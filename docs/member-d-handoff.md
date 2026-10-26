@@ -1,8 +1,10 @@
 # 成员 D 开工交接
 
-任务 1 已提供非 Mock `SecurityAdapter`、`build_security` 和 `app.security.main:create_app` 开发入口，详见 [任务 1 接入说明](member-d-task1.md)。当前执行策略为全拒绝，返回 `QUERY_EXECUTION_DISABLED`，尚无真实 SQL 执行能力；下文真实网关、审计与数据库验收要求仍有效。
+任务 1 已提供非 Mock `SecurityAdapter`、`build_security` 和 `app.security.main:create_app` 开发入口，详见 [任务 1 接入说明](member-d-task1.md)。尚无真实 SQL 执行能力；下文真实执行、审计与数据库验收要求仍有效。
 
 任务 2 已补齐应用层项目授权：按可信 Context 重新查询当前角色、核对 B 的角色快照、未知动作默认拒绝、撤权与查询故障拒绝授权。权限矩阵、验证及数据库边界见 [授权策略说明](member-d-authorization.md)。
+
+任务 3 已接通三条自然语言统计的候选生成、完整 AST 允许清单与项目参数绑定，详见 [网关校验说明](member-d-gateway.md)。策略通过返回 allowed/not_executed，仍不执行 SQL；正式视图/方言与受限执行器待 A/D 确认和交付。
 
 ## 1. 职责范围
 
@@ -12,7 +14,7 @@
 
 - `backend/app/adapters/ports.py:SecurityPort`、`schemas.py:SecureQueryResult/AuditEvent`。
 - 参考：`adapters/mock_security.py`；身份和基础项目授权：`auth.py:project_context`；调用：`services.py:secure_query`、`routes/security.py`。
-- `backend/app/security/adapter.py` 已提供端口与应用层授权策略；SQL/执行器与关键审计仍需后续交付。共享测试：`backend/tests/security_contracts/`。
+- `backend/app/security/adapter.py` 已提供端口、授权与网关校验，`sql_policy.py` 提供封闭 AST 允许清单；受限执行器与关键审计仍需后续交付。共享测试：`backend/tests/security_contracts/`。
 - 正常/拒绝/故障及审计的可执行合成样例：`contracts/module-port-examples.json`；HTTP 示例沿用 `contracts/examples/` 和 `scenarios/`。
 
 ## 3. 完整接口（2 个方法）
@@ -81,7 +83,7 @@ from app.main import create_app as create_business_app
 from app.security import build_security
 
 def create_app():
-    # 当前 build_security 提供全拒绝适配器，真实 SQL 网关仍待后续实现。
+    # 当前 build_security 提供 AST 校验，受限执行器未接入时始终 not_executed。
     # 启动前设置 PAPERPILOT_D_MODE=real，保留统一环境配置。
     return create_business_app(Settings.from_env(), security_factory=build_security)
 ```

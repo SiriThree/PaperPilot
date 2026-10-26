@@ -68,9 +68,16 @@ def test_invalid_role_cannot_read_project(data, ctx, role):
 
 
 @pytest.mark.parametrize(
-    "question", ["按年份统计论文数量", "不支持的问题", "模拟执行失败", "模拟网关故障", "SELECT * FROM papers"]
+    "question,decision,code",
+    [
+        ("按年份统计论文数量", "allowed", "QUERY_EXECUTION_DISABLED"),
+        ("不支持的问题", "rejected", "UNSUPPORTED_QUERY"),
+        ("模拟执行失败", "rejected", "UNSUPPORTED_QUERY"),
+        ("模拟网关故障", "rejected", "UNSUPPORTED_QUERY"),
+        ("SELECT * FROM papers", "rejected", "UNSUPPORTED_QUERY"),
+    ],
 )
-def test_execute_denies_without_statistics_or_mock_fallback(data, ctx, monkeypatch, question):
+def test_execute_never_runs_statistics_or_mock_fallback(data, ctx, monkeypatch, question, decision, code):
     def unexpected(*args, **kwargs):
         pytest.fail("The bootstrap adapter must not execute queries or fall back to Mock")
 
@@ -78,8 +85,8 @@ def test_execute_denies_without_statistics_or_mock_fallback(data, ctx, monkeypat
     monkeypatch.setattr(MockSecurity, "execute", unexpected)
     result = asyncio.run(build_security(data).execute(ctx, question))
     assert isinstance(result, SecureQueryResult)
-    assert (result.decision, result.execution_status) == ("rejected", "not_executed")
-    assert result.reason.code == "QUERY_EXECUTION_DISABLED"
+    assert (result.decision, result.execution_status) == (decision, "not_executed")
+    assert result.reason.code == code
     assert result.policy_id == SecurityAdapter.policy_id and result.request_id == ctx.request_id
     assert result.mock is False and not result.rows and not result.columns
 
@@ -155,7 +162,7 @@ def test_d_composition_reaches_http_without_changing_public_contract(monkeypatch
         assert response.status_code == 200
         result = SecureQueryResult.model_validate(response.json())
         assert result.mock is False and str(result.request_id) == request_id
-        assert (result.decision, result.execution_status) == ("rejected", "not_executed")
+        assert (result.decision, result.execution_status) == ("allowed", "not_executed")
         assert result.reason.code == "QUERY_EXECUTION_DISABLED"
         health = client.get("/api/v1/health").json()
         assert health["modes"] == {"a": "mock", "c": "mock", "d": "real"}

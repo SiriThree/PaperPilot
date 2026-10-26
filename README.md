@@ -114,6 +114,7 @@ npm.cmd --prefix frontend run test:e2e
 - [成员开发及交接指南](docs/development-guide.md)
 - [A/B 数据层契约 AB-1](docs/ab-data-contract.md)、[成员 A 交接摘要](docs/member-a-handoff.md)
 - [成员 C：AI 接口与开工验收](docs/member-c-handoff.md)、[成员 D：安全接口与开工验收](docs/member-d-handoff.md)
+- [D 的项目授权策略](docs/member-d-authorization.md)、[D 的统计网关 AST 校验与执行限制](docs/member-d-gateway.md)
 - [C/D 全方法可执行示例与异常](contracts/module-port-examples.json)
 - [数据库中立接入、测试与待确认事项](docs/persistence-integration.md)、[历史 SQLite 实验](docs/persistence.md)
 - [任务恢复、未知提交与重复提交边界](docs/task-recovery.md)

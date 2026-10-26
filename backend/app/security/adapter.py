@@ -2,16 +2,22 @@
 
 from uuid import UUID
 
+from pydantic import ValidationError
+
 from app.adapters.ports import Context, DataPort, ProjectRole, SecurityPort
 from app.errors import AppError
-from app.schemas import QueryReason, SecureQueryResult
+from app.schemas import QueryReason, SecureQueryRequest, SecureQueryResult
+from app.security.sql_policy import CandidateGenerator, SQLPolicyRejected, generate_candidate, prepare_query
 
 
 class SecurityAdapter:
-    policy_id = "security-bootstrap-deny-v1"
+    policy_id = "statistics-ast-v1"
 
-    def __init__(self, data: DataPort):
+    def __init__(self, data: DataPort, *, candidate_generator: CandidateGenerator = generate_candidate):
+        if not callable(candidate_generator):
+            raise ValueError("Candidate generator must be callable")
         self.data = data
+        self._candidate_generator = candidate_generator
 
     def _project_role(self, ctx: Context) -> ProjectRole:
         if not isinstance(ctx, Context) or not all(
@@ -40,13 +46,36 @@ class SecurityAdapter:
 
     async def execute(self, ctx: Context, question: str) -> SecureQueryResult:
         self._project_role(ctx)
-        # shortcut: deny every query until AST validation, restricted execution and critical audit are ready.
+        try:
+            question = SecureQueryRequest(question=question).question
+        except ValidationError:
+            raise AppError(422, "VALIDATION_ERROR", "请求格式或字段值不符合契约") from None
+        try:
+            candidate = await self._candidate_generator(ctx, question)
+        except Exception:
+            raise AppError(503, "GATEWAY_UNAVAILABLE", "安全网关不可用，未执行查询") from None
+        self._project_role(ctx)
+        decision = "rejected"
+        if candidate is None:
+            reason = QueryReason(code="UNSUPPORTED_QUERY", message="该问题不在当前统计允许范围内，未执行查询")
+        else:
+            try:
+                prepare_query(candidate, ctx.project_id)
+            except SQLPolicyRejected:
+                reason = QueryReason(code="SQL_POLICY_REJECTED", message="候选查询不符合安全策略，未执行查询")
+            except Exception:
+                raise AppError(503, "GATEWAY_UNAVAILABLE", "安全网关不可用，未执行查询") from None
+            else:
+                decision = "allowed"
+                # shortcut: do not execute until the restricted executor and critical audit are ready.
+                reason = QueryReason(
+                    code="QUERY_EXECUTION_DISABLED",
+                    message="查询已通过策略校验；受限执行器尚未接入，未执行查询",
+                )
         return SecureQueryResult(
-            decision="rejected",
+            decision=decision,
             execution_status="not_executed",
-            reason=QueryReason(
-                code="QUERY_EXECUTION_DISABLED", message="安全查询执行链路尚未就绪，未执行查询"
-            ),
+            reason=reason,
             policy_id=self.policy_id,
             request_id=ctx.request_id,
             mock=False,

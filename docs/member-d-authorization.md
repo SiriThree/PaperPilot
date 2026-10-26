@@ -1,5 +1,7 @@
 # 成员 D 任务 2：项目授权策略
 
+任务 3 后续已加入 SQL AST 校验；当前查询状态见 [网关校验说明](member-d-gateway.md)。下文全拒绝查询策略与 144 项测试为任务 2 当时记录。
+
 `SecurityAdapter.authorize(ctx, action, role)` 继续保持 SecurityPort 签名，正常返回 None，拒绝抛出脱敏 AppError。复用同一个 A DataPort 查询最新项目角色，不保存角色缓存，不创建独立用户或权限来源。
 
 ## 权限矩阵
