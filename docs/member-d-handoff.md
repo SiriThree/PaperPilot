@@ -1,5 +1,7 @@
 # 成员 D 开工交接
 
+任务 1 已提供非 Mock `SecurityAdapter`、`build_security` 和 `app.security.main:create_app` 开发入口，详见 [任务 1 接入说明](member-d-task1.md)。当前执行策略为全拒绝，返回 `QUERY_EXECUTION_DISABLED`，尚无真实 SQL 执行能力；下文真实网关、审计与数据库验收要求仍有效。
+
 ## 1. 职责范围
 
 负责最终授权策略、数据库访问策略、自然语言统计的安全网关、SQL 解析/约束/受限执行、关键审计与安全实验。B 只调用 SecurityPort，不执行模型生成 SQL，也不在网关失败后降级查询。MockSecurity 只有固定意图演示，不具备真实 SQL 防护。
@@ -8,7 +10,7 @@
 
 - `backend/app/adapters/ports.py:SecurityPort`、`schemas.py:SecureQueryResult/AuditEvent`。
 - 参考：`adapters/mock_security.py`；身份和基础项目授权：`auth.py:project_context`；调用：`services.py:secure_query`、`routes/security.py`。
-- 建议新增 `backend/app/security/adapter.py` 和模块内策略/SQL/执行器实现（建议目录尚不存在）。共享测试：`backend/tests/security_contracts/`。
+- `backend/app/security/adapter.py` 已提供任务 1 端口实现；策略扩展、SQL/执行器与关键审计仍需后续交付。共享测试：`backend/tests/security_contracts/`。
 - 正常/拒绝/故障及审计的可执行合成样例：`contracts/module-port-examples.json`；HTTP 示例沿用 `contracts/examples/` 和 `scenarios/`。
 
 ## 3. 完整接口（2 个方法）
@@ -74,9 +76,10 @@ event_id 唯一、timestamp 带时区、duration_ms非负。业务请求共用�
 ```python
 from app.config import Settings
 from app.main import create_app as create_business_app
+from app.security import build_security
 
 def create_app():
-    # build_security 是 D 将交付的函数，不是已有真实安全实现。
+    # 当前 build_security 提供全拒绝适配器，真实 SQL 网关仍待后续实现。
     # 启动前设置 PAPERPILOT_D_MODE=real，保留统一环境配置。
     return create_business_app(Settings.from_env(), security_factory=build_security)
 ```
