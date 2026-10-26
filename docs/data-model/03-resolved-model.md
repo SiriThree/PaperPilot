@@ -26,45 +26,9 @@
 
 这是映射后的总图，包含 24 张逻辑表。概念多对多联系已经展开，Source 分拆为结果来源与版本来源，运行控制实体也单独保留。图显示主要联系；所有字段级复合外键、辅助唯一键及可空性以 [数据字典](04-data-dictionary.md) 为准。每项目一个 owner、每报告至少一版、每份证据恰好五字段，属于需额外保证的提交后业务基数，不能只凭图中的“多”表达。
 
-```mermaid
-erDiagram
-    users ||--o{ project_members : participates
-    projects ||--|{ project_members : includes
-    users ||--o{ projects : owns
-    projects ||--o{ papers : scopes
-    papers ||--|| project_papers : describes
-    projects ||--o{ project_papers : imports
-    project_papers ||--o{ paper_authors : credits
-    authors ||--o{ paper_authors : appears_in
-    project_papers ||--o{ paper_topics : classifies
-    topics ||--o{ paper_topics : labels
-    project_papers ||--o{ chunks : contains
-    chunks ||--o{ chunk_embeddings : represented_by
-    embedding_models ||--o{ chunk_embeddings : computes
-    projects ||--o{ tasks : schedules
-    tasks ||--o{ task_papers : selects
-    project_papers ||--o{ task_papers : selected_by
-    tasks ||--o{ task_attempts : claims
-    tasks ||--o| task_results : commits
-    task_results o|--o| project_papers : active_process_result
-    task_attempts ||--o| task_results : accepted_attempt
-    task_results ||--o{ evidence_fields : extracts
-    task_results ||--o{ result_sources : cites
-    evidence_fields o|--o{ result_sources : supports
-    chunks ||--o{ result_sources : locates
-    projects ||--o{ reports : contains
-    reports ||--|{ report_versions : versions
-    report_versions ||--o{ report_version_sources : preserves
-    chunks ||--o{ report_version_sources : locates
-    users ||--o{ idempotency_records : requests
-    projects ||--o{ idempotency_records : scopes
-    tasks o|--o{ idempotency_records : task_replay
-    report_versions o|--o{ idempotency_records : version_replay
-    users o|--o{ audit_events : acts
-    projects o|--o{ audit_events : scopes
-    users o|--o{ outbox_events : originates
-    projects o|--o{ outbox_events : scopes
-```
+![最终总 E-R 图（冲突消解后）](diagrams/resolved-er.svg)
+
+[打开可缩放 SVG](diagrams/resolved-er.svg) · [图例与联系基数说明](06-chen-notation.md)
 
 outbox_events 与 audit_events 按相同 event_id 幂等投递，未画成强制外键联系。用户、项目到作者/主题/模型等的辅助外键省略绘制，不代表这些表可以跨项目访问。
 

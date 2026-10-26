@@ -17,34 +17,9 @@
 
 ## 2 初步合并总图
 
-```mermaid
-erDiagram
-    USER ||--o{ MEMBERSHIP : participates
-    PROJECT ||--|{ MEMBERSHIP : has
-    USER ||--o{ PROJECT : owns
-    PROJECT ||--o{ PROJECT_PAPER : imports
-    PAPER ||--o{ PROJECT_PAPER : describes
-    PAPER }o--o{ AUTHOR : written_by
-    PAPER }o--o{ TOPIC : classified_as
-    PROJECT_PAPER ||--o{ CHUNK : contains
-    CHUNK ||--o{ EMBEDDING : represented_by
-    EMBEDDING_MODEL ||--o{ EMBEDDING : computes
-    PROJECT ||--o{ TASK : schedules
-    TASK }o--o{ PROJECT_PAPER : selects
-    TASK ||--o{ TASK_ATTEMPT : claims
-    TASK ||--o| RESULT : produces
-    RESULT ||--o{ EVIDENCE_FIELD : extracts
-    RESULT ||--o{ SOURCE : cites
-    CHUNK ||--o{ SOURCE : locates
-    PROJECT ||--o{ REPORT : contains
-    REPORT ||--|{ REPORT_VERSION : versions
-    REPORT_VERSION ||--o{ SOURCE : snapshots
-    USER ||--o{ IDEMPOTENCY_RECORD : requests
-    PROJECT ||--o{ IDEMPOTENCY_RECORD : scopes
-    USER o|--o{ AUDIT_EVENT : acts
-    PROJECT o|--o{ AUDIT_EVENT : scopes
-    OUTBOX_EVENT o|--o| AUDIT_EVENT : delivered_as
-```
+![初步合并总 E-R 图（冲突消解前）](diagrams/merged-er.svg)
+
+[打开可缩放 SVG](diagrams/merged-er.svg) · [图例与联系基数说明](06-chen-notation.md)
 
 ## 3 合并后发现的冲突
 

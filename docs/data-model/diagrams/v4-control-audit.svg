@@ -1,1 +1,788 @@
-<svg id="diagram-v4-control-audit" width="1078.76953125" xmlns="http://www.w3.org/2000/svg" class="erDiagram" height="285" viewBox="0 0 1078.76953125 285" role="graphics-document document" aria-roledescription="er"><style>#diagram-v4-control-audit{font-family:Arial,Microsoft YaHei,sans-serif;font-size:16px;fill:#000000;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#diagram-v4-control-audit .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#diagram-v4-control-audit .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#diagram-v4-control-audit .error-icon{fill:#552222;}#diagram-v4-control-audit .error-text{fill:#552222;stroke:#552222;}#diagram-v4-control-audit .edge-thickness-normal{stroke-width:1px;}#diagram-v4-control-audit .edge-thickness-thick{stroke-width:3.5px;}#diagram-v4-control-audit .edge-pattern-solid{stroke-dasharray:0;}#diagram-v4-control-audit .edge-thickness-invisible{stroke-width:0;fill:none;}#diagram-v4-control-audit .edge-pattern-dashed{stroke-dasharray:3;}#diagram-v4-control-audit .edge-pattern-dotted{stroke-dasharray:2;}#diagram-v4-control-audit .marker{fill:#666;stroke:#666;}#diagram-v4-control-audit .marker.cross{stroke:#666;}#diagram-v4-control-audit svg{font-family:Arial,Microsoft YaHei,sans-serif;font-size:16px;}#diagram-v4-control-audit p{margin:0;}#diagram-v4-control-audit .entityBox{fill:#eee;stroke:#999;}#diagram-v4-control-audit .relationshipLabelBox{fill:hsl(-160, 0%, 93.3333333333%);opacity:0.7;background-color:hsl(-160, 0%, 93.3333333333%);}#diagram-v4-control-audit .relationshipLabelBox rect{opacity:0.5;}#diagram-v4-control-audit .labelBkg{background-color:rgba(237.9999999999, 237.9999999999, 237.9999999999, 0.5);}#diagram-v4-control-audit .edgeLabel{background-color:white;}#diagram-v4-control-audit .edgeLabel .label rect{fill:white;}#diagram-v4-control-audit .edgeLabel .label text{fill:#000000;}#diagram-v4-control-audit .edgeLabel .label{fill:#999;font-size:14px;}#diagram-v4-control-audit .label{font-family:Arial,Microsoft YaHei,sans-serif;color:#000000;}#diagram-v4-control-audit .edge-pattern-dashed{stroke-dasharray:8,8;}#diagram-v4-control-audit .node rect,#diagram-v4-control-audit .node circle,#diagram-v4-control-audit .node ellipse,#diagram-v4-control-audit .node polygon{fill:#eee;stroke:#999;stroke-width:1px;}#diagram-v4-control-audit .relationshipLine{stroke:#666;stroke-width:1px;fill:none;}#diagram-v4-control-audit .marker{fill:none!important;stroke:#666!important;stroke-width:1;}#diagram-v4-control-audit [data-look=neo].labelBkg{background-color:rgba(237.9999999999, 237.9999999999, 237.9999999999, 0.5);}#diagram-v4-control-audit .cluster rect{fill:hsl(0, 0%, 98.9215686275%);stroke:#707070;stroke-width:1px;}#diagram-v4-control-audit .cluster text{fill:#333;}#diagram-v4-control-audit .cluster-label text{fill:#333;}#diagram-v4-control-audit .node .neo-node{stroke:#999;}#diagram-v4-control-audit [data-look="neo"].node rect,#diagram-v4-control-audit [data-look="neo"].cluster rect,#diagram-v4-control-audit [data-look="neo"].node polygon{stroke:url(#diagram-v4-control-audit-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#diagram-v4-control-audit [data-look="neo"].swimlane.cluster rect{filter:none;}#diagram-v4-control-audit [data-look="neo"].node path{stroke:url(#diagram-v4-control-audit-gradient);stroke-width:1px;}#diagram-v4-control-audit [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#diagram-v4-control-audit [data-look="neo"].node .neo-line path{stroke:#999;filter:none;}#diagram-v4-control-audit [data-look="neo"].node circle{stroke:url(#diagram-v4-control-audit-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#diagram-v4-control-audit [data-look="neo"].node circle .state-start{fill:#000000;}#diagram-v4-control-audit [data-look="neo"].icon-shape .icon{fill:url(#diagram-v4-control-audit-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#diagram-v4-control-audit [data-look="neo"].icon-shape .icon-neo path{stroke:url(#diagram-v4-control-audit-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#diagram-v4-control-audit :root{--mermaid-font-family:Arial,Microsoft YaHei,sans-serif;}</style><g><defs><marker id="diagram-v4-control-audit_er-onlyOneStart" class="marker onlyOne er" refX="0" refY="9" markerWidth="18" markerHeight="18" orient="auto"><path d="M9,0 L9,18 M15,0 L15,18"></path></marker></defs><defs><marker id="diagram-v4-control-audit_er-onlyOneEnd" class="marker onlyOne er" refX="18" refY="9" markerWidth="18" markerHeight="18" orient="auto"><path d="M3,0 L3,18 M9,0 L9,18"></path></marker></defs><defs><marker id="diagram-v4-control-audit_er-zeroOrOneStart" class="marker zeroOrOne er" refX="0" refY="9" markerWidth="30" markerHeight="18" orient="auto"><circle fill="white" cx="21" cy="9" r="6"></circle><path d="M9,0 L9,18"></path></marker></defs><defs><marker id="diagram-v4-control-audit_er-zeroOrOneEnd" class="marker zeroOrOne er" refX="30" refY="9" markerWidth="30" markerHeight="18" orient="auto"><circle fill="white" cx="9" cy="9" r="6"></circle><path d="M21,0 L21,18"></path></marker></defs><defs><marker id="diagram-v4-control-audit_er-oneOrMoreStart" class="marker oneOrMore er" refX="18" refY="18" markerWidth="45" markerHeight="36" orient="auto"><path d="M0,18 Q 18,0 36,18 Q 18,36 0,18 M42,9 L42,27"></path></marker></defs><defs><marker id="diagram-v4-control-audit_er-oneOrMoreEnd" class="marker oneOrMore er" refX="27" refY="18" markerWidth="45" markerHeight="36" orient="auto"><path d="M3,9 L3,27 M9,18 Q27,0 45,18 Q27,36 9,18"></path></marker></defs><defs><marker id="diagram-v4-control-audit_er-zeroOrMoreStart" class="marker zeroOrMore er" refX="18" refY="18" markerWidth="57" markerHeight="36" orient="auto"><circle fill="white" cx="48" cy="18" r="6"></circle><path d="M0,18 Q18,0 36,18 Q18,36 0,18"></path></marker></defs><defs><marker id="diagram-v4-control-audit_er-zeroOrMoreEnd" class="marker zeroOrMore er" refX="39" refY="18" markerWidth="57" markerHeight="36" orient="auto"><circle fill="white" cx="9" cy="18" r="6"></circle><path d="M21,18 Q39,0 57,18 Q39,36 21,18"></path></marker></defs><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M89.492,92L89.492,100.417C89.492,108.833,89.492,125.667,89.492,142.5C89.492,159.333,89.492,176.167,89.492,184.583L89.492,193" id="diagram-v4-control-audit-id_entity-TASK-0_entity-TASK_ATTEMPT-1_0" class="edge-thickness-normal edge-pattern-solid relationshipLine" style="undefined;;;undefined" data-edge="true" data-et="edge" data-id="id_entity-TASK-0_entity-TASK_ATTEMPT-1_0" data-points="W3sieCI6ODkuNDkyMTg3NSwieSI6OTJ9LHsieCI6ODkuNDkyMTg3NSwieSI6MTQyLjV9LHsieCI6ODkuNDkyMTg3NSwieSI6MTkzfV0=" data-look="classic" marker-start="url(#diagram-v4-control-audit_er-onlyOneStart)" marker-end="url(#diagram-v4-control-audit_er-zeroOrMoreEnd)"></path><path d="M406.285,78.234L387.317,88.945C368.349,99.656,330.413,121.078,323.846,140.206C317.28,159.333,342.084,176.167,354.486,184.583L366.887,193" id="diagram-v4-control-audit-id_entity-USER-2_entity-IDEMPOTENCY_RECORD-3_1" class="edge-thickness-normal edge-pattern-solid relationshipLine" style="undefined;;;undefined" data-edge="true" data-et="edge" data-id="id_entity-USER-2_entity-IDEMPOTENCY_RECORD-3_1" data-points="W3sieCI6NDA2LjI4NTE1NjI1LCJ5Ijo3OC4yMzQxNzE5MzI3NTMwN30seyJ4IjoyOTIuNDc2NTYyNSwieSI6MTQyLjV9LHsieCI6MzY2Ljg4NzI4ODg1MTM1MTM0LCJ5IjoxOTN9XQ==" data-look="classic" marker-start="url(#diagram-v4-control-audit_er-onlyOneStart)" marker-end="url(#diagram-v4-control-audit_er-zeroOrMoreEnd)"></path><path d="M646.285,85.081L630.645,94.651C615.004,104.221,583.723,123.36,556.829,141.347C529.936,159.333,507.431,176.167,496.178,184.583L484.925,193" id="diagram-v4-control-audit-id_entity-PROJECT-4_entity-IDEMPOTENCY_RECORD-3_2" class="edge-thickness-normal edge-pattern-solid relationshipLine" style="undefined;;;undefined" data-edge="true" data-et="edge" data-id="id_entity-PROJECT-4_entity-IDEMPOTENCY_RECORD-3_2" data-points="W3sieCI6NjQ2LjI4NTE1NjI1LCJ5Ijo4NS4wODEyNjE5NTAyODY4fSx7IngiOjU1Mi40NDE0MDYyNSwieSI6MTQyLjV9LHsieCI6NDg0LjkyNTM4MDA2NzU2NzYsInkiOjE5M31d" data-look="classic" marker-start="url(#diagram-v4-control-audit_er-onlyOneStart)" marker-end="url(#diagram-v4-control-audit_er-zeroOrMoreEnd)"></path><path d="M506.285,73.556L530.675,85.047C555.065,96.537,603.845,119.519,653.023,141.252C702.201,162.986,751.776,183.471,776.564,193.714L801.352,203.957" id="diagram-v4-control-audit-id_entity-USER-2_entity-AUDIT_EVENT-5_3" class="edge-thickness-normal edge-pattern-solid relationshipLine" style="undefined;;;undefined" data-edge="true" data-et="edge" data-id="id_entity-USER-2_entity-AUDIT_EVENT-5_3" data-points="W3sieCI6NTA2LjI4NTE1NjI1LCJ5Ijo3My41NTYwOTQ5NDA2MTIzOH0seyJ4Ijo2NTIuNjI1LCJ5IjoxNDIuNX0seyJ4Ijo4MDEuMzUxNTYyNSwieSI6MjAzLjk1NjgyODI1NTMzMTAzfV0=" data-look="classic" marker-start="url(#diagram-v4-control-audit_er-zeroOrOneStart)" marker-end="url(#diagram-v4-control-audit_er-zeroOrMoreEnd)"></path><path d="M749.11,92L758.226,100.417C767.341,108.833,785.573,125.667,801.301,142.5C817.03,159.333,830.255,176.167,836.867,184.583L843.48,193" id="diagram-v4-control-audit-id_entity-PROJECT-4_entity-AUDIT_EVENT-5_4" class="edge-thickness-normal edge-pattern-solid relationshipLine" style="undefined;;;undefined" data-edge="true" data-et="edge" data-id="id_entity-PROJECT-4_entity-AUDIT_EVENT-5_4" data-points="W3sieCI6NzQ5LjEwOTg2MDY0MTg5MTksInkiOjkyfSx7IngiOjgwMy44MDQ2ODc1LCJ5IjoxNDIuNX0seyJ4Ijo4NDMuNDc5NjAzMDQwNTQwNSwieSI6MTkzfV0=" data-look="classic" marker-start="url(#diagram-v4-control-audit_er-zeroOrOneStart)" marker-end="url(#diagram-v4-control-audit_er-zeroOrMoreEnd)"></path><path d="M985.863,92L985.863,100.417C985.863,108.833,985.863,125.667,975.91,142.5C965.957,159.333,946.05,176.167,936.097,184.583L926.144,193" id="diagram-v4-control-audit-id_entity-OUTBOX_EVENT-6_entity-AUDIT_EVENT-5_5" class="edge-thickness-normal edge-pattern-solid relationshipLine" style="undefined;;;undefined" data-edge="true" data-et="edge" data-id="id_entity-OUTBOX_EVENT-6_entity-AUDIT_EVENT-5_5" data-points="W3sieCI6OTg1Ljg2MzI4MTI1LCJ5Ijo5Mn0seyJ4Ijo5ODUuODYzMjgxMjUsInkiOjE0Mi41fSx7IngiOjkyNi4xNDQwNDU2MDgxMDgxLCJ5IjoxOTN9XQ==" data-look="classic" marker-start="url(#diagram-v4-control-audit_er-zeroOrOneStart)" marker-end="url(#diagram-v4-control-audit_er-zeroOrOneEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel" transform="translate(89.4921875, 142.5)"><g class="label" data-id="id_entity-TASK-0_entity-TASK_ATTEMPT-1_0" transform="translate(-19.8359375, -10.5)"><foreignObject width="39.671875" height="21"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>claims</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(310.22753, 132.47632)"><g class="label" data-id="id_entity-USER-2_entity-IDEMPOTENCY_RECORD-3_1" transform="translate(-26.8515625, -10.5)"><foreignObject width="53.703125" height="21"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>requests</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(563.40385, 135.79257)"><g class="label" data-id="id_entity-PROJECT-4_entity-IDEMPOTENCY_RECORD-3_2" transform="translate(-22.1796875, -10.5)"><foreignObject width="44.359375" height="21"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>scopes</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(652.625, 142.5)"><g class="label" data-id="id_entity-USER-2_entity-AUDIT_EVENT-5_3" transform="translate(-12.84375, -10.5)"><foreignObject width="25.6875" height="21"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>acts</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(803.8046875, 142.5)"><g class="label" data-id="id_entity-PROJECT-4_entity-AUDIT_EVENT-5_4" transform="translate(-22.1796875, -10.5)"><foreignObject width="44.359375" height="21"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>scopes</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(985.86328125, 142.5)"><g class="label" data-id="id_entity-OUTBOX_EVENT-6_entity-AUDIT_EVENT-5_5" transform="translate(-39.6953125, -10.5)"><foreignObject width="79.390625" height="21"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>delivered_as</p></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default" id="diagram-v4-control-audit-entity-TASK-0" data-look="classic" transform="translate(89.4921875, 50)"><rect class="basic label-container" style="" x="-50" y="-42" width="100" height="84"></rect><g class="label" style="" transform="translate(-20.3046875, -12)"><rect></rect><foreignObject width="40.609375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 100px; text-align: center;"><span class="nodeLabel markdown-node-label"><p>TASK</p></span></div></foreignObject></g></g><g class="node default" id="diagram-v4-control-audit-entity-TASK_ATTEMPT-1" data-look="classic" transform="translate(89.4921875, 235)"><rect class="basic label-container" style="" x="-81.4921875" y="-42" width="162.984375" height="84"></rect><g class="label" style="" transform="translate(-61.4921875, -12)"><rect></rect><foreignObject width="122.984375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel markdown-node-label"><p>TASK_ATTEMPT</p></span></div></foreignObject></g></g><g class="node default" id="diagram-v4-control-audit-entity-USER-2" data-look="classic" transform="translate(456.28515625, 50)"><rect class="basic label-container" style="" x="-50" y="-42" width="100" height="84"></rect><g class="label" style="" transform="translate(-22.2265625, -12)"><rect></rect><foreignObject width="44.453125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 100px; text-align: center;"><span class="nodeLabel markdown-node-label"><p>USER</p></span></div></foreignObject></g></g><g class="node default" id="diagram-v4-control-audit-entity-IDEMPOTENCY_RECORD-3" data-look="classic" transform="translate(428.7734375, 235)"><rect class="basic label-container" style="" x="-117.7890625" y="-42" width="235.578125" height="84"></rect><g class="label" style="" transform="translate(-97.7890625, -12)"><rect></rect><foreignObject width="195.578125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel markdown-node-label"><p>IDEMPOTENCY_RECORD</p></span></div></foreignObject></g></g><g class="node default" id="diagram-v4-control-audit-entity-PROJECT-4" data-look="classic" transform="translate(703.62109375, 50)"><rect class="basic label-container" style="" x="-57.3359375" y="-42" width="114.671875" height="84"></rect><g class="label" style="" transform="translate(-37.3359375, -12)"><rect></rect><foreignObject width="74.671875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel markdown-node-label"><p>PROJECT</p></span></div></foreignObject></g></g><g class="node default" id="diagram-v4-control-audit-entity-AUDIT_EVENT-5" data-look="classic" transform="translate(876.4765625, 235)"><rect class="basic label-container" style="" x="-75.125" y="-42" width="150.25" height="84"></rect><g class="label" style="" transform="translate(-55.125, -12)"><rect></rect><foreignObject width="110.25" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel markdown-node-label"><p>AUDIT_EVENT</p></span></div></foreignObject></g></g><g class="node default" id="diagram-v4-control-audit-entity-OUTBOX_EVENT-6" data-look="classic" transform="translate(985.86328125, 50)"><rect class="basic label-container" style="" x="-84.90625" y="-42" width="169.8125" height="84"></rect><g class="label" style="" transform="translate(-64.90625, -12)"><rect></rect><foreignObject width="129.8125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel markdown-node-label"><p>OUTBOX_EVENT</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="diagram-v4-control-audit-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="diagram-v4-control-audit-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="diagram-v4-control-audit-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="hsl(0, 0%, 83.3333333333%)" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(0, 0%, 88.9215686275%)" stop-opacity="1"></stop></linearGradient></svg>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 16.1.0 (20260904.0139)
+ -->
+<!-- Title: ER Pages: 1 -->
+<svg width="4125pt" height="681pt"
+ viewBox="0.00 0.00 4125.00 681.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 659.78)">
+<title>ER</title>
+<polygon fill="white" stroke="none" points="-21.6,21.6 -21.6,-659.78 4103.6,-659.78 4103.6,21.6 -21.6,21.6"/>
+<text xml:space="preserve" text-anchor="middle" x="2041" y="-613.48" font-family="Microsoft YaHei" font-size="23.00">分 E&#45;R 图四 运行控制与审计</text>
+<text xml:space="preserve" text-anchor="middle" x="2041" y="-585.88" font-family="Microsoft YaHei" font-size="23.00">矩形：实体　椭圆：属性　菱形：联系　下划线：主键　?：可空　1/N：最大联系基数</text>
+<g id="clust1" class="cluster">
+<title>cluster_0</title>
+<polygon fill="white" stroke="none" points="497,-244.53 497,-566.98 1029,-566.98 1029,-244.53 497,-244.53"/>
+</g>
+<g id="clust4" class="cluster">
+<title>cluster_1</title>
+<polygon fill="white" stroke="none" points="8,-8 8,-330.45 489,-330.45 489,-8 8,-8"/>
+</g>
+<g id="clust7" class="cluster">
+<title>cluster_2</title>
+<polygon fill="white" stroke="none" points="1746,-244.53 1746,-566.98 1961,-566.98 1961,-244.53 1746,-244.53"/>
+</g>
+<g id="clust10" class="cluster">
+<title>cluster_3</title>
+<polygon fill="white" stroke="none" points="1288,-8 1288,-330.45 1738,-330.45 1738,-8 1288,-8"/>
+</g>
+<g id="clust13" class="cluster">
+<title>cluster_4</title>
+<polygon fill="white" stroke="none" points="2268,-244.53 2268,-566.98 2514,-566.98 2514,-244.53 2268,-244.53"/>
+</g>
+<g id="clust16" class="cluster">
+<title>cluster_5</title>
+<polygon fill="white" stroke="none" points="2797,-8 2797,-330.45 3501,-330.45 3501,-8 2797,-8"/>
+</g>
+<g id="clust19" class="cluster">
+<title>cluster_6</title>
+<polygon fill="white" stroke="none" points="3509,-244.53 3509,-566.98 4074,-566.98 4074,-244.53 3509,-244.53"/>
+</g>
+<!-- e_TASK&#45;&#45;a_TASK_4 -->
+<g id="edge5" class="edge">
+<title>e_TASK&#45;&#45;a_TASK_4</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M852.11,-385.7C846.54,-364.96 839.12,-337.32 833.61,-316.81"/>
+</g>
+<!-- e_TASK&#45;&#45;a_TASK_5 -->
+<g id="edge6" class="edge">
+<title>e_TASK&#45;&#45;a_TASK_5</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M883.43,-385.7C900.56,-364.23 923.59,-335.36 940.1,-314.67"/>
+</g>
+<!-- e_TASK&#45;&#45;a_TASK_6 -->
+<g id="edge7" class="edge">
+<title>e_TASK&#45;&#45;a_TASK_6</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M822.45,-402.3C752.89,-378.66 611,-330.45 611,-330.45 611,-330.45 598.33,-320.61 585.27,-310.45"/>
+</g>
+<!-- e_TASK&#45;&#45;a_TASK_7 -->
+<g id="edge8" class="edge">
+<title>e_TASK&#45;&#45;a_TASK_7</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M822.46,-388.21C791.11,-365.79 746.8,-334.11 716.6,-312.51"/>
+</g>
+<!-- e_TASK&#45;&#45;r_0 -->
+<g id="edge50" class="edge">
+<title>e_TASK:se&#45;&#45;r_0</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M896.96,-386.05C896.96,-386.05 1033,-330.45 1033,-330.45 1033,-330.45 1051.22,-315.46 1065.88,-303.4"/>
+<text xml:space="preserve" text-anchor="middle" x="1011.48" y="-345.85" font-family="Microsoft YaHei" font-size="18.00">1</text>
+</g>
+<!-- a_TASK_0&#45;&#45;e_TASK -->
+<g id="edge1" class="edge">
+<title>a_TASK_0&#45;&#45;e_TASK</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M676.81,-504.99C687.26,-499.58 696,-495.05 696,-495.05 696,-495.05 774.4,-457.77 822.79,-434.75"/>
+</g>
+<!-- a_TASK_1&#45;&#45;e_TASK -->
+<g id="edge2" class="edge">
+<title>a_TASK_1&#45;&#45;e_TASK</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M775.46,-499.24C791.53,-483.61 812.66,-463.07 829.78,-446.43"/>
+</g>
+<!-- a_TASK_2&#45;&#45;e_TASK -->
+<g id="edge3" class="edge">
+<title>a_TASK_2&#45;&#45;e_TASK</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M860,-494.62C860,-479.78 860,-461.64 860,-446.64"/>
+</g>
+<!-- a_TASK_3&#45;&#45;e_TASK -->
+<g id="edge4" class="edge">
+<title>a_TASK_3&#45;&#45;e_TASK</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M944.54,-499.24C928.47,-483.61 907.34,-463.07 890.22,-446.43"/>
+</g>
+<!-- e_TASK_ATTEMPT&#45;&#45;a_TASK_ATTEMPT_4 -->
+<g id="edge13" class="edge">
+<title>e_TASK_ATTEMPT&#45;&#45;a_TASK_ATTEMPT_4</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M287.13,-128.41C268.85,-112 246.39,-91.82 229.12,-76.32"/>
+</g>
+<!-- e_TASK_ATTEMPT&#45;&#45;a_TASK_ATTEMPT_5 -->
+<g id="edge14" class="edge">
+<title>e_TASK_ATTEMPT&#45;&#45;a_TASK_ATTEMPT_5</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M320,-128.41C320,-113.35 320,-95.11 320,-80.23"/>
+</g>
+<!-- e_TASK_ATTEMPT&#45;&#45;a_TASK_ATTEMPT_6 -->
+<g id="edge15" class="edge">
+<title>e_TASK_ATTEMPT&#45;&#45;a_TASK_ATTEMPT_6</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M350.36,-128.41C367.5,-111.75 388.62,-91.22 404.66,-75.63"/>
+</g>
+<!-- a_TASK_ATTEMPT_0&#45;&#45;e_TASK_ATTEMPT -->
+<g id="edge9" class="edge">
+<title>a_TASK_ATTEMPT_0&#45;&#45;e_TASK_ATTEMPT</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M96.27,-264.52C109.33,-254.37 122,-244.53 122,-244.53 122,-244.53 193.65,-213.91 250.75,-189.52"/>
+</g>
+<!-- a_TASK_ATTEMPT_1&#45;&#45;e_TASK_ATTEMPT -->
+<g id="edge10" class="edge">
+<title>a_TASK_ATTEMPT_1&#45;&#45;e_TASK_ATTEMPT</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M203.23,-263.28C226.69,-242.51 261.21,-211.96 286.63,-189.46"/>
+</g>
+<!-- a_TASK_ATTEMPT_2&#45;&#45;e_TASK_ATTEMPT -->
+<g id="edge11" class="edge">
+<title>a_TASK_ATTEMPT_2&#45;&#45;e_TASK_ATTEMPT</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M293.55,-258.4C299.06,-237.86 306.53,-210.08 312.12,-189.26"/>
+</g>
+<!-- a_TASK_ATTEMPT_3&#45;&#45;e_TASK_ATTEMPT -->
+<g id="edge12" class="edge">
+<title>a_TASK_ATTEMPT_3&#45;&#45;e_TASK_ATTEMPT</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M392.49,-259.65C377.51,-239.04 356.84,-210.61 341.41,-189.38"/>
+</g>
+<!-- e_USER&#45;&#45;a_USER_2 -->
+<g id="edge18" class="edge">
+<title>e_USER&#45;&#45;a_USER_2</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1860,-385.7C1860,-364.96 1860,-337.32 1860,-316.81"/>
+</g>
+<!-- e_USER&#45;&#45;r_1 -->
+<g id="edge52" class="edge">
+<title>e_USER:se&#45;&#45;r_1</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1893.41,-386.05C1893.41,-386.05 1284,-330.45 1284,-330.45 1284,-330.45 1257.91,-315.85 1236.5,-303.88"/>
+<text xml:space="preserve" text-anchor="middle" x="1629.69" y="-345.85" font-family="Microsoft YaHei" font-size="18.00">1</text>
+</g>
+<!-- e_USER&#45;&#45;r_3 -->
+<g id="edge56" class="edge">
+<title>e_USER:sw&#45;&#45;r_3</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1826.59,-386.05C1826.59,-386.05 1965,-330.45 1965,-330.45 1965,-330.45 1991.09,-315.85 2012.5,-303.88"/>
+<text xml:space="preserve" text-anchor="middle" x="1943.02" y="-345.85" font-family="Microsoft YaHei" font-size="18.00">1</text>
+</g>
+<!-- a_USER_0&#45;&#45;e_USER -->
+<g id="edge16" class="edge">
+<title>a_USER_0&#45;&#45;e_USER</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1819.77,-496C1827.45,-480.92 1837.04,-462.1 1844.93,-446.63"/>
+</g>
+<!-- a_USER_1&#45;&#45;e_USER -->
+<g id="edge17" class="edge">
+<title>a_USER_1&#45;&#45;e_USER</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1895.76,-496C1888.93,-480.92 1880.41,-462.1 1873.4,-446.63"/>
+</g>
+<!-- e_IDEMPOTENCY_RECORD&#45;&#45;a_IDEMPOTENCY_RECORD_4 -->
+<g id="edge23" class="edge">
+<title>e_IDEMPOTENCY_RECORD&#45;&#45;a_IDEMPOTENCY_RECORD_4</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1474.77,-128.41C1451.85,-112 1423.67,-91.82 1402.02,-76.32"/>
+</g>
+<!-- e_IDEMPOTENCY_RECORD&#45;&#45;a_IDEMPOTENCY_RECORD_5 -->
+<g id="edge24" class="edge">
+<title>e_IDEMPOTENCY_RECORD&#45;&#45;a_IDEMPOTENCY_RECORD_5</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1516,-128.41C1516,-113.35 1516,-95.11 1516,-80.23"/>
+</g>
+<!-- e_IDEMPOTENCY_RECORD&#45;&#45;a_IDEMPOTENCY_RECORD_6 -->
+<g id="edge25" class="edge">
+<title>e_IDEMPOTENCY_RECORD&#45;&#45;a_IDEMPOTENCY_RECORD_6</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1556.39,-128.41C1579.02,-111.88 1606.87,-91.52 1628.15,-75.97"/>
+</g>
+<!-- a_IDEMPOTENCY_RECORD_0&#45;&#45;e_IDEMPOTENCY_RECORD -->
+<g id="edge19" class="edge">
+<title>a_IDEMPOTENCY_RECORD_0&#45;&#45;e_IDEMPOTENCY_RECORD</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1385.88,-264.15C1411.84,-243.36 1450.7,-212.23 1479.2,-189.41"/>
+</g>
+<!-- a_IDEMPOTENCY_RECORD_1&#45;&#45;e_IDEMPOTENCY_RECORD -->
+<g id="edge20" class="edge">
+<title>a_IDEMPOTENCY_RECORD_1&#45;&#45;e_IDEMPOTENCY_RECORD</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1477.63,-259.03C1485.63,-238.38 1496.56,-210.15 1504.71,-189.1"/>
+</g>
+<!-- a_IDEMPOTENCY_RECORD_2&#45;&#45;e_IDEMPOTENCY_RECORD -->
+<g id="edge21" class="edge">
+<title>a_IDEMPOTENCY_RECORD_2&#45;&#45;e_IDEMPOTENCY_RECORD</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1563.13,-259.34C1553.35,-238.71 1539.92,-210.38 1529.9,-189.24"/>
+</g>
+<!-- a_IDEMPOTENCY_RECORD_3&#45;&#45;e_IDEMPOTENCY_RECORD -->
+<g id="edge22" class="edge">
+<title>a_IDEMPOTENCY_RECORD_3&#45;&#45;e_IDEMPOTENCY_RECORD</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1653.19,-264.77C1641.97,-254.53 1631,-244.53 1631,-244.53 1631,-244.53 1589.38,-213.91 1556.22,-189.52"/>
+</g>
+<!-- e_PROJECT&#45;&#45;a_PROJECT_2 -->
+<g id="edge28" class="edge">
+<title>e_PROJECT&#45;&#45;a_PROJECT_2</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M2381.76,-385.7C2369.97,-364.38 2354.14,-335.76 2342.72,-315.1"/>
+</g>
+<!-- e_PROJECT&#45;&#45;a_PROJECT_3 -->
+<g id="edge29" class="edge">
+<title>e_PROJECT&#45;&#45;a_PROJECT_3</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M2409.13,-385.7C2417.05,-364.81 2427.63,-336.93 2435.42,-316.38"/>
+</g>
+<!-- e_PROJECT&#45;&#45;r_2 -->
+<g id="edge54" class="edge">
+<title>e_PROJECT:se&#45;&#45;r_2</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M2444.75,-386.05C2444.75,-386.05 2346,-362.05 2346,-362.05 2346,-362.05 2264,-330.45 2264,-330.45 2264,-330.45 2237.91,-315.85 2216.5,-303.88"/>
+<text xml:space="preserve" text-anchor="middle" x="2350.5" y="-345.85" font-family="Microsoft YaHei" font-size="18.00">1</text>
+</g>
+<!-- e_PROJECT&#45;&#45;r_4 -->
+<g id="edge58" class="edge">
+<title>e_PROJECT:sw&#45;&#45;r_4</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M2351.25,-386.05C2351.25,-386.05 2427,-362.05 2427,-362.05 2427,-362.05 2518,-330.45 2518,-330.45 2518,-330.45 2544.09,-315.85 2565.5,-303.88"/>
+<text xml:space="preserve" text-anchor="middle" x="2493.07" y="-345.85" font-family="Microsoft YaHei" font-size="18.00">1</text>
+</g>
+<!-- a_PROJECT_0&#45;&#45;e_PROJECT -->
+<g id="edge26" class="edge">
+<title>a_PROJECT_0&#45;&#45;e_PROJECT</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M2351.65,-496.28C2360.54,-481.07 2371.7,-462.01 2380.83,-446.39"/>
+</g>
+<!-- a_PROJECT_1&#45;&#45;e_PROJECT -->
+<g id="edge27" class="edge">
+<title>a_PROJECT_1&#45;&#45;e_PROJECT</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M2432.9,-495.73C2426.21,-480.64 2417.89,-461.89 2411.05,-446.48"/>
+</g>
+<!-- e_AUDIT_EVENT&#45;&#45;a_AUDIT_EVENT_6 -->
+<g id="edge36" class="edge">
+<title>e_AUDIT_EVENT&#45;&#45;a_AUDIT_EVENT_6</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M2937.03,-128.41C2921.04,-112.12 2901.42,-92.12 2886.25,-76.67"/>
+</g>
+<!-- e_AUDIT_EVENT&#45;&#45;a_AUDIT_EVENT_7 -->
+<g id="edge37" class="edge">
+<title>e_AUDIT_EVENT&#45;&#45;a_AUDIT_EVENT_7</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M2969.06,-128.41C2970.63,-113.35 2972.52,-95.11 2974.07,-80.23"/>
+</g>
+<!-- e_AUDIT_EVENT&#45;&#45;a_AUDIT_EVENT_8 -->
+<g id="edge38" class="edge">
+<title>e_AUDIT_EVENT&#45;&#45;a_AUDIT_EVENT_8</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M3003.05,-128.41C3023.8,-111.88 3049.35,-91.52 3068.86,-75.97"/>
+</g>
+<!-- e_AUDIT_EVENT&#45;&#45;a_AUDIT_EVENT_9 -->
+<g id="edge39" class="edge">
+<title>e_AUDIT_EVENT&#45;&#45;a_AUDIT_EVENT_9</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M3034.61,-131.3C3092.84,-108.71 3167,-79.93 3167,-79.93 3167,-79.93 3175.74,-75.4 3186.19,-69.99"/>
+</g>
+<!-- e_AUDIT_EVENT&#45;&#45;a_AUDIT_EVENT_10 -->
+<g id="edge40" class="edge">
+<title>e_AUDIT_EVENT&#45;&#45;a_AUDIT_EVENT_10</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M3034.41,-140.71C3125.71,-117.74 3276,-79.93 3276,-79.93 3276,-79.93 3284.73,-75.49 3295.24,-70.15"/>
+</g>
+<!-- e_AUDIT_EVENT&#45;&#45;a_AUDIT_EVENT_11 -->
+<g id="edge41" class="edge">
+<title>e_AUDIT_EVENT&#45;&#45;a_AUDIT_EVENT_11</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M3034.58,-145.22C3153.87,-123.12 3387,-79.93 3387,-79.93 3387,-79.93 3395.74,-75.4 3406.19,-69.99"/>
+</g>
+<!-- a_AUDIT_EVENT_0&#45;&#45;e_AUDIT_EVENT -->
+<g id="edge30" class="edge">
+<title>a_AUDIT_EVENT_0&#45;&#45;e_AUDIT_EVENT</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M3053.47,-261.48C3035.6,-240.74 3010.16,-211.2 2991.32,-189.32"/>
+</g>
+<!-- a_AUDIT_EVENT_1&#45;&#45;e_AUDIT_EVENT -->
+<g id="edge31" class="edge">
+<title>a_AUDIT_EVENT_1&#45;&#45;e_AUDIT_EVENT</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M3155.73,-264.52C3142.67,-254.37 3130,-244.53 3130,-244.53 3130,-244.53 3070.65,-213.91 3023.36,-189.52"/>
+</g>
+<!-- a_AUDIT_EVENT_2&#45;&#45;e_AUDIT_EVENT -->
+<g id="edge32" class="edge">
+<title>a_AUDIT_EVENT_2&#45;&#45;e_AUDIT_EVENT</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M3264.73,-264.52C3251.67,-254.37 3239,-244.53 3239,-244.53 3239,-244.53 3115.4,-206.23 3034.54,-181.17"/>
+</g>
+<!-- a_AUDIT_EVENT_3&#45;&#45;e_AUDIT_EVENT -->
+<g id="edge33" class="edge">
+<title>a_AUDIT_EVENT_3&#45;&#45;e_AUDIT_EVENT</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M3377.66,-264.28C3362.54,-254.21 3348,-244.53 3348,-244.53 3348,-244.53 3144.17,-199.38 3034.29,-175.05"/>
+</g>
+<!-- a_AUDIT_EVENT_4&#45;&#45;e_AUDIT_EVENT -->
+<g id="edge34" class="edge">
+<title>a_AUDIT_EVENT_4&#45;&#45;e_AUDIT_EVENT</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M2878.53,-261.48C2896.4,-240.74 2921.84,-211.2 2940.68,-189.32"/>
+</g>
+<!-- a_AUDIT_EVENT_5&#45;&#45;e_AUDIT_EVENT -->
+<g id="edge35" class="edge">
+<title>a_AUDIT_EVENT_5&#45;&#45;e_AUDIT_EVENT</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M2966,-258.09C2966,-237.53 2966,-209.84 2966,-189.11"/>
+</g>
+<!-- e_OUTBOX_EVENT&#45;&#45;a_OUTBOX_EVENT_4 -->
+<g id="edge46" class="edge">
+<title>e_OUTBOX_EVENT&#45;&#45;a_OUTBOX_EVENT_4</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M3721.14,-385.7C3754.62,-362.91 3800.35,-331.8 3830.96,-310.97"/>
+</g>
+<!-- e_OUTBOX_EVENT&#45;&#45;a_OUTBOX_EVENT_5 -->
+<g id="edge47" class="edge">
+<title>e_OUTBOX_EVENT&#45;&#45;a_OUTBOX_EVENT_5</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M3755.08,-388.86C3828.21,-364.02 3927,-330.45 3927,-330.45 3927,-330.45 3943.12,-320.92 3960.01,-310.95"/>
+</g>
+<!-- e_OUTBOX_EVENT&#45;&#45;a_OUTBOX_EVENT_6 -->
+<g id="edge48" class="edge">
+<title>e_OUTBOX_EVENT&#45;&#45;a_OUTBOX_EVENT_6</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M3656.66,-385.7C3641.27,-364.52 3620.64,-336.15 3605.65,-315.52"/>
+</g>
+<!-- e_OUTBOX_EVENT&#45;&#45;a_OUTBOX_EVENT_7 -->
+<g id="edge49" class="edge">
+<title>e_OUTBOX_EVENT&#45;&#45;a_OUTBOX_EVENT_7</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M3689.83,-385.7C3698.24,-364.81 3709.48,-336.93 3717.76,-316.38"/>
+</g>
+<!-- e_OUTBOX_EVENT&#45;&#45;r_5 -->
+<g id="edge60" class="edge">
+<title>e_OUTBOX_EVENT:se&#45;&#45;r_5</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M3754.51,-386.05C3754.51,-386.05 2793,-330.45 2793,-330.45 2793,-330.45 2771.08,-315.85 2753.1,-303.88"/>
+<text xml:space="preserve" text-anchor="middle" x="3335.82" y="-345.85" font-family="Microsoft YaHei" font-size="18.00">1</text>
+</g>
+<!-- a_OUTBOX_EVENT_0&#45;&#45;e_OUTBOX_EVENT -->
+<g id="edge42" class="edge">
+<title>a_OUTBOX_EVENT_0&#45;&#45;e_OUTBOX_EVENT</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M3593.46,-499.24C3609.53,-483.61 3630.66,-463.07 3647.78,-446.43"/>
+</g>
+<!-- a_OUTBOX_EVENT_1&#45;&#45;e_OUTBOX_EVENT -->
+<g id="edge43" class="edge">
+<title>a_OUTBOX_EVENT_1&#45;&#45;e_OUTBOX_EVENT</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M3678,-494.62C3678,-479.78 3678,-461.64 3678,-446.64"/>
+</g>
+<!-- a_OUTBOX_EVENT_2&#45;&#45;e_OUTBOX_EVENT -->
+<g id="edge44" class="edge">
+<title>a_OUTBOX_EVENT_2&#45;&#45;e_OUTBOX_EVENT</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M3768.63,-498.44C3751.34,-482.91 3728.9,-462.76 3710.67,-446.39"/>
+</g>
+<!-- a_OUTBOX_EVENT_3&#45;&#45;e_OUTBOX_EVENT -->
+<g id="edge45" class="edge">
+<title>a_OUTBOX_EVENT_3&#45;&#45;e_OUTBOX_EVENT</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M3878.86,-505.15C3868.08,-499.67 3859,-495.05 3859,-495.05 3859,-495.05 3797.89,-468.72 3746.69,-446.65"/>
+</g>
+<!-- r_0&#45;&#45;e_TASK_ATTEMPT -->
+<g id="edge51" class="edge">
+<title>r_0&#45;&#45;e_TASK_ATTEMPT:nw</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1065.88,-271.58C1051.22,-259.52 1033,-244.53 1033,-244.53 1033,-244.53 245.26,-188.93 245.26,-188.93"/>
+<text xml:space="preserve" text-anchor="middle" x="888.81" y="-218.33" font-family="Microsoft YaHei" font-size="18.00">N</text>
+</g>
+<!-- r_1&#45;&#45;e_IDEMPOTENCY_RECORD -->
+<g id="edge53" class="edge">
+<title>r_1&#45;&#45;e_IDEMPOTENCY_RECORD:nw</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1236.5,-271.1C1257.91,-259.13 1284,-244.53 1284,-244.53 1284,-244.53 1409.26,-188.93 1409.26,-188.93"/>
+<text xml:space="preserve" text-anchor="middle" x="1360.63" y="-218.33" font-family="Microsoft YaHei" font-size="18.00">N</text>
+</g>
+<!-- r_2&#45;&#45;e_IDEMPOTENCY_RECORD -->
+<g id="edge55" class="edge">
+<title>r_2&#45;&#45;e_IDEMPOTENCY_RECORD:ne</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M2164.88,-269.43C2134.16,-247.7 2085,-212.93 2085,-212.93 2085,-212.93 1622.74,-188.93 1622.74,-188.93"/>
+<text xml:space="preserve" text-anchor="middle" x="2119.39" y="-218.33" font-family="Microsoft YaHei" font-size="18.00">N</text>
+</g>
+<!-- r_3&#45;&#45;e_AUDIT_EVENT -->
+<g id="edge57" class="edge">
+<title>r_3&#45;&#45;e_AUDIT_EVENT:nw</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M2048.86,-263.21C2057.06,-241.66 2068,-212.93 2068,-212.93 2068,-212.93 2897.94,-188.93 2897.94,-188.93"/>
+<text xml:space="preserve" text-anchor="middle" x="2074.5" y="-218.33" font-family="Microsoft YaHei" font-size="18.00">N</text>
+</g>
+<!-- r_4&#45;&#45;e_AUDIT_EVENT -->
+<g id="edge59" class="edge">
+<title>r_4&#45;&#45;e_AUDIT_EVENT:ne</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M2620.5,-271.1C2641.91,-259.13 2668,-244.53 2668,-244.53 2668,-244.53 2782,-212.93 2782,-212.93 2782,-212.93 3034.06,-188.93 3034.06,-188.93"/>
+<text xml:space="preserve" text-anchor="middle" x="2788.5" y="-218.33" font-family="Microsoft YaHei" font-size="18.00">N</text>
+</g>
+<!-- r_5&#45;&#45;e_AUDIT_EVENT -->
+<g id="edge61" class="edge">
+<title>r_5&#45;&#45;e_AUDIT_EVENT:w</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M2751.14,-270.33C2796.07,-236.01 2896.94,-158.93 2896.94,-158.93"/>
+<text xml:space="preserve" text-anchor="middle" x="2827.97" y="-218.33" font-family="Microsoft YaHei" font-size="18.00">1</text>
+</g>
+<!-- e_TASK -->
+<g id="node1" class="node">
+<title>e_TASK</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="896.96,-446.05 823.04,-446.05 823.04,-386.05 896.96,-386.05 896.96,-446.05"/>
+<text xml:space="preserve" text-anchor="middle" x="860" y="-420.85" font-family="Microsoft YaHei" font-size="16.00">处理任务</text>
+<text xml:space="preserve" text-anchor="middle" x="860" y="-401.65" font-family="Microsoft YaHei" font-size="16.00">TASK</text>
+</g>
+<!-- a_TASK_0 -->
+<g id="node2" class="node">
+<title>a_TASK_0</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="642" cy="-524.02" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="618" y="-527.22" font-family="Microsoft YaHei" text-decoration="underline" font-size="16.00">任务编号</text>
+<text xml:space="preserve" text-anchor="start" x="627.56" y="-509.42" font-family="Microsoft YaHei" font-size="10.00">task_id</text>
+</g>
+<!-- a_TASK_1 -->
+<g id="node3" class="node">
+<title>a_TASK_1</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="751" cy="-524.02" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="727" y="-524.62" font-family="Microsoft YaHei" font-size="16.00">任务类型</text>
+<text xml:space="preserve" text-anchor="start" x="742.11" y="-509.42" font-family="Microsoft YaHei" font-size="10.00">kind</text>
+</g>
+<!-- a_TASK_2 -->
+<g id="node4" class="node">
+<title>a_TASK_2</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="860" cy="-524.02" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="836" y="-524.62" font-family="Microsoft YaHei" font-size="16.00">任务状态</text>
+<text xml:space="preserve" text-anchor="start" x="848.61" y="-509.42" font-family="Microsoft YaHei" font-size="10.00">status</text>
+</g>
+<!-- a_TASK_3 -->
+<g id="node5" class="node">
+<title>a_TASK_3</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="969" cy="-524.02" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="945" y="-524.62" font-family="Microsoft YaHei" font-size="16.00">研究问题</text>
+<text xml:space="preserve" text-anchor="start" x="952.06" y="-509.42" font-family="Microsoft YaHei" font-size="10.00">question</text>
+</g>
+<!-- a_TASK_4 -->
+<g id="node6" class="node">
+<title>a_TASK_4</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="826" cy="-287.49" rx="62.51" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="790" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">选定论文集合</text>
+<text xml:space="preserve" text-anchor="start" x="806.56" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">paper_ids</text>
+</g>
+<!-- a_TASK_5 -->
+<g id="node7" class="node">
+<title>a_TASK_5</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="961" cy="-287.49" rx="54.02" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="931" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">操作者编号</text>
+<text xml:space="preserve" text-anchor="start" x="944.62" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">actor_id</text>
+</g>
+<!-- a_TASK_6 -->
+<g id="node8" class="node">
+<title>a_TASK_6</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="557" cy="-287.49" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="533" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">请求编号</text>
+<text xml:space="preserve" text-anchor="start" x="536.17" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">request_id</text>
+</g>
+<!-- a_TASK_7 -->
+<g id="node9" class="node">
+<title>a_TASK_7</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="683" cy="-287.49" rx="62.51" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="647" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">累计领取次数</text>
+<text xml:space="preserve" text-anchor="start" x="666.06" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">attempts</text>
+</g>
+<!-- e_TASK_ATTEMPT -->
+<g id="node10" class="node">
+<title>e_TASK_ATTEMPT</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="394.74,-188.93 245.26,-188.93 245.26,-128.93 394.74,-128.93 394.74,-188.93"/>
+<text xml:space="preserve" text-anchor="middle" x="320" y="-163.73" font-family="Microsoft YaHei" font-size="16.00">执行尝试</text>
+<text xml:space="preserve" text-anchor="middle" x="320" y="-144.53" font-family="Microsoft YaHei" font-size="16.00">TASK_ATTEMPT</text>
+</g>
+<!-- a_TASK_ATTEMPT_0 -->
+<g id="node11" class="node">
+<title>a_TASK_ATTEMPT_0</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="68" cy="-287.49" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="44" y="-290.69" font-family="Microsoft YaHei" text-decoration="underline" font-size="16.00">任务编号</text>
+<text xml:space="preserve" text-anchor="start" x="53.56" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">task_id</text>
+</g>
+<!-- a_TASK_ATTEMPT_1 -->
+<g id="node12" class="node">
+<title>a_TASK_ATTEMPT_1</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="177" cy="-287.49" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="153" y="-290.69" font-family="Microsoft YaHei" text-decoration="underline" font-size="16.00">尝试序号</text>
+<text xml:space="preserve" text-anchor="start" x="154.5" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">attempt_no</text>
+</g>
+<!-- a_TASK_ATTEMPT_2 -->
+<g id="node13" class="node">
+<title>a_TASK_ATTEMPT_2</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="286" cy="-287.49" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="262" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">领取时间</text>
+<text xml:space="preserve" text-anchor="start" x="264.07" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">claimed_at</text>
+</g>
+<!-- a_TASK_ATTEMPT_3 -->
+<g id="node14" class="node">
+<title>a_TASK_ATTEMPT_3</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="412" cy="-287.49" rx="62.51" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="376" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">租约到期时间</text>
+<text xml:space="preserve" text-anchor="start" x="378.96" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">lease_expires_at</text>
+</g>
+<!-- a_TASK_ATTEMPT_4 -->
+<g id="node15" class="node">
+<title>a_TASK_ATTEMPT_4</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="202" cy="-50.96" rx="54.02" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="172" y="-51.56" font-family="Microsoft YaHei" font-size="16.00">操作者编号</text>
+<text xml:space="preserve" text-anchor="start" x="185.62" y="-36.36" font-family="Microsoft YaHei" font-size="10.00">actor_id</text>
+</g>
+<!-- a_TASK_ATTEMPT_5 -->
+<g id="node16" class="node">
+<title>a_TASK_ATTEMPT_5</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="320" cy="-50.96" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="296" y="-51.56" font-family="Microsoft YaHei" font-size="16.00">请求编号</text>
+<text xml:space="preserve" text-anchor="start" x="299.17" y="-36.36" font-family="Microsoft YaHei" font-size="10.00">request_id</text>
+</g>
+<!-- a_TASK_ATTEMPT_6 -->
+<g id="node17" class="node">
+<title>a_TASK_ATTEMPT_6</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="429" cy="-50.96" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="405" y="-51.56" font-family="Microsoft YaHei" font-size="16.00">尝试状态</text>
+<text xml:space="preserve" text-anchor="start" x="417.61" y="-36.36" font-family="Microsoft YaHei" font-size="10.00">status</text>
+</g>
+<!-- e_USER -->
+<g id="node18" class="node">
+<title>e_USER</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="1893.41,-446.05 1826.59,-446.05 1826.59,-386.05 1893.41,-386.05 1893.41,-446.05"/>
+<text xml:space="preserve" text-anchor="middle" x="1860" y="-420.85" font-family="Microsoft YaHei" font-size="16.00">用户</text>
+<text xml:space="preserve" text-anchor="middle" x="1860" y="-401.65" font-family="Microsoft YaHei" font-size="16.00">USER</text>
+</g>
+<!-- a_USER_0 -->
+<g id="node19" class="node">
+<title>a_USER_0</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1806" cy="-524.02" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1782" y="-527.22" font-family="Microsoft YaHei" text-decoration="underline" font-size="16.00">用户编号</text>
+<text xml:space="preserve" text-anchor="start" x="1791.28" y="-509.42" font-family="Microsoft YaHei" font-size="10.00">user_id</text>
+</g>
+<!-- a_USER_1 -->
+<g id="node20" class="node">
+<title>a_USER_1</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1908" cy="-524.02" rx="38.69" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1890" y="-524.62" font-family="Microsoft YaHei" font-size="16.00">用户名</text>
+<text xml:space="preserve" text-anchor="start" x="1888.84" y="-509.42" font-family="Microsoft YaHei" font-size="10.00">username</text>
+</g>
+<!-- a_USER_2 -->
+<g id="node21" class="node">
+<title>a_USER_2</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1860" cy="-287.49" rx="50.87" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1842" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">显示名</text>
+<text xml:space="preserve" text-anchor="start" x="1832.23" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">display_name</text>
+</g>
+<!-- e_IDEMPOTENCY_RECORD -->
+<g id="node22" class="node">
+<title>e_IDEMPOTENCY_RECORD</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="1622.74,-188.93 1409.26,-188.93 1409.26,-128.93 1622.74,-128.93 1622.74,-188.93"/>
+<text xml:space="preserve" text-anchor="middle" x="1516" y="-163.73" font-family="Microsoft YaHei" font-size="16.00">幂等记录</text>
+<text xml:space="preserve" text-anchor="middle" x="1516" y="-144.53" font-family="Microsoft YaHei" font-size="16.00">IDEMPOTENCY_RECORD</text>
+</g>
+<!-- a_IDEMPOTENCY_RECORD_0 -->
+<g id="node23" class="node">
+<title>a_IDEMPOTENCY_RECORD_0</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1358" cy="-287.49" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1334" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">用户编号</text>
+<text xml:space="preserve" text-anchor="start" x="1343.28" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">user_id</text>
+</g>
+<!-- a_IDEMPOTENCY_RECORD_1 -->
+<g id="node24" class="node">
+<title>a_IDEMPOTENCY_RECORD_1</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1467" cy="-287.49" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1443" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">项目编号</text>
+<text xml:space="preserve" text-anchor="start" x="1446.73" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">project_id</text>
+</g>
+<!-- a_IDEMPOTENCY_RECORD_2 -->
+<g id="node25" class="node">
+<title>a_IDEMPOTENCY_RECORD_2</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1576" cy="-287.49" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1552" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">业务操作</text>
+<text xml:space="preserve" text-anchor="start" x="1557.12" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">operation</text>
+</g>
+<!-- a_IDEMPOTENCY_RECORD_3 -->
+<g id="node26" class="node">
+<title>a_IDEMPOTENCY_RECORD_3</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1677" cy="-287.49" rx="37.05" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1659" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">幂等键</text>
+<text xml:space="preserve" text-anchor="start" x="1669.78" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">key</text>
+</g>
+<!-- a_IDEMPOTENCY_RECORD_4 -->
+<g id="node27" class="node">
+<title>a_IDEMPOTENCY_RECORD_4</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1368" cy="-50.96" rx="65.79" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1344" y="-51.56" font-family="Microsoft YaHei" font-size="16.00">请求指纹</text>
+<text xml:space="preserve" text-anchor="start" x="1329.68" y="-36.36" font-family="Microsoft YaHei" font-size="10.00">request_fingerprint</text>
+</g>
+<!-- a_IDEMPOTENCY_RECORD_5 -->
+<g id="node28" class="node">
+<title>a_IDEMPOTENCY_RECORD_5</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1516" cy="-50.96" rx="64.62" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1486" y="-51.56" font-family="Microsoft YaHei" font-size="16.00">原响应快照</text>
+<text xml:space="preserve" text-anchor="start" x="1478.5" y="-36.36" font-family="Microsoft YaHei" font-size="10.00">response_snapshot</text>
+</g>
+<!-- a_IDEMPOTENCY_RECORD_6 -->
+<g id="node29" class="node">
+<title>a_IDEMPOTENCY_RECORD_6</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1661" cy="-50.96" rx="62.51" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1625" y="-51.56" font-family="Microsoft YaHei" font-size="16.00">保留到期时间</text>
+<text xml:space="preserve" text-anchor="start" x="1640.45" y="-36.36" font-family="Microsoft YaHei" font-size="10.00">expires_at</text>
+</g>
+<!-- e_PROJECT -->
+<g id="node30" class="node">
+<title>e_PROJECT</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="2444.75,-446.05 2351.25,-446.05 2351.25,-386.05 2444.75,-386.05 2444.75,-446.05"/>
+<text xml:space="preserve" text-anchor="middle" x="2398" y="-420.85" font-family="Microsoft YaHei" font-size="16.00">研究项目</text>
+<text xml:space="preserve" text-anchor="middle" x="2398" y="-401.65" font-family="Microsoft YaHei" font-size="16.00">PROJECT</text>
+</g>
+<!-- a_PROJECT_0 -->
+<g id="node31" class="node">
+<title>a_PROJECT_0</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="2336" cy="-524.02" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="2312" y="-527.22" font-family="Microsoft YaHei" text-decoration="underline" font-size="16.00">项目编号</text>
+<text xml:space="preserve" text-anchor="start" x="2315.73" y="-509.42" font-family="Microsoft YaHei" font-size="10.00">project_id</text>
+</g>
+<!-- a_PROJECT_1 -->
+<g id="node32" class="node">
+<title>a_PROJECT_1</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="2445" cy="-524.02" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="2421" y="-524.62" font-family="Microsoft YaHei" font-size="16.00">项目名称</text>
+<text xml:space="preserve" text-anchor="start" x="2434.17" y="-509.42" font-family="Microsoft YaHei" font-size="10.00">name</text>
+</g>
+<!-- a_PROJECT_2 -->
+<g id="node33" class="node">
+<title>a_PROJECT_2</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="2328" cy="-287.49" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="2304" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">项目描述</text>
+<text xml:space="preserve" text-anchor="start" x="2305.78" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">description</text>
+</g>
+<!-- a_PROJECT_3 -->
+<g id="node34" class="node">
+<title>a_PROJECT_3</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="2446" cy="-287.49" rx="54.02" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="2416" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">负责人编号</text>
+<text xml:space="preserve" text-anchor="start" x="2427.12" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">owner_id</text>
+</g>
+<!-- e_AUDIT_EVENT -->
+<g id="node35" class="node">
+<title>e_AUDIT_EVENT</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="3034.06,-188.93 2897.94,-188.93 2897.94,-128.93 3034.06,-128.93 3034.06,-188.93"/>
+<text xml:space="preserve" text-anchor="middle" x="2966" y="-163.73" font-family="Microsoft YaHei" font-size="16.00">审计事件</text>
+<text xml:space="preserve" text-anchor="middle" x="2966" y="-144.53" font-family="Microsoft YaHei" font-size="16.00">AUDIT_EVENT</text>
+</g>
+<!-- a_AUDIT_EVENT_0 -->
+<g id="node36" class="node">
+<title>a_AUDIT_EVENT_0</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="3075" cy="-287.49" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="3051" y="-290.69" font-family="Microsoft YaHei" text-decoration="underline" font-size="16.00">事件编号</text>
+<text xml:space="preserve" text-anchor="start" x="3057.78" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">event_id</text>
+</g>
+<!-- a_AUDIT_EVENT_1 -->
+<g id="node37" class="node">
+<title>a_AUDIT_EVENT_1</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="3184" cy="-287.49" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="3160" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">事件时间</text>
+<text xml:space="preserve" text-anchor="start" x="3163.17" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">timestamp</text>
+</g>
+<!-- a_AUDIT_EVENT_2 -->
+<g id="node38" class="node">
+<title>a_AUDIT_EVENT_2</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="3293" cy="-287.49" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="3269" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">请求编号</text>
+<text xml:space="preserve" text-anchor="start" x="3272.17" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">request_id</text>
+</g>
+<!-- a_AUDIT_EVENT_3 -->
+<g id="node39" class="node">
+<title>a_AUDIT_EVENT_3</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="3411" cy="-287.49" rx="54.02" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="3381" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">操作者编号</text>
+<text xml:space="preserve" text-anchor="start" x="3394.62" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">actor_id</text>
+</g>
+<!-- a_AUDIT_EVENT_4 -->
+<g id="node40" class="node">
+<title>a_AUDIT_EVENT_4</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="2857" cy="-287.49" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="2833" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">项目编号</text>
+<text xml:space="preserve" text-anchor="start" x="2836.73" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">project_id</text>
+</g>
+<!-- a_AUDIT_EVENT_5 -->
+<g id="node41" class="node">
+<title>a_AUDIT_EVENT_5</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="2966" cy="-287.49" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="2942" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">操作动作</text>
+<text xml:space="preserve" text-anchor="start" x="2953.78" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">action</text>
+</g>
+<!-- a_AUDIT_EVENT_6 -->
+<g id="node42" class="node">
+<title>a_AUDIT_EVENT_6</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="2862" cy="-50.96" rx="51.25" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="2838" y="-51.56" font-family="Microsoft YaHei" font-size="16.00">资源类型</text>
+<text xml:space="preserve" text-anchor="start" x="2833.96" y="-36.36" font-family="Microsoft YaHei" font-size="10.00">resource_type</text>
+</g>
+<!-- a_AUDIT_EVENT_7 -->
+<g id="node43" class="node">
+<title>a_AUDIT_EVENT_7</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="2977" cy="-50.96" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="2953" y="-51.56" font-family="Microsoft YaHei" font-size="16.00">安全决策</text>
+<text xml:space="preserve" text-anchor="start" x="2960.34" y="-36.36" font-family="Microsoft YaHei" font-size="10.00">decision</text>
+</g>
+<!-- a_AUDIT_EVENT_8 -->
+<g id="node44" class="node">
+<title>a_AUDIT_EVENT_8</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="3099" cy="-50.96" rx="58.73" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="3075" y="-51.56" font-family="Microsoft YaHei" font-size="16.00">执行状态</text>
+<text xml:space="preserve" text-anchor="start" x="3065.67" y="-36.36" font-family="Microsoft YaHei" font-size="10.00">execution_status</text>
+</g>
+<!-- a_AUDIT_EVENT_9 -->
+<g id="node45" class="node">
+<title>a_AUDIT_EVENT_9</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="3221" cy="-50.96" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="3197" y="-51.56" font-family="Microsoft YaHei" font-size="16.00">策略编号</text>
+<text xml:space="preserve" text-anchor="start" x="3202.11" y="-36.36" font-family="Microsoft YaHei" font-size="10.00">policy_id</text>
+</g>
+<!-- a_AUDIT_EVENT_10 -->
+<g id="node46" class="node">
+<title>a_AUDIT_EVENT_10</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="3331" cy="-50.96" rx="46.95" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="3307" y="-51.56" font-family="Microsoft YaHei" font-size="16.00">耗时毫秒</text>
+<text xml:space="preserve" text-anchor="start" x="3306" y="-36.36" font-family="Microsoft YaHei" font-size="10.00">duration_ms</text>
+</g>
+<!-- a_AUDIT_EVENT_11 -->
+<g id="node47" class="node">
+<title>a_AUDIT_EVENT_11</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="3441" cy="-50.96" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="3417" y="-51.56" font-family="Microsoft YaHei" font-size="16.00">是否模拟</text>
+<text xml:space="preserve" text-anchor="start" x="3429.89" y="-36.36" font-family="Microsoft YaHei" font-size="10.00">mock</text>
+</g>
+<!-- e_OUTBOX_EVENT -->
+<g id="node48" class="node">
+<title>e_OUTBOX_EVENT</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="3754.51,-446.05 3601.49,-446.05 3601.49,-386.05 3754.51,-386.05 3754.51,-446.05"/>
+<text xml:space="preserve" text-anchor="middle" x="3678" y="-420.85" font-family="Microsoft YaHei" font-size="16.00">领域事件</text>
+<text xml:space="preserve" text-anchor="middle" x="3678" y="-401.65" font-family="Microsoft YaHei" font-size="16.00">OUTBOX_EVENT</text>
+</g>
+<!-- a_OUTBOX_EVENT_0 -->
+<g id="node49" class="node">
+<title>a_OUTBOX_EVENT_0</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="3569" cy="-524.02" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="3545" y="-527.22" font-family="Microsoft YaHei" text-decoration="underline" font-size="16.00">事件编号</text>
+<text xml:space="preserve" text-anchor="start" x="3551.78" y="-509.42" font-family="Microsoft YaHei" font-size="10.00">event_id</text>
+</g>
+<!-- a_OUTBOX_EVENT_1 -->
+<g id="node50" class="node">
+<title>a_OUTBOX_EVENT_1</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="3678" cy="-524.02" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="3654" y="-524.62" font-family="Microsoft YaHei" font-size="16.00">项目编号</text>
+<text xml:space="preserve" text-anchor="start" x="3657.73" y="-509.42" font-family="Microsoft YaHei" font-size="10.00">project_id</text>
+</g>
+<!-- a_OUTBOX_EVENT_2 -->
+<g id="node51" class="node">
+<title>a_OUTBOX_EVENT_2</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="3796" cy="-524.02" rx="54.02" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="3766" y="-524.62" font-family="Microsoft YaHei" font-size="16.00">操作者编号</text>
+<text xml:space="preserve" text-anchor="start" x="3779.62" y="-509.42" font-family="Microsoft YaHei" font-size="10.00">actor_id</text>
+</g>
+<!-- a_OUTBOX_EVENT_3 -->
+<g id="node52" class="node">
+<title>a_OUTBOX_EVENT_3</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="3914" cy="-524.02" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="3890" y="-524.62" font-family="Microsoft YaHei" font-size="16.00">请求编号</text>
+<text xml:space="preserve" text-anchor="start" x="3893.17" y="-509.42" font-family="Microsoft YaHei" font-size="10.00">request_id</text>
+</g>
+<!-- a_OUTBOX_EVENT_4 -->
+<g id="node53" class="node">
+<title>a_OUTBOX_EVENT_4</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="3864" cy="-287.49" rx="54.02" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="3834" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">结构化载荷</text>
+<text xml:space="preserve" text-anchor="start" x="3848.17" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">payload</text>
+</g>
+<!-- a_OUTBOX_EVENT_5 -->
+<g id="node54" class="node">
+<title>a_OUTBOX_EVENT_5</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="3998" cy="-287.49" rx="62.26" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="3974" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">投递次数</text>
+<text xml:space="preserve" text-anchor="start" x="3962.18" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">delivery_attempts</text>
+</g>
+<!-- a_OUTBOX_EVENT_6 -->
+<g id="node55" class="node">
+<title>a_OUTBOX_EVENT_6</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="3586" cy="-287.49" rx="62.51" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="3550" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">下次投递时间</text>
+<text xml:space="preserve" text-anchor="start" x="3553.79" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">next_attempt_at</text>
+</g>
+<!-- a_OUTBOX_EVENT_7 -->
+<g id="node56" class="node">
+<title>a_OUTBOX_EVENT_7</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="3729" cy="-287.49" rx="62.51" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="3693" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">确认投递时间</text>
+<text xml:space="preserve" text-anchor="start" x="3703.45" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">published_at</text>
+</g>
+<!-- r_0 -->
+<g id="node57" class="node">
+<title>r_0</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="1084,-315.33 1042.72,-287.49 1084,-259.65 1125.28,-287.49 1084,-315.33"/>
+<text xml:space="preserve" text-anchor="middle" x="1084" y="-282.69" font-family="Microsoft YaHei" font-size="16.00">领取</text>
+</g>
+<!-- r_1 -->
+<g id="node58" class="node">
+<title>r_1</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="1209,-315.33 1143.72,-287.49 1209,-259.65 1274.28,-287.49 1209,-315.33"/>
+<text xml:space="preserve" text-anchor="middle" x="1209" y="-282.69" font-family="Microsoft YaHei" font-size="16.00">提交请求</text>
+</g>
+<!-- r_2 -->
+<g id="node59" class="node">
+<title>r_2</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="2189,-315.33 2123.72,-287.49 2189,-259.65 2254.28,-287.49 2189,-315.33"/>
+<text xml:space="preserve" text-anchor="middle" x="2189" y="-282.69" font-family="Microsoft YaHei" font-size="16.00">限定项目</text>
+</g>
+<!-- r_3 -->
+<g id="node60" class="node">
+<title>r_3</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="2040,-315.33 1974.72,-287.49 2040,-259.65 2105.28,-287.49 2040,-315.33"/>
+<text xml:space="preserve" text-anchor="middle" x="2040" y="-282.69" font-family="Microsoft YaHei" font-size="16.00">执行动作</text>
+</g>
+<!-- r_4 -->
+<g id="node61" class="node">
+<title>r_4</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="2593,-315.33 2527.72,-287.49 2593,-259.65 2658.28,-287.49 2593,-315.33"/>
+<text xml:space="preserve" text-anchor="middle" x="2593" y="-282.69" font-family="Microsoft YaHei" font-size="16.00">限定项目</text>
+</g>
+<!-- r_5 -->
+<g id="node62" class="node">
+<title>r_5</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="2730,-315.33 2676.72,-287.49 2730,-259.65 2783.28,-287.49 2730,-315.33"/>
+<text xml:space="preserve" text-anchor="middle" x="2730" y="-282.69" font-family="Microsoft YaHei" font-size="16.00">投递为</text>
+</g>
+</g>
+</svg>

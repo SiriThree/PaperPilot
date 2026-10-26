@@ -28,12 +28,9 @@
 
 ## 3 V1 身份与项目分 E-R 图
 
-```mermaid
-erDiagram
-    USER ||--o{ MEMBERSHIP : participates
-    PROJECT ||--|{ MEMBERSHIP : contains
-    USER ||--o{ PROJECT : owns
-```
+![分 E-R 图一 身份与项目](diagrams/v1-identity-project.svg)
+
+[打开可缩放 SVG](diagrams/v1-identity-project.svg) · [图例与联系基数说明](06-chen-notation.md)
 
 | 对象或联系 | 局部属性 | 规则 |
 | --- | --- | --- |
@@ -45,16 +42,9 @@ erDiagram
 
 ## 4 V2 文献与来源分 E-R 图
 
-```mermaid
-erDiagram
-    PROJECT ||--o{ PROJECT_PAPER : imports
-    PAPER ||--o{ PROJECT_PAPER : included_in
-    PAPER }o--o{ AUTHOR : written_by
-    PAPER }o--o{ TOPIC : classified_as
-    PROJECT_PAPER ||--o{ CHUNK : provides
-    CHUNK ||--o{ EMBEDDING : represented_by
-    EMBEDDING_MODEL ||--o{ EMBEDDING : computes
-```
+![分 E-R 图二 文献与来源](diagrams/v2-literature-source.svg)
+
+[打开可缩放 SVG](diagrams/v2-literature-source.svg) · [图例与联系基数说明](06-chen-notation.md)
 
 | 对象或联系 | 局部属性 | 规则 |
 | --- | --- | --- |
@@ -68,18 +58,9 @@ erDiagram
 
 ## 5 V3 研究与报告分 E-R 图
 
-```mermaid
-erDiagram
-    PROJECT ||--o{ TASK : schedules
-    TASK }o--o{ PROJECT_PAPER : selects
-    TASK ||--o| RESEARCH_RESULT : produces
-    RESEARCH_RESULT ||--o{ EVIDENCE_FIELD : extracts
-    RESEARCH_RESULT ||--o{ SOURCE : cites
-    CHUNK ||--o{ SOURCE : locates
-    PROJECT ||--o{ REPORT : contains
-    REPORT ||--|{ REPORT_VERSION : versions
-    REPORT_VERSION ||--o{ SOURCE : preserves
-```
+![分 E-R 图三 研究与报告](diagrams/v3-research-report.svg)
+
+[打开可缩放 SVG](diagrams/v3-research-report.svg) · [图例与联系基数说明](06-chen-notation.md)
 
 | 对象或联系 | 局部属性 | 规则 |
 | --- | --- | --- |
@@ -93,15 +74,9 @@ SOURCE 不是独立的“全局引用编号库”；结果内编号可能重新�
 
 ## 6 V4 运行控制与审计分 E-R 图
 
-```mermaid
-erDiagram
-    TASK ||--o{ TASK_ATTEMPT : claims
-    USER ||--o{ IDEMPOTENCY_RECORD : requests
-    PROJECT ||--o{ IDEMPOTENCY_RECORD : scopes
-    USER o|--o{ AUDIT_EVENT : acts
-    PROJECT o|--o{ AUDIT_EVENT : scopes
-    OUTBOX_EVENT o|--o| AUDIT_EVENT : delivered_as
-```
+![分 E-R 图四 运行控制与审计](diagrams/v4-control-audit.svg)
+
+[打开可缩放 SVG](diagrams/v4-control-audit.svg) · [图例与联系基数说明](06-chen-notation.md)
 
 | 对象或联系 | 局部属性 | 规则 |
 | --- | --- | --- |

@@ -1,1 +1,589 @@
-<svg id="diagram-v2-literature-source" width="688.3984375" xmlns="http://www.w3.org/2000/svg" class="erDiagram" height="655" viewBox="0 0 688.3984375 655" role="graphics-document document" aria-roledescription="er"><style>#diagram-v2-literature-source{font-family:Arial,Microsoft YaHei,sans-serif;font-size:16px;fill:#000000;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#diagram-v2-literature-source .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#diagram-v2-literature-source .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#diagram-v2-literature-source .error-icon{fill:#552222;}#diagram-v2-literature-source .error-text{fill:#552222;stroke:#552222;}#diagram-v2-literature-source .edge-thickness-normal{stroke-width:1px;}#diagram-v2-literature-source .edge-thickness-thick{stroke-width:3.5px;}#diagram-v2-literature-source .edge-pattern-solid{stroke-dasharray:0;}#diagram-v2-literature-source .edge-thickness-invisible{stroke-width:0;fill:none;}#diagram-v2-literature-source .edge-pattern-dashed{stroke-dasharray:3;}#diagram-v2-literature-source .edge-pattern-dotted{stroke-dasharray:2;}#diagram-v2-literature-source .marker{fill:#666;stroke:#666;}#diagram-v2-literature-source .marker.cross{stroke:#666;}#diagram-v2-literature-source svg{font-family:Arial,Microsoft YaHei,sans-serif;font-size:16px;}#diagram-v2-literature-source p{margin:0;}#diagram-v2-literature-source .entityBox{fill:#eee;stroke:#999;}#diagram-v2-literature-source .relationshipLabelBox{fill:hsl(-160, 0%, 93.3333333333%);opacity:0.7;background-color:hsl(-160, 0%, 93.3333333333%);}#diagram-v2-literature-source .relationshipLabelBox rect{opacity:0.5;}#diagram-v2-literature-source .labelBkg{background-color:rgba(237.9999999999, 237.9999999999, 237.9999999999, 0.5);}#diagram-v2-literature-source .edgeLabel{background-color:white;}#diagram-v2-literature-source .edgeLabel .label rect{fill:white;}#diagram-v2-literature-source .edgeLabel .label text{fill:#000000;}#diagram-v2-literature-source .edgeLabel .label{fill:#999;font-size:14px;}#diagram-v2-literature-source .label{font-family:Arial,Microsoft YaHei,sans-serif;color:#000000;}#diagram-v2-literature-source .edge-pattern-dashed{stroke-dasharray:8,8;}#diagram-v2-literature-source .node rect,#diagram-v2-literature-source .node circle,#diagram-v2-literature-source .node ellipse,#diagram-v2-literature-source .node polygon{fill:#eee;stroke:#999;stroke-width:1px;}#diagram-v2-literature-source .relationshipLine{stroke:#666;stroke-width:1px;fill:none;}#diagram-v2-literature-source .marker{fill:none!important;stroke:#666!important;stroke-width:1;}#diagram-v2-literature-source [data-look=neo].labelBkg{background-color:rgba(237.9999999999, 237.9999999999, 237.9999999999, 0.5);}#diagram-v2-literature-source .cluster rect{fill:hsl(0, 0%, 98.9215686275%);stroke:#707070;stroke-width:1px;}#diagram-v2-literature-source .cluster text{fill:#333;}#diagram-v2-literature-source .cluster-label text{fill:#333;}#diagram-v2-literature-source .node .neo-node{stroke:#999;}#diagram-v2-literature-source [data-look="neo"].node rect,#diagram-v2-literature-source [data-look="neo"].cluster rect,#diagram-v2-literature-source [data-look="neo"].node polygon{stroke:url(#diagram-v2-literature-source-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#diagram-v2-literature-source [data-look="neo"].swimlane.cluster rect{filter:none;}#diagram-v2-literature-source [data-look="neo"].node path{stroke:url(#diagram-v2-literature-source-gradient);stroke-width:1px;}#diagram-v2-literature-source [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#diagram-v2-literature-source [data-look="neo"].node .neo-line path{stroke:#999;filter:none;}#diagram-v2-literature-source [data-look="neo"].node circle{stroke:url(#diagram-v2-literature-source-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#diagram-v2-literature-source [data-look="neo"].node circle .state-start{fill:#000000;}#diagram-v2-literature-source [data-look="neo"].icon-shape .icon{fill:url(#diagram-v2-literature-source-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#diagram-v2-literature-source [data-look="neo"].icon-shape .icon-neo path{stroke:url(#diagram-v2-literature-source-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#diagram-v2-literature-source :root{--mermaid-font-family:Arial,Microsoft YaHei,sans-serif;}</style><g><defs><marker id="diagram-v2-literature-source_er-onlyOneStart" class="marker onlyOne er" refX="0" refY="9" markerWidth="18" markerHeight="18" orient="auto"><path d="M9,0 L9,18 M15,0 L15,18"></path></marker></defs><defs><marker id="diagram-v2-literature-source_er-onlyOneEnd" class="marker onlyOne er" refX="18" refY="9" markerWidth="18" markerHeight="18" orient="auto"><path d="M3,0 L3,18 M9,0 L9,18"></path></marker></defs><defs><marker id="diagram-v2-literature-source_er-zeroOrOneStart" class="marker zeroOrOne er" refX="0" refY="9" markerWidth="30" markerHeight="18" orient="auto"><circle fill="white" cx="21" cy="9" r="6"></circle><path d="M9,0 L9,18"></path></marker></defs><defs><marker id="diagram-v2-literature-source_er-zeroOrOneEnd" class="marker zeroOrOne er" refX="30" refY="9" markerWidth="30" markerHeight="18" orient="auto"><circle fill="white" cx="9" cy="9" r="6"></circle><path d="M21,0 L21,18"></path></marker></defs><defs><marker id="diagram-v2-literature-source_er-oneOrMoreStart" class="marker oneOrMore er" refX="18" refY="18" markerWidth="45" markerHeight="36" orient="auto"><path d="M0,18 Q 18,0 36,18 Q 18,36 0,18 M42,9 L42,27"></path></marker></defs><defs><marker id="diagram-v2-literature-source_er-oneOrMoreEnd" class="marker oneOrMore er" refX="27" refY="18" markerWidth="45" markerHeight="36" orient="auto"><path d="M3,9 L3,27 M9,18 Q27,0 45,18 Q27,36 9,18"></path></marker></defs><defs><marker id="diagram-v2-literature-source_er-zeroOrMoreStart" class="marker zeroOrMore er" refX="18" refY="18" markerWidth="57" markerHeight="36" orient="auto"><circle fill="white" cx="48" cy="18" r="6"></circle><path d="M0,18 Q18,0 36,18 Q18,36 0,18"></path></marker></defs><defs><marker id="diagram-v2-literature-source_er-zeroOrMoreEnd" class="marker zeroOrMore er" refX="39" refY="18" markerWidth="57" markerHeight="36" orient="auto"><circle fill="white" cx="9" cy="18" r="6"></circle><path d="M21,18 Q39,0 57,18 Q39,36 21,18"></path></marker></defs><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M65.336,92L65.336,100.417C65.336,108.833,65.336,125.667,68.902,142.5C72.467,159.333,79.599,176.167,83.164,184.583L86.73,193" id="diagram-v2-literature-source-id_entity-PROJECT-0_entity-PROJECT_PAPER-1_0" class="edge-thickness-normal edge-pattern-solid relationshipLine" style="undefined;;;undefined" data-edge="true" data-et="edge" data-id="id_entity-PROJECT-0_entity-PROJECT_PAPER-1_0" data-points="W3sieCI6NjUuMzM1OTM3NSwieSI6OTJ9LHsieCI6NjUuMzM1OTM3NSwieSI6MTQyLjV9LHsieCI6ODYuNzMwMTk0MjU2NzU2NzYsInkiOjE5M31d" data-look="classic" marker-start="url(#diagram-v2-literature-source_er-onlyOneStart)" marker-end="url(#diagram-v2-literature-source_er-zeroOrMoreEnd)"></path><path d="M336.617,75.039L314.165,86.283C291.714,97.526,246.81,120.013,215.497,139.673C184.184,159.333,166.462,176.167,157.601,184.583L148.74,193" id="diagram-v2-literature-source-id_entity-PAPER-2_entity-PROJECT_PAPER-1_1" class="edge-thickness-normal edge-pattern-solid relationshipLine" style="undefined;;;undefined" data-edge="true" data-et="edge" data-id="id_entity-PAPER-2_entity-PROJECT_PAPER-1_1" data-points="W3sieCI6MzM2LjYxNzE4NzUsInkiOjc1LjAzOTEyMzYzMDY3MjkyfSx7IngiOjIwMS45MDYyNSwieSI6MTQyLjV9LHsieCI6MTQ4Ljc0MDQ5ODMxMDgxMDgsInkiOjE5M31d" data-look="classic" marker-start="url(#diagram-v2-literature-source_er-onlyOneStart)" marker-end="url(#diagram-v2-literature-source_er-zeroOrMoreEnd)"></path><path d="M386.617,92L386.617,100.417C386.617,108.833,386.617,125.667,386.617,142.5C386.617,159.333,386.617,176.167,386.617,184.583L386.617,193" id="diagram-v2-literature-source-id_entity-PAPER-2_entity-AUTHOR-3_2" class="edge-thickness-normal edge-pattern-solid relationshipLine" style="undefined;;;undefined" data-edge="true" data-et="edge" data-id="id_entity-PAPER-2_entity-AUTHOR-3_2" data-points="W3sieCI6Mzg2LjYxNzE4NzUsInkiOjkyfSx7IngiOjM4Ni42MTcxODc1LCJ5IjoxNDIuNX0seyJ4IjozODYuNjE3MTg3NSwieSI6MTkzfV0=" data-look="classic" marker-start="url(#diagram-v2-literature-source_er-zeroOrMoreStart)" marker-end="url(#diagram-v2-literature-source_er-zeroOrMoreEnd)"></path><path d="M436.617,68.972L468.914,81.227C501.211,93.481,565.805,117.991,598.102,138.662C630.398,159.333,630.398,176.167,630.398,184.583L630.398,193" id="diagram-v2-literature-source-id_entity-PAPER-2_entity-TOPIC-4_3" class="edge-thickness-normal edge-pattern-solid relationshipLine" style="undefined;;;undefined" data-edge="true" data-et="edge" data-id="id_entity-PAPER-2_entity-TOPIC-4_3" data-points="W3sieCI6NDM2LjYxNzE4NzUsInkiOjY4Ljk3MTkyNjY3NjA2NzE3fSx7IngiOjYzMC4zOTg0Mzc1LCJ5IjoxNDIuNX0seyJ4Ijo2MzAuMzk4NDM3NSwieSI6MTkzfV0=" data-look="classic" marker-start="url(#diagram-v2-literature-source_er-zeroOrMoreStart)" marker-end="url(#diagram-v2-literature-source_er-zeroOrMoreEnd)"></path><path d="M104.523,277L104.523,285.417C104.523,293.833,104.523,310.667,104.523,327.5C104.523,344.333,104.523,361.167,104.523,369.583L104.523,378" id="diagram-v2-literature-source-id_entity-PROJECT_PAPER-1_entity-CHUNK-5_4" class="edge-thickness-normal edge-pattern-solid relationshipLine" style="undefined;;;undefined" data-edge="true" data-et="edge" data-id="id_entity-PROJECT_PAPER-1_entity-CHUNK-5_4" data-points="W3sieCI6MTA0LjUyMzQzNzUsInkiOjI3N30seyJ4IjoxMDQuNTIzNDM3NSwieSI6MzI3LjV9LHsieCI6MTA0LjUyMzQzNzUsInkiOjM3OH1d" data-look="classic" marker-start="url(#diagram-v2-literature-source_er-onlyOneStart)" marker-end="url(#diagram-v2-literature-source_er-zeroOrMoreEnd)"></path><path d="M104.523,462L104.523,470.417C104.523,478.833,104.523,495.667,117.779,512.5C131.034,529.333,157.544,546.167,170.799,554.583L184.055,563" id="diagram-v2-literature-source-id_entity-CHUNK-5_entity-EMBEDDING-6_5" class="edge-thickness-normal edge-pattern-solid relationshipLine" style="undefined;;;undefined" data-edge="true" data-et="edge" data-id="id_entity-CHUNK-5_entity-EMBEDDING-6_5" data-points="W3sieCI6MTA0LjUyMzQzNzUsInkiOjQ2Mn0seyJ4IjoxMDQuNTIzNDM3NSwieSI6NTEyLjV9LHsieCI6MTg0LjA1NDUzOTY5NTk0NTk1LCJ5Ijo1NjN9XQ==" data-look="classic" marker-start="url(#diagram-v2-literature-source_er-onlyOneStart)" marker-end="url(#diagram-v2-literature-source_er-zeroOrMoreEnd)"></path><path d="M395.875,462L395.875,470.417C395.875,478.833,395.875,495.667,382.62,512.5C369.365,529.333,342.854,546.167,329.599,554.583L316.344,563" id="diagram-v2-literature-source-id_entity-EMBEDDING_MODEL-7_entity-EMBEDDING-6_6" class="edge-thickness-normal edge-pattern-solid relationshipLine" style="undefined;;;undefined" data-edge="true" data-et="edge" data-id="id_entity-EMBEDDING_MODEL-7_entity-EMBEDDING-6_6" data-points="W3sieCI6Mzk1Ljg3NSwieSI6NDYyfSx7IngiOjM5NS44NzUsInkiOjUxMi41fSx7IngiOjMxNi4zNDM4OTc4MDQwNTQwNSwieSI6NTYzfV0=" data-look="classic" marker-start="url(#diagram-v2-literature-source_er-onlyOneStart)" marker-end="url(#diagram-v2-literature-source_er-zeroOrMoreEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel" transform="translate(65.3359375, 142.5)"><g class="label" data-id="id_entity-PROJECT-0_entity-PROJECT_PAPER-1_0" transform="translate(-22.953125, -10.5)"><foreignObject width="45.90625" height="21"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>imports</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(236.47916, 125.18649)"><g class="label" data-id="id_entity-PAPER-2_entity-PROJECT_PAPER-1_1" transform="translate(-35.421875, -10.5)"><foreignObject width="70.84375" height="21"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>included_in</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(386.6171875, 142.5)"><g class="label" data-id="id_entity-PAPER-2_entity-AUTHOR-3_2" transform="translate(-31.90625, -10.5)"><foreignObject width="63.8125" height="21"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>written_by</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(630.3984375, 142.5)"><g class="label" data-id="id_entity-PAPER-2_entity-TOPIC-4_3" transform="translate(-40.078125, -10.5)"><foreignObject width="80.15625" height="21"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>classified_as</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(104.5234375, 327.5)"><g class="label" data-id="id_entity-PROJECT_PAPER-1_entity-CHUNK-5_4" transform="translate(-26.4609375, -10.5)"><foreignObject width="52.921875" height="21"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>provides</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(104.5234375, 512.5)"><g class="label" data-id="id_entity-CHUNK-5_entity-EMBEDDING-6_5" transform="translate(-48.6484375, -10.5)"><foreignObject width="97.296875" height="21"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>represented_by</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(395.875, 512.5)"><g class="label" data-id="id_entity-EMBEDDING_MODEL-7_entity-EMBEDDING-6_6" transform="translate(-30.3515625, -10.5)"><foreignObject width="60.703125" height="21"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>computes</p></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default" id="diagram-v2-literature-source-entity-PROJECT-0" data-look="classic" transform="translate(65.3359375, 50)"><rect class="basic label-container" style="" x="-57.3359375" y="-42" width="114.671875" height="84"></rect><g class="label" style="" transform="translate(-37.3359375, -12)"><rect></rect><foreignObject width="74.671875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel markdown-node-label"><p>PROJECT</p></span></div></foreignObject></g></g><g class="node default" id="diagram-v2-literature-source-entity-PROJECT_PAPER-1" data-look="classic" transform="translate(104.5234375, 235)"><rect class="basic label-container" style="" x="-88.3125" y="-42" width="176.625" height="84"></rect><g class="label" style="" transform="translate(-68.3125, -12)"><rect></rect><foreignObject width="136.625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel markdown-node-label"><p>PROJECT_PAPER</p></span></div></foreignObject></g></g><g class="node default" id="diagram-v2-literature-source-entity-PAPER-2" data-look="classic" transform="translate(386.6171875, 50)"><rect class="basic label-container" style="" x="-50" y="-42" width="100" height="84"></rect><g class="label" style="" transform="translate(-26.53125, -12)"><rect></rect><foreignObject width="53.0625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 100px; text-align: center;"><span class="nodeLabel markdown-node-label"><p>PAPER</p></span></div></foreignObject></g></g><g class="node default" id="diagram-v2-literature-source-entity-AUTHOR-3" data-look="classic" transform="translate(386.6171875, 235)"><rect class="basic label-container" style="" x="-53.78125" y="-42" width="107.5625" height="84"></rect><g class="label" style="" transform="translate(-33.78125, -12)"><rect></rect><foreignObject width="67.5625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel markdown-node-label"><p>AUTHOR</p></span></div></foreignObject></g></g><g class="node default" id="diagram-v2-literature-source-entity-TOPIC-4" data-look="classic" transform="translate(630.3984375, 235)"><rect class="basic label-container" style="" x="-50" y="-42" width="100" height="84"></rect><g class="label" style="" transform="translate(-24.3046875, -12)"><rect></rect><foreignObject width="48.609375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 100px; text-align: center;"><span class="nodeLabel markdown-node-label"><p>TOPIC</p></span></div></foreignObject></g></g><g class="node default" id="diagram-v2-literature-source-entity-CHUNK-5" data-look="classic" transform="translate(104.5234375, 420)"><rect class="basic label-container" style="" x="-50" y="-42" width="100" height="84"></rect><g class="label" style="" transform="translate(-28.4453125, -12)"><rect></rect><foreignObject width="56.890625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 100px; text-align: center;"><span class="nodeLabel markdown-node-label"><p>CHUNK</p></span></div></foreignObject></g></g><g class="node default" id="diagram-v2-literature-source-entity-EMBEDDING-6" data-look="classic" transform="translate(250.19921875, 605)"><rect class="basic label-container" style="" x="-68.453125" y="-42" width="136.90625" height="84"></rect><g class="label" style="" transform="translate(-48.453125, -12)"><rect></rect><foreignObject width="96.90625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel markdown-node-label"><p>EMBEDDING</p></span></div></foreignObject></g></g><g class="node default" id="diagram-v2-literature-source-entity-EMBEDDING_MODEL-7" data-look="classic" transform="translate(395.875, 420)"><rect class="basic label-container" style="" x="-101.3515625" y="-42" width="202.703125" height="84"></rect><g class="label" style="" transform="translate(-81.3515625, -12)"><rect></rect><foreignObject width="162.703125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel markdown-node-label"><p>EMBEDDING_MODEL</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="diagram-v2-literature-source-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="diagram-v2-literature-source-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="diagram-v2-literature-source-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="hsl(0, 0%, 83.3333333333%)" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(0, 0%, 88.9215686275%)" stop-opacity="1"></stop></linearGradient></svg>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 16.1.0 (20260904.0139)
+ -->
+<!-- Title: ER Pages: 1 -->
+<svg width="2362pt" height="1196pt"
+ viewBox="0.00 0.00 2362.00 1196.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 1174.03)">
+<title>ER</title>
+<polygon fill="white" stroke="none" points="-21.6,21.6 -21.6,-1174.03 2340.88,-1174.03 2340.88,21.6 -21.6,21.6"/>
+<text xml:space="preserve" text-anchor="middle" x="1159.64" y="-1127.73" font-family="Microsoft YaHei" font-size="23.00">分 E&#45;R 图二 文献与来源</text>
+<text xml:space="preserve" text-anchor="middle" x="1159.64" y="-1100.13" font-family="Microsoft YaHei" font-size="23.00">矩形：实体　椭圆：属性　菱形：联系　下划线：主键　?：可空　1/N：最大联系基数</text>
+<g id="clust1" class="cluster">
+<title>cluster_0</title>
+<polygon fill="white" stroke="none" points="8,-758.78 8,-1081.23 254,-1081.23 254,-758.78 8,-758.78"/>
+</g>
+<g id="clust4" class="cluster">
+<title>cluster_1</title>
+<polygon fill="white" stroke="none" points="262,-501.65 262,-844.7 634,-844.7 634,-501.65 262,-501.65"/>
+</g>
+<g id="clust7" class="cluster">
+<title>cluster_2</title>
+<polygon fill="white" stroke="none" points="1636,-758.78 1636,-1081.23 1865,-1081.23 1865,-758.78 1636,-758.78"/>
+</g>
+<g id="clust10" class="cluster">
+<title>cluster_3</title>
+<polygon fill="white" stroke="none" points="1873,-501.65 1873,-844.7 1993,-844.7 1993,-501.65 1873,-501.65"/>
+</g>
+<g id="clust13" class="cluster">
+<title>cluster_4</title>
+<polygon fill="white" stroke="none" points="2103,-501.65 2103,-844.7 2223,-844.7 2223,-501.65 2103,-501.65"/>
+</g>
+<g id="clust16" class="cluster">
+<title>cluster_5</title>
+<polygon fill="white" stroke="none" points="642,-244.53 642,-587.58 1040,-587.58 1040,-244.53 642,-244.53"/>
+</g>
+<g id="clust19" class="cluster">
+<title>cluster_6</title>
+<polygon fill="white" stroke="none" points="1048,-8 1048,-330.45 1198,-330.45 1198,-8 1048,-8"/>
+</g>
+<g id="clust22" class="cluster">
+<title>cluster_7</title>
+<polygon fill="white" stroke="none" points="1505,-244.53 1505,-587.58 1865,-587.58 1865,-244.53 1505,-244.53"/>
+</g>
+<!-- e_PROJECT&#45;&#45;a_PROJECT_2 -->
+<g id="edge3" class="edge">
+<title>e_PROJECT&#45;&#45;a_PROJECT_2</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M164.01,-899.95C142.08,-877.75 112.35,-847.64 91.81,-826.85"/>
+</g>
+<!-- e_PROJECT&#45;&#45;a_PROJECT_3 -->
+<g id="edge4" class="edge">
+<title>e_PROJECT&#45;&#45;a_PROJECT_3</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M191.38,-899.95C190.23,-879.21 188.7,-851.57 187.57,-831.07"/>
+</g>
+<!-- e_PROJECT&#45;&#45;r_0 -->
+<g id="edge31" class="edge">
+<title>e_PROJECT:se&#45;&#45;r_0</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M239.75,-900.3C239.75,-900.3 638,-844.7 638,-844.7 638,-844.7 656.22,-829.72 670.88,-817.65"/>
+<text xml:space="preserve" text-anchor="middle" x="566.32" y="-860.1" font-family="Microsoft YaHei" font-size="18.00">1</text>
+</g>
+<!-- a_PROJECT_0&#45;&#45;e_PROJECT -->
+<g id="edge1" class="edge">
+<title>a_PROJECT_0&#45;&#45;e_PROJECT</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M108.46,-1013.49C124.53,-997.87 145.66,-977.32 162.78,-960.68"/>
+</g>
+<!-- a_PROJECT_1&#45;&#45;e_PROJECT -->
+<g id="edge2" class="edge">
+<title>a_PROJECT_1&#45;&#45;e_PROJECT</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M193,-1008.87C193,-994.04 193,-975.9 193,-960.89"/>
+</g>
+<!-- e_PROJECT_PAPER&#45;&#45;a_PROJECT_PAPER_3 -->
+<g id="edge8" class="edge">
+<title>e_PROJECT_PAPER&#45;&#45;a_PROJECT_PAPER_3</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M495.73,-642.59C455.94,-618.19 406,-587.58 406,-587.58 406,-587.58 391.46,-577.89 376.34,-567.83"/>
+</g>
+<!-- e_PROJECT_PAPER&#45;&#45;a_PROJECT_PAPER_4 -->
+<g id="edge9" class="edge">
+<title>e_PROJECT_PAPER&#45;&#45;a_PROJECT_PAPER_4</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M524.75,-642.82C510.67,-621.36 491.74,-592.49 478.17,-571.8"/>
+</g>
+<!-- e_PROJECT_PAPER&#45;&#45;a_PROJECT_PAPER_5 -->
+<g id="edge10" class="edge">
+<title>e_PROJECT_PAPER&#45;&#45;a_PROJECT_PAPER_5</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M550.49,-642.82C555.11,-621.94 561.28,-594.06 565.83,-573.51"/>
+</g>
+<!-- e_PROJECT_PAPER&#45;&#45;r_4 -->
+<g id="edge39" class="edge">
+<title>e_PROJECT_PAPER:se&#45;&#45;r_4</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M619.64,-643.18C619.64,-643.18 1044,-587.58 1044,-587.58 1044,-587.58 1062.22,-572.59 1076.88,-560.53"/>
+<text xml:space="preserve" text-anchor="middle" x="967.32" y="-602.98" font-family="Microsoft YaHei" font-size="18.00">1</text>
+</g>
+<!-- a_PROJECT_PAPER_0&#45;&#45;e_PROJECT_PAPER -->
+<g id="edge5" class="edge">
+<title>a_PROJECT_PAPER_0&#45;&#45;e_PROJECT_PAPER</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M375.65,-778.11C409.28,-757.35 459.31,-726.47 496.09,-703.76"/>
+</g>
+<!-- a_PROJECT_PAPER_1&#45;&#45;e_PROJECT_PAPER -->
+<g id="edge6" class="edge">
+<title>a_PROJECT_PAPER_1&#45;&#45;e_PROJECT_PAPER</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M481.56,-774.21C494.41,-753.62 512.22,-725.1 525.53,-703.77"/>
+</g>
+<!-- a_PROJECT_PAPER_2&#45;&#45;e_PROJECT_PAPER -->
+<g id="edge7" class="edge">
+<title>a_PROJECT_PAPER_2&#45;&#45;e_PROJECT_PAPER</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M567.34,-772.65C562.47,-752.12 555.89,-724.33 550.95,-703.51"/>
+</g>
+<!-- e_PAPER&#45;&#45;a_PAPER_2 -->
+<g id="edge13" class="edge">
+<title>e_PAPER&#45;&#45;a_PAPER_2</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1813,-899.95C1813,-879.21 1813,-851.57 1813,-831.07"/>
+</g>
+<!-- e_PAPER&#45;&#45;r_1 -->
+<g id="edge33" class="edge">
+<title>e_PAPER:se&#45;&#45;r_1</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1850.86,-900.3C1850.86,-900.3 1354.25,-827.43 1219.43,-807.65"/>
+<text xml:space="preserve" text-anchor="middle" x="1677.05" y="-860.1" font-family="Microsoft YaHei" font-size="18.00">1</text>
+</g>
+<!-- e_PAPER&#45;&#45;r_2 -->
+<g id="edge35" class="edge">
+<title>e_PAPER:sw&#45;&#45;r_2</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1775.14,-900.3C1775.14,-900.3 1997,-844.7 1997,-844.7 1997,-844.7 2015.22,-829.72 2029.88,-817.65"/>
+<text xml:space="preserve" text-anchor="middle" x="1961.06" y="-860.1" font-family="Microsoft YaHei" font-size="18.00">N</text>
+</g>
+<!-- e_PAPER&#45;&#45;r_3 -->
+<g id="edge37" class="edge">
+<title>e_PAPER:e&#45;&#45;r_3</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1851.86,-930.3C1851.86,-930.3 2227,-844.7 2227,-844.7 2227,-844.7 2245.22,-829.72 2259.88,-817.65"/>
+<text xml:space="preserve" text-anchor="middle" x="2187.02" y="-860.1" font-family="Microsoft YaHei" font-size="18.00">N</text>
+</g>
+<!-- a_PAPER_0&#45;&#45;e_PAPER -->
+<g id="edge11" class="edge">
+<title>a_PAPER_0&#45;&#45;e_PAPER</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1737.72,-1011.07C1752.18,-995.75 1770.47,-976.38 1785.4,-960.56"/>
+</g>
+<!-- a_PAPER_1&#45;&#45;e_PAPER -->
+<g id="edge12" class="edge">
+<title>a_PAPER_1&#45;&#45;e_PAPER</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1819.59,-1008.87C1818.33,-994.04 1816.79,-975.9 1815.51,-960.89"/>
+</g>
+<!-- e_AUTHOR&#45;&#45;a_AUTHOR_1 -->
+<g id="edge15" class="edge">
+<title>e_AUTHOR&#45;&#45;a_AUTHOR_1</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1933,-642.82C1933,-622.09 1933,-594.44 1933,-573.94"/>
+</g>
+<!-- a_AUTHOR_0&#45;&#45;e_AUTHOR -->
+<g id="edge14" class="edge">
+<title>a_AUTHOR_0&#45;&#45;e_AUTHOR</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1933,-772.34C1933,-751.79 1933,-724.1 1933,-703.36"/>
+</g>
+<!-- e_TOPIC&#45;&#45;a_TOPIC_1 -->
+<g id="edge17" class="edge">
+<title>e_TOPIC&#45;&#45;a_TOPIC_1</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M2169.91,-642.82C2168.44,-622.09 2166.47,-594.44 2165.01,-573.94"/>
+</g>
+<!-- a_TOPIC_0&#45;&#45;e_TOPIC -->
+<g id="edge16" class="edge">
+<title>a_TOPIC_0&#45;&#45;e_TOPIC</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M2165.02,-772.34C2166.48,-751.79 2168.45,-724.1 2169.92,-703.36"/>
+</g>
+<!-- e_CHUNK&#45;&#45;a_CHUNK_3 -->
+<g id="edge21" class="edge">
+<title>e_CHUNK&#45;&#45;a_CHUNK_3</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M954.72,-385.7C935.85,-363.79 910.35,-334.18 892.47,-313.42"/>
+</g>
+<!-- e_CHUNK&#45;&#45;a_CHUNK_4 -->
+<g id="edge22" class="edge">
+<title>e_CHUNK&#45;&#45;a_CHUNK_4</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M980,-385.7C980,-364.96 980,-337.32 980,-316.81"/>
+</g>
+<!-- e_CHUNK&#45;&#45;a_CHUNK_5 -->
+<g id="edge23" class="edge">
+<title>e_CHUNK&#45;&#45;a_CHUNK_5</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M938.19,-393.49C889.6,-368.42 816,-330.45 816,-330.45 816,-330.45 803.33,-320.61 790.27,-310.45"/>
+</g>
+<!-- e_CHUNK&#45;&#45;r_5 -->
+<g id="edge41" class="edge">
+<title>e_CHUNK:se&#45;&#45;r_5</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1021.41,-386.05C1021.41,-386.05 1202,-330.45 1202,-330.45 1202,-330.45 1228.09,-315.85 1249.5,-303.88"/>
+<text xml:space="preserve" text-anchor="middle" x="1171.95" y="-345.85" font-family="Microsoft YaHei" font-size="18.00">1</text>
+</g>
+<!-- a_CHUNK_0&#45;&#45;e_CHUNK -->
+<g id="edge18" class="edge">
+<title>a_CHUNK_0&#45;&#45;e_CHUNK</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M884.75,-519.21C904.17,-498.38 932.15,-468.37 952.76,-446.27"/>
+</g>
+<!-- a_CHUNK_1&#45;&#45;e_CHUNK -->
+<g id="edge19" class="edge">
+<title>a_CHUNK_1&#45;&#45;e_CHUNK</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M976.9,-515.21C977.55,-494.66 978.42,-466.97 979.08,-446.24"/>
+</g>
+<!-- a_CHUNK_2&#45;&#45;e_CHUNK -->
+<g id="edge20" class="edge">
+<title>a_CHUNK_2&#45;&#45;e_CHUNK</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M769.81,-521.16C788.83,-511.18 807,-501.65 807,-501.65 807,-501.65 886.92,-462.57 938.12,-437.53"/>
+</g>
+<!-- e_EMBEDDING&#45;&#45;a_EMBEDDING_1 -->
+<g id="edge25" class="edge">
+<title>e_EMBEDDING&#45;&#45;a_EMBEDDING_1</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1123,-128.41C1123,-113.35 1123,-95.11 1123,-80.23"/>
+</g>
+<!-- a_EMBEDDING_0&#45;&#45;e_EMBEDDING -->
+<g id="edge24" class="edge">
+<title>a_EMBEDDING_0&#45;&#45;e_EMBEDDING</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1123,-258.09C1123,-237.53 1123,-209.84 1123,-189.11"/>
+</g>
+<!-- e_EMBEDDING_MODEL&#45;&#45;a_EMBEDDING_MODEL_3 -->
+<g id="edge29" class="edge">
+<title>e_EMBEDDING_MODEL&#45;&#45;a_EMBEDDING_MODEL_3</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1605.74,-385.7C1601.28,-364.81 1595.33,-336.93 1590.95,-316.38"/>
+</g>
+<!-- e_EMBEDDING_MODEL&#45;&#45;a_EMBEDDING_MODEL_4 -->
+<g id="edge30" class="edge">
+<title>e_EMBEDDING_MODEL&#45;&#45;a_EMBEDDING_MODEL_4</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1633.57,-385.7C1649.24,-364.38 1670.27,-335.76 1685.45,-315.1"/>
+</g>
+<!-- e_EMBEDDING_MODEL&#45;&#45;r_6 -->
+<g id="edge43" class="edge">
+<title>e_EMBEDDING_MODEL:se&#45;&#45;r_6</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1705.4,-386.05C1705.4,-386.05 1584,-362.05 1584,-362.05 1584,-362.05 1501,-330.45 1501,-330.45 1501,-330.45 1474.91,-315.85 1453.5,-303.88"/>
+<text xml:space="preserve" text-anchor="middle" x="1588.5" y="-345.85" font-family="Microsoft YaHei" font-size="18.00">1</text>
+</g>
+<!-- a_EMBEDDING_MODEL_0&#45;&#45;e_EMBEDDING_MODEL -->
+<g id="edge26" class="edge">
+<title>a_EMBEDDING_MODEL_0&#45;&#45;e_EMBEDDING_MODEL</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1667.77,-516.46C1656.2,-495.84 1640.3,-467.51 1628.44,-446.36"/>
+</g>
+<!-- a_EMBEDDING_MODEL_1&#45;&#45;e_EMBEDDING_MODEL -->
+<g id="edge27" class="edge">
+<title>a_EMBEDDING_MODEL_1&#45;&#45;e_EMBEDDING_MODEL</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1772.83,-521.41C1759.16,-511.34 1746,-501.65 1746,-501.65 1746,-501.65 1697.51,-471.04 1658.87,-446.64"/>
+</g>
+<!-- a_EMBEDDING_MODEL_2&#45;&#45;e_EMBEDDING_MODEL -->
+<g id="edge28" class="edge">
+<title>a_EMBEDDING_MODEL_2&#45;&#45;e_EMBEDDING_MODEL</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1575.31,-515.84C1582.93,-495.32 1593.29,-467.44 1601.06,-446.52"/>
+</g>
+<!-- r_0&#45;&#45;e_PROJECT_PAPER -->
+<g id="edge32" class="edge">
+<title>r_0&#45;&#45;e_PROJECT_PAPER:nw</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M670.88,-785.83C656.22,-773.77 638,-758.78 638,-758.78 638,-758.78 594,-748.78 594,-748.78 594,-748.78 564,-727.18 564,-727.18 564,-727.18 468.36,-703.18 468.36,-703.18"/>
+<text xml:space="preserve" text-anchor="middle" x="600.5" y="-732.58" font-family="Microsoft YaHei" font-size="18.00">N</text>
+</g>
+<!-- r_1&#45;&#45;e_PROJECT_PAPER -->
+<g id="edge34" class="edge">
+<title>r_1&#45;&#45;e_PROJECT_PAPER:ne</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1153.52,-795.15C1033.17,-774.41 619.64,-703.18 619.64,-703.18"/>
+<text xml:space="preserve" text-anchor="middle" x="875.41" y="-732.58" font-family="Microsoft YaHei" font-size="18.00">N</text>
+</g>
+<!-- r_2&#45;&#45;e_AUTHOR -->
+<g id="edge36" class="edge">
+<title>r_2&#45;&#45;e_AUTHOR:nw</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M2029.88,-785.83C2015.22,-773.77 1997,-758.78 1997,-758.78 1997,-758.78 1938,-727.18 1938,-727.18 1938,-727.18 1886.71,-703.18 1886.71,-703.18"/>
+<text xml:space="preserve" text-anchor="middle" x="1984.42" y="-732.58" font-family="Microsoft YaHei" font-size="18.00">N</text>
+</g>
+<!-- r_3&#45;&#45;e_TOPIC -->
+<g id="edge38" class="edge">
+<title>r_3&#45;&#45;e_TOPIC:nw</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M2259.88,-785.83C2245.22,-773.77 2227,-758.78 2227,-758.78 2227,-758.78 2135.04,-703.18 2135.04,-703.18"/>
+<text xml:space="preserve" text-anchor="middle" x="2215.91" y="-732.58" font-family="Microsoft YaHei" font-size="18.00">N</text>
+</g>
+<!-- r_4&#45;&#45;e_CHUNK -->
+<g id="edge40" class="edge">
+<title>r_4&#45;&#45;e_CHUNK:nw</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1076.88,-528.7C1062.22,-516.64 1044,-501.65 1044,-501.65 1044,-501.65 938.59,-446.05 938.59,-446.05"/>
+<text xml:space="preserve" text-anchor="middle" x="1030.34" y="-475.45" font-family="Microsoft YaHei" font-size="18.00">N</text>
+</g>
+<!-- r_5&#45;&#45;e_EMBEDDING -->
+<g id="edge42" class="edge">
+<title>r_5&#45;&#45;e_EMBEDDING:nw</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1249.5,-271.1C1228.09,-259.13 1202,-244.53 1202,-244.53 1202,-244.53 1128,-212.93 1128,-212.93 1128,-212.93 1062.04,-188.93 1062.04,-188.93"/>
+<text xml:space="preserve" text-anchor="middle" x="1184.56" y="-218.33" font-family="Microsoft YaHei" font-size="18.00">N</text>
+</g>
+<!-- r_6&#45;&#45;e_EMBEDDING -->
+<g id="edge44" class="edge">
+<title>r_6&#45;&#45;e_EMBEDDING:ne</title>
+<path fill="none" stroke="#333333" stroke-width="1.1" d="M1398.5,-271.1C1377.09,-259.13 1351,-244.53 1351,-244.53 1351,-244.53 1183.96,-188.93 1183.96,-188.93"/>
+<text xml:space="preserve" text-anchor="middle" x="1325.54" y="-218.33" font-family="Microsoft YaHei" font-size="18.00">N</text>
+</g>
+<!-- e_PROJECT -->
+<g id="node1" class="node">
+<title>e_PROJECT</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="239.75,-960.3 146.25,-960.3 146.25,-900.3 239.75,-900.3 239.75,-960.3"/>
+<text xml:space="preserve" text-anchor="middle" x="193" y="-935.1" font-family="Microsoft YaHei" font-size="16.00">研究项目</text>
+<text xml:space="preserve" text-anchor="middle" x="193" y="-915.9" font-family="Microsoft YaHei" font-size="16.00">PROJECT</text>
+</g>
+<!-- a_PROJECT_0 -->
+<g id="node2" class="node">
+<title>a_PROJECT_0</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="84" cy="-1038.27" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="60" y="-1041.47" font-family="Microsoft YaHei" text-decoration="underline" font-size="16.00">项目编号</text>
+<text xml:space="preserve" text-anchor="start" x="63.73" y="-1023.67" font-family="Microsoft YaHei" font-size="10.00">project_id</text>
+</g>
+<!-- a_PROJECT_1 -->
+<g id="node3" class="node">
+<title>a_PROJECT_1</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="193" cy="-1038.27" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="169" y="-1038.87" font-family="Microsoft YaHei" font-size="16.00">项目名称</text>
+<text xml:space="preserve" text-anchor="start" x="182.17" y="-1023.67" font-family="Microsoft YaHei" font-size="10.00">name</text>
+</g>
+<!-- a_PROJECT_2 -->
+<g id="node4" class="node">
+<title>a_PROJECT_2</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="68" cy="-801.74" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="44" y="-802.34" font-family="Microsoft YaHei" font-size="16.00">项目描述</text>
+<text xml:space="preserve" text-anchor="start" x="45.78" y="-787.14" font-family="Microsoft YaHei" font-size="10.00">description</text>
+</g>
+<!-- a_PROJECT_3 -->
+<g id="node5" class="node">
+<title>a_PROJECT_3</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="186" cy="-801.74" rx="54.02" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="156" y="-802.34" font-family="Microsoft YaHei" font-size="16.00">负责人编号</text>
+<text xml:space="preserve" text-anchor="start" x="167.12" y="-787.14" font-family="Microsoft YaHei" font-size="10.00">owner_id</text>
+</g>
+<!-- e_PROJECT_PAPER -->
+<g id="node6" class="node">
+<title>e_PROJECT_PAPER</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="619.64,-703.18 468.36,-703.18 468.36,-643.18 619.64,-643.18 619.64,-703.18"/>
+<text xml:space="preserve" text-anchor="middle" x="544" y="-677.98" font-family="Microsoft YaHei" font-size="16.00">项目论文导入</text>
+<text xml:space="preserve" text-anchor="middle" x="544" y="-658.78" font-family="Microsoft YaHei" font-size="16.00">PROJECT_PAPER</text>
+</g>
+<!-- a_PROJECT_PAPER_0 -->
+<g id="node7" class="node">
+<title>a_PROJECT_PAPER_0</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="339" cy="-801.74" rx="62.51" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="303" y="-804.94" font-family="Microsoft YaHei" text-decoration="underline" font-size="16.00">论文导入编号</text>
+<text xml:space="preserve" text-anchor="start" x="321.51" y="-787.14" font-family="Microsoft YaHei" font-size="10.00">paper_id</text>
+</g>
+<!-- a_PROJECT_PAPER_1 -->
+<g id="node8" class="node">
+<title>a_PROJECT_PAPER_1</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="465" cy="-801.74" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="441" y="-802.34" font-family="Microsoft YaHei" font-size="16.00">项目编号</text>
+<text xml:space="preserve" text-anchor="start" x="444.73" y="-787.14" font-family="Microsoft YaHei" font-size="10.00">project_id</text>
+</g>
+<!-- a_PROJECT_PAPER_2 -->
+<g id="node9" class="node">
+<title>a_PROJECT_PAPER_2</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="574" cy="-801.74" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="550" y="-802.34" font-family="Microsoft YaHei" font-size="16.00">文件摘要</text>
+<text xml:space="preserve" text-anchor="start" x="562.06" y="-787.14" font-family="Microsoft YaHei" font-size="10.00">digest</text>
+</g>
+<!-- a_PROJECT_PAPER_3 -->
+<g id="node10" class="node">
+<title>a_PROJECT_PAPER_3</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="343" cy="-544.62" rx="54.02" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="313" y="-545.22" font-family="Microsoft YaHei" font-size="16.00">文件存储键</text>
+<text xml:space="preserve" text-anchor="start" x="318.84" y="-530.02" font-family="Microsoft YaHei" font-size="10.00">storage_key</text>
+</g>
+<!-- a_PROJECT_PAPER_4 -->
+<g id="node11" class="node">
+<title>a_PROJECT_PAPER_4</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="461" cy="-544.62" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="437" y="-545.22" font-family="Microsoft YaHei" font-size="16.00">处理状态</text>
+<text xml:space="preserve" text-anchor="start" x="449.61" y="-530.02" font-family="Microsoft YaHei" font-size="10.00">status</text>
+</g>
+<!-- a_PROJECT_PAPER_5 -->
+<g id="node12" class="node">
+<title>a_PROJECT_PAPER_5</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="572" cy="-544.62" rx="47.73" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="554" y="-545.22" font-family="Microsoft YaHei" font-size="16.00">导入人</text>
+<text xml:space="preserve" text-anchor="start" x="546.45" y="-530.02" font-family="Microsoft YaHei" font-size="10.00">imported_by</text>
+</g>
+<!-- e_PAPER -->
+<g id="node13" class="node">
+<title>e_PAPER</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="1850.86,-960.3 1775.14,-960.3 1775.14,-900.3 1850.86,-900.3 1850.86,-960.3"/>
+<text xml:space="preserve" text-anchor="middle" x="1813" y="-935.1" font-family="Microsoft YaHei" font-size="16.00">论文书目</text>
+<text xml:space="preserve" text-anchor="middle" x="1813" y="-915.9" font-family="Microsoft YaHei" font-size="16.00">PAPER</text>
+</g>
+<!-- a_PAPER_0 -->
+<g id="node14" class="node">
+<title>a_PAPER_0</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1713" cy="-1038.27" rx="62.51" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1677" y="-1041.47" font-family="Microsoft YaHei" text-decoration="underline" font-size="16.00">论文导入编号</text>
+<text xml:space="preserve" text-anchor="start" x="1695.51" y="-1023.67" font-family="Microsoft YaHei" font-size="10.00">paper_id</text>
+</g>
+<!-- a_PAPER_1 -->
+<g id="node15" class="node">
+<title>a_PAPER_1</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1822" cy="-1038.27" rx="28.57" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1810" y="-1038.87" font-family="Microsoft YaHei" font-size="16.00">标题</text>
+<text xml:space="preserve" text-anchor="start" x="1814.22" y="-1023.67" font-family="Microsoft YaHei" font-size="10.00">title</text>
+</g>
+<!-- a_PAPER_2 -->
+<g id="node16" class="node">
+<title>a_PAPER_2</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1813" cy="-801.74" rx="28.57" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1801" y="-802.34" font-family="Microsoft YaHei" font-size="16.00">年份</text>
+<text xml:space="preserve" text-anchor="start" x="1804.4" y="-787.14" font-family="Microsoft YaHei" font-size="10.00">year</text>
+</g>
+<!-- e_AUTHOR -->
+<g id="node17" class="node">
+<title>e_AUTHOR</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="1979.29,-703.18 1886.71,-703.18 1886.71,-643.18 1979.29,-643.18 1979.29,-703.18"/>
+<text xml:space="preserve" text-anchor="middle" x="1933" y="-677.98" font-family="Microsoft YaHei" font-size="16.00">作者</text>
+<text xml:space="preserve" text-anchor="middle" x="1933" y="-658.78" font-family="Microsoft YaHei" font-size="16.00">AUTHOR</text>
+</g>
+<!-- a_AUTHOR_0 -->
+<g id="node18" class="node">
+<title>a_AUTHOR_0</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1933" cy="-801.74" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1909" y="-804.94" font-family="Microsoft YaHei" text-decoration="underline" font-size="16.00">作者编号</text>
+<text xml:space="preserve" text-anchor="start" x="1913.84" y="-787.14" font-family="Microsoft YaHei" font-size="10.00">author_id</text>
+</g>
+<!-- a_AUTHOR_1 -->
+<g id="node19" class="node">
+<title>a_AUTHOR_1</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1933" cy="-544.62" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1909" y="-545.22" font-family="Microsoft YaHei" font-size="16.00">作者姓名</text>
+<text xml:space="preserve" text-anchor="start" x="1922.17" y="-530.02" font-family="Microsoft YaHei" font-size="10.00">name</text>
+</g>
+<!-- e_TOPIC -->
+<g id="node20" class="node">
+<title>e_TOPIC</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="2208.96,-703.18 2135.04,-703.18 2135.04,-643.18 2208.96,-643.18 2208.96,-703.18"/>
+<text xml:space="preserve" text-anchor="middle" x="2172" y="-677.98" font-family="Microsoft YaHei" font-size="16.00">研究主题</text>
+<text xml:space="preserve" text-anchor="middle" x="2172" y="-658.78" font-family="Microsoft YaHei" font-size="16.00">TOPIC</text>
+</g>
+<!-- a_TOPIC_0 -->
+<g id="node21" class="node">
+<title>a_TOPIC_0</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="2163" cy="-801.74" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="2139" y="-804.94" font-family="Microsoft YaHei" text-decoration="underline" font-size="16.00">主题编号</text>
+<text xml:space="preserve" text-anchor="start" x="2146.61" y="-787.14" font-family="Microsoft YaHei" font-size="10.00">topic_id</text>
+</g>
+<!-- a_TOPIC_1 -->
+<g id="node22" class="node">
+<title>a_TOPIC_1</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="2163" cy="-544.62" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="2139" y="-545.22" font-family="Microsoft YaHei" font-size="16.00">主题名称</text>
+<text xml:space="preserve" text-anchor="start" x="2152.17" y="-530.02" font-family="Microsoft YaHei" font-size="10.00">name</text>
+</g>
+<!-- e_CHUNK -->
+<g id="node23" class="node">
+<title>e_CHUNK</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="1021.41,-446.05 938.59,-446.05 938.59,-386.05 1021.41,-386.05 1021.41,-446.05"/>
+<text xml:space="preserve" text-anchor="middle" x="980" y="-420.85" font-family="Microsoft YaHei" font-size="16.00">原文片段</text>
+<text xml:space="preserve" text-anchor="middle" x="980" y="-401.65" font-family="Microsoft YaHei" font-size="16.00">CHUNK</text>
+</g>
+<!-- a_CHUNK_0 -->
+<g id="node24" class="node">
+<title>a_CHUNK_0</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="862" cy="-544.62" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="838" y="-547.82" font-family="Microsoft YaHei" text-decoration="underline" font-size="16.00">片段编号</text>
+<text xml:space="preserve" text-anchor="start" x="843.39" y="-530.02" font-family="Microsoft YaHei" font-size="10.00">chunk_id</text>
+</g>
+<!-- a_CHUNK_1 -->
+<g id="node25" class="node">
+<title>a_CHUNK_1</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="976" cy="-544.62" rx="50.08" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="964" y="-545.22" font-family="Microsoft YaHei" font-size="16.00">页码</text>
+<text xml:space="preserve" text-anchor="start" x="948.79" y="-530.02" font-family="Microsoft YaHei" font-size="10.00">page_number</text>
+</g>
+<!-- a_CHUNK_2 -->
+<g id="node26" class="node">
+<title>a_CHUNK_2</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="727" cy="-544.62" rx="70.99" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="685" y="-545.22" font-family="Microsoft YaHei" font-size="16.00">解析内片段序号</text>
+<text xml:space="preserve" text-anchor="start" x="707.28" y="-530.02" font-family="Microsoft YaHei" font-size="10.00">chunk_no</text>
+</g>
+<!-- a_CHUNK_3 -->
+<g id="node27" class="node">
+<title>a_CHUNK_3</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="871" cy="-287.49" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="847" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">来源摘录</text>
+<text xml:space="preserve" text-anchor="start" x="856.29" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">excerpt</text>
+</g>
+<!-- a_CHUNK_4 -->
+<g id="node28" class="node">
+<title>a_CHUNK_4</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="980" cy="-287.49" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="956" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">片段正文</text>
+<text xml:space="preserve" text-anchor="start" x="965.28" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">content</text>
+</g>
+<!-- a_CHUNK_5 -->
+<g id="node29" class="node">
+<title>a_CHUNK_5</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="762" cy="-287.49" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="738" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">是否合成</text>
+<text xml:space="preserve" text-anchor="start" x="743.95" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">synthetic</text>
+</g>
+<!-- e_EMBEDDING -->
+<g id="node30" class="node">
+<title>e_EMBEDDING</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="1183.96,-188.93 1062.04,-188.93 1062.04,-128.93 1183.96,-128.93 1183.96,-188.93"/>
+<text xml:space="preserve" text-anchor="middle" x="1123" y="-163.73" font-family="Microsoft YaHei" font-size="16.00">片段向量</text>
+<text xml:space="preserve" text-anchor="middle" x="1123" y="-144.53" font-family="Microsoft YaHei" font-size="16.00">EMBEDDING</text>
+</g>
+<!-- a_EMBEDDING_0 -->
+<g id="node31" class="node">
+<title>a_EMBEDDING_0</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1123" cy="-287.49" rx="43.02" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1105" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">向量值</text>
+<text xml:space="preserve" text-anchor="start" x="1100.78" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">embedding</text>
+</g>
+<!-- a_EMBEDDING_1 -->
+<g id="node32" class="node">
+<title>a_EMBEDDING_1</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1123" cy="-50.96" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1099" y="-51.56" font-family="Microsoft YaHei" font-size="16.00">向量维度</text>
+<text xml:space="preserve" text-anchor="start" x="1100.22" y="-36.36" font-family="Microsoft YaHei" font-size="10.00">dimensions</text>
+</g>
+<!-- e_EMBEDDING_MODEL -->
+<g id="node33" class="node">
+<title>e_EMBEDDING_MODEL</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="1705.4,-446.05 1518.6,-446.05 1518.6,-386.05 1705.4,-386.05 1705.4,-446.05"/>
+<text xml:space="preserve" text-anchor="middle" x="1612" y="-420.85" font-family="Microsoft YaHei" font-size="16.00">向量模型</text>
+<text xml:space="preserve" text-anchor="middle" x="1612" y="-401.65" font-family="Microsoft YaHei" font-size="16.00">EMBEDDING_MODEL</text>
+</g>
+<!-- a_EMBEDDING_MODEL_0 -->
+<g id="node34" class="node">
+<title>a_EMBEDDING_MODEL_0</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1683" cy="-544.62" rx="54.02" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1653" y="-545.22" font-family="Microsoft YaHei" font-size="16.00">模型供应方</text>
+<text xml:space="preserve" text-anchor="start" x="1666.06" y="-530.02" font-family="Microsoft YaHei" font-size="10.00">provider</text>
+</g>
+<!-- a_EMBEDDING_MODEL_1 -->
+<g id="node35" class="node">
+<title>a_EMBEDDING_MODEL_1</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1803" cy="-544.62" rx="48.12" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1779" y="-545.22" font-family="Microsoft YaHei" font-size="16.00">模型名称</text>
+<text xml:space="preserve" text-anchor="start" x="1777.17" y="-530.02" font-family="Microsoft YaHei" font-size="10.00">model_name</text>
+</g>
+<!-- a_EMBEDDING_MODEL_2 -->
+<g id="node36" class="node">
+<title>a_EMBEDDING_MODEL_2</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1565" cy="-544.62" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1541" y="-545.22" font-family="Microsoft YaHei" font-size="16.00">模型版本</text>
+<text xml:space="preserve" text-anchor="start" x="1548.89" y="-530.02" font-family="Microsoft YaHei" font-size="10.00">revision</text>
+</g>
+<!-- a_EMBEDDING_MODEL_3 -->
+<g id="node37" class="node">
+<title>a_EMBEDDING_MODEL_3</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1585" cy="-287.49" rx="45.54" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1561" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">向量维度</text>
+<text xml:space="preserve" text-anchor="start" x="1562.22" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">dimensions</text>
+</g>
+<!-- a_EMBEDDING_MODEL_4 -->
+<g id="node38" class="node">
+<title>a_EMBEDDING_MODEL_4</title>
+<ellipse fill="white" stroke="#111111" stroke-width="1.2" cx="1705" cy="-287.49" rx="56.36" ry="28.96"/>
+<text xml:space="preserve" text-anchor="start" x="1681" y="-288.09" font-family="Microsoft YaHei" font-size="16.00">距离度量</text>
+<text xml:space="preserve" text-anchor="start" x="1673.35" y="-272.89" font-family="Microsoft YaHei" font-size="10.00">distance_metric</text>
+</g>
+<!-- r_0 -->
+<g id="node39" class="node">
+<title>r_0</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="689,-829.58 647.72,-801.74 689,-773.9 730.28,-801.74 689,-829.58"/>
+<text xml:space="preserve" text-anchor="middle" x="689" y="-796.94" font-family="Microsoft YaHei" font-size="16.00">导入</text>
+</g>
+<!-- r_1 -->
+<g id="node40" class="node">
+<title>r_1</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="1186,-829.58 1144.72,-801.74 1186,-773.9 1227.28,-801.74 1186,-829.58"/>
+<text xml:space="preserve" text-anchor="middle" x="1186" y="-796.94" font-family="Microsoft YaHei" font-size="16.00">纳入</text>
+</g>
+<!-- r_2 -->
+<g id="node41" class="node">
+<title>r_2</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="2048,-829.58 2006.72,-801.74 2048,-773.9 2089.28,-801.74 2048,-829.58"/>
+<text xml:space="preserve" text-anchor="middle" x="2048" y="-796.94" font-family="Microsoft YaHei" font-size="16.00">撰写</text>
+</g>
+<!-- r_3 -->
+<g id="node42" class="node">
+<title>r_3</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="2278,-829.58 2236.72,-801.74 2278,-773.9 2319.28,-801.74 2278,-829.58"/>
+<text xml:space="preserve" text-anchor="middle" x="2278" y="-796.94" font-family="Microsoft YaHei" font-size="16.00">归类</text>
+</g>
+<!-- r_4 -->
+<g id="node43" class="node">
+<title>r_4</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="1095,-572.46 1053.72,-544.62 1095,-516.78 1136.28,-544.62 1095,-572.46"/>
+<text xml:space="preserve" text-anchor="middle" x="1095" y="-539.82" font-family="Microsoft YaHei" font-size="16.00">提供</text>
+</g>
+<!-- r_5 -->
+<g id="node44" class="node">
+<title>r_5</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="1277,-315.33 1211.72,-287.49 1277,-259.65 1342.28,-287.49 1277,-315.33"/>
+<text xml:space="preserve" text-anchor="middle" x="1277" y="-282.69" font-family="Microsoft YaHei" font-size="16.00">向量表示</text>
+</g>
+<!-- r_6 -->
+<g id="node45" class="node">
+<title>r_6</title>
+<polygon fill="white" stroke="#111111" stroke-width="1.2" points="1426,-315.33 1360.72,-287.49 1426,-259.65 1491.28,-287.49 1426,-315.33"/>
+<text xml:space="preserve" text-anchor="middle" x="1426" y="-282.69" font-family="Microsoft YaHei" font-size="16.00">生成向量</text>
+</g>
+</g>
+</svg>
