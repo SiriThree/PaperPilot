@@ -2,6 +2,8 @@
 
 任务 1 已提供非 Mock `SecurityAdapter`、`build_security` 和 `app.security.main:create_app` 开发入口，详见 [任务 1 接入说明](member-d-task1.md)。当前执行策略为全拒绝，返回 `QUERY_EXECUTION_DISABLED`，尚无真实 SQL 执行能力；下文真实网关、审计与数据库验收要求仍有效。
 
+任务 2 已补齐应用层项目授权：按可信 Context 重新查询当前角色、核对 B 的角色快照、未知动作默认拒绝、撤权与查询故障拒绝授权。权限矩阵、验证及数据库边界见 [授权策略说明](member-d-authorization.md)。
+
 ## 1. 职责范围
 
 负责最终授权策略、数据库访问策略、自然语言统计的安全网关、SQL 解析/约束/受限执行、关键审计与安全实验。B 只调用 SecurityPort，不执行模型生成 SQL，也不在网关失败后降级查询。MockSecurity 只有固定意图演示，不具备真实 SQL 防护。
@@ -10,7 +12,7 @@
 
 - `backend/app/adapters/ports.py:SecurityPort`、`schemas.py:SecureQueryResult/AuditEvent`。
 - 参考：`adapters/mock_security.py`；身份和基础项目授权：`auth.py:project_context`；调用：`services.py:secure_query`、`routes/security.py`。
-- `backend/app/security/adapter.py` 已提供任务 1 端口实现；策略扩展、SQL/执行器与关键审计仍需后续交付。共享测试：`backend/tests/security_contracts/`。
+- `backend/app/security/adapter.py` 已提供端口与应用层授权策略；SQL/执行器与关键审计仍需后续交付。共享测试：`backend/tests/security_contracts/`。
 - 正常/拒绝/故障及审计的可执行合成样例：`contracts/module-port-examples.json`；HTTP 示例沿用 `contracts/examples/` 和 `scenarios/`。
 
 ## 3. 完整接口（2 个方法）

@@ -38,11 +38,14 @@ def ctx():
     ],
 )
 def test_known_permissions(data, ctx, action, role):
+    if role == "member":
+        ctx = Context(seed_id("bob"), ctx.project_id, ctx.request_id)
     assert build_security(data).authorize(ctx, action, role) is None
 
 
 @pytest.mark.parametrize("action", ["members.manage", "paper.remove", "audit.read"])
 def test_member_cannot_use_owner_permissions(data, ctx, action):
+    ctx = Context(seed_id("bob"), ctx.project_id, ctx.request_id)
     with pytest.raises(AppError) as error:
         build_security(data).authorize(ctx, action, "member")
     assert (error.value.status, error.value.code) == (403, "OWNER_REQUIRED")
@@ -50,6 +53,8 @@ def test_member_cannot_use_owner_permissions(data, ctx, action):
 
 @pytest.mark.parametrize("role", ["owner", "member"])
 def test_unknown_action_is_denied(data, ctx, role):
+    if role == "member":
+        ctx = Context(seed_id("bob"), ctx.project_id, ctx.request_id)
     with pytest.raises(AppError) as error:
         build_security(data).authorize(ctx, "unknown.action", role)
     assert (error.value.status, error.value.code) == (403, "ACTION_FORBIDDEN")
