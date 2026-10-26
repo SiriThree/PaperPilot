@@ -1,0 +1,465 @@
+{
+  "audit": {
+    "append_audit": {
+      "event": {
+        "action": "contract.gateway",
+        "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+        "decision": "allowed",
+        "duration_ms": 0.0,
+        "event_id": "00000000-0000-0000-0000-00000000000a",
+        "execution_status": "executed",
+        "mock": true,
+        "policy_id": "mock-intents-v1",
+        "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+        "request_id": "2083434e-6698-535f-9cf1-3f8d783cb166",
+        "resource_type": "secure_query",
+        "timestamp": "2026-10-26T00:00:00Z"
+      }
+    },
+    "read_back": {
+      "items": [
+        {
+          "action": "contract.gateway",
+          "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+          "decision": "allowed",
+          "duration_ms": 0.0,
+          "event_id": "00000000-0000-0000-0000-00000000000a",
+          "execution_status": "executed",
+          "mock": true,
+          "policy_id": "mock-intents-v1",
+          "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+          "request_id": "2083434e-6698-535f-9cf1-3f8d783cb166",
+          "resource_type": "secure_query",
+          "timestamp": "2026-10-26T00:00:00Z"
+        }
+      ],
+      "limit": 20,
+      "mock": true,
+      "offset": 0,
+      "total": 1
+    }
+  },
+  "contract": "existing AIPort and SecurityPort",
+  "methods": {
+    "AIPort": {
+      "answer": {
+        "input": {
+          "ctx": {
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "request_id": "2083434e-6698-535f-9cf1-3f8d783cb166",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "question": {
+            "paper_ids": [],
+            "question": "检索增强生成"
+          },
+          "sources": [
+            {
+              "chunk_id": "70b17c47-566d-59cd-ab8b-ad20f55ac2f8",
+              "citation_id": "1",
+              "excerpt": "【合成片段】本示例展示检索增强生成的来源定位，不代表真实论文或实验结论。",
+              "page_number": 1,
+              "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+              "synthetic": true
+            }
+          ]
+        },
+        "output": {
+          "answer": "【Mock 回答】合成示例演示引用与来源的对应关系 [1]，不代表真实研究结论。",
+          "citation_ids": [
+            "1"
+          ],
+          "insufficient_evidence": false,
+          "kind": "answer",
+          "mock": true,
+          "sources": [
+            {
+              "chunk_id": "70b17c47-566d-59cd-ab8b-ad20f55ac2f8",
+              "citation_id": "1",
+              "excerpt": "【合成片段】本示例展示检索增强生成的来源定位，不代表真实论文或实验结论。",
+              "page_number": 1,
+              "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+              "synthetic": true
+            }
+          ]
+        },
+        "signature": "(self, ctx: app.adapters.ports.Context, question: app.schemas.QuestionRequest, sources: list[app.schemas.Source]) -> app.schemas.AnswerResult"
+      },
+      "draft": {
+        "input": {
+          "ctx": {
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "request_id": "2083434e-6698-535f-9cf1-3f8d783cb166",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "question": {
+            "paper_ids": [],
+            "question": "检索增强生成"
+          },
+          "sources": [
+            {
+              "chunk_id": "70b17c47-566d-59cd-ab8b-ad20f55ac2f8",
+              "citation_id": "1",
+              "excerpt": "【合成片段】本示例展示检索增强生成的来源定位，不代表真实论文或实验结论。",
+              "page_number": 1,
+              "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+              "synthetic": true
+            }
+          ]
+        },
+        "output": {
+          "body": "# 检索增强生成\n\n## 主要方法\nMock 合成内容。\n\n## 研究发现\n仅用于页面与接口演示。\n\n## 局限\n未调用真实模型，不可用于效果评测。\n\n## 来源\n合成片段 [1]",
+          "kind": "draft",
+          "mock": true,
+          "sources": [
+            {
+              "chunk_id": "70b17c47-566d-59cd-ab8b-ad20f55ac2f8",
+              "citation_id": "1",
+              "excerpt": "【合成片段】本示例展示检索增强生成的来源定位，不代表真实论文或实验结论。",
+              "page_number": 1,
+              "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+              "synthetic": true
+            }
+          ]
+        },
+        "signature": "(self, ctx: app.adapters.ports.Context, question: app.schemas.QuestionRequest, sources: list[app.schemas.Source]) -> app.schemas.DraftResult"
+      },
+      "extract": {
+        "input": {
+          "ctx": {
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "request_id": "2083434e-6698-535f-9cf1-3f8d783cb166",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+          "sources": [
+            {
+              "chunk_id": "70b17c47-566d-59cd-ab8b-ad20f55ac2f8",
+              "citation_id": "1",
+              "excerpt": "【合成片段】本示例展示检索增强生成的来源定位，不代表真实论文或实验结论。",
+              "page_number": 1,
+              "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+              "synthetic": true
+            }
+          ]
+        },
+        "output": {
+          "conclusion": {
+            "sources": [
+              {
+                "chunk_id": "70b17c47-566d-59cd-ab8b-ad20f55ac2f8",
+                "citation_id": "1",
+                "excerpt": "【合成片段】本示例展示检索增强生成的来源定位，不代表真实论文或实验结论。",
+                "page_number": 1,
+                "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+                "synthetic": true
+              }
+            ],
+            "status": "pending_verification",
+            "text": "【Mock】待人工核验的合成证据"
+          },
+          "evidence_id": "00000000-0000-0000-0000-000000000002",
+          "kind": "evidence",
+          "limitations": {
+            "sources": [],
+            "status": "not_mentioned",
+            "text": null
+          },
+          "method": {
+            "sources": [
+              {
+                "chunk_id": "70b17c47-566d-59cd-ab8b-ad20f55ac2f8",
+                "citation_id": "1",
+                "excerpt": "【合成片段】本示例展示检索增强生成的来源定位，不代表真实论文或实验结论。",
+                "page_number": 1,
+                "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+                "synthetic": true
+              }
+            ],
+            "status": "pending_verification",
+            "text": "【Mock】待人工核验的合成证据"
+          },
+          "mock": true,
+          "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+          "research_question": {
+            "sources": [
+              {
+                "chunk_id": "70b17c47-566d-59cd-ab8b-ad20f55ac2f8",
+                "citation_id": "1",
+                "excerpt": "【合成片段】本示例展示检索增强生成的来源定位，不代表真实论文或实验结论。",
+                "page_number": 1,
+                "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+                "synthetic": true
+              }
+            ],
+            "status": "pending_verification",
+            "text": "【Mock】待人工核验的合成证据"
+          },
+          "results": {
+            "sources": [
+              {
+                "chunk_id": "70b17c47-566d-59cd-ab8b-ad20f55ac2f8",
+                "citation_id": "1",
+                "excerpt": "【合成片段】本示例展示检索增强生成的来源定位，不代表真实论文或实验结论。",
+                "page_number": 1,
+                "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+                "synthetic": true
+              }
+            ],
+            "status": "pending_verification",
+            "text": "【Mock】待人工核验的合成证据"
+          }
+        },
+        "signature": "(self, ctx: app.adapters.ports.Context, paper_id: uuid.UUID, sources: list[app.schemas.Source]) -> app.schemas.EvidenceResult"
+      },
+      "process": {
+        "input": {
+          "ctx": {
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "request_id": "2083434e-6698-535f-9cf1-3f8d783cb166",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "file": {
+            "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "storage_key": "contract.pdf"
+          },
+          "task_id": "06cdb7c0-c35a-5abb-9980-8c8a59539d43"
+        },
+        "output": {
+          "kind": "process",
+          "mock": true,
+          "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+          "sources": [
+            {
+              "chunk_id": "00000000-0000-0000-0000-000000000001",
+              "citation_id": "1",
+              "excerpt": "【Mock 合成片段】上传已进入模拟处理流程；此内容不是从 PDF 提取的原文。",
+              "page_number": 1,
+              "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+              "synthetic": true
+            }
+          ]
+        },
+        "signature": "(self, ctx: app.adapters.ports.Context, task_id: uuid.UUID, file: app.adapters.ports.FileReference) -> app.schemas.ProcessResult"
+      },
+      "search": {
+        "input": {
+          "ctx": {
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "request_id": "2083434e-6698-535f-9cf1-3f8d783cb166",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "query": {
+            "limit": 10,
+            "mode": "hybrid",
+            "query": "检索增强生成",
+            "year_from": null,
+            "year_to": null
+          }
+        },
+        "output": {
+          "items": [
+            {
+              "paper": {
+                "mock": true,
+                "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+                "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+                "status": "searchable",
+                "title": "合成示例：检索增强生成的证据核验",
+                "year": 2024
+              },
+              "score": null,
+              "source": {
+                "chunk_id": "70b17c47-566d-59cd-ab8b-ad20f55ac2f8",
+                "citation_id": "1",
+                "excerpt": "【合成片段】本示例展示检索增强生成的来源定位，不代表真实论文或实验结论。",
+                "page_number": 1,
+                "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+                "synthetic": true
+              }
+            }
+          ],
+          "mock": true,
+          "mode": "hybrid",
+          "provider": "mock-c"
+        },
+        "signature": "(self, ctx: app.adapters.ports.Context, query: app.schemas.SearchRequest) -> app.schemas.SearchResult"
+      }
+    },
+    "SecurityPort": {
+      "authorize": {
+        "input": {
+          "action": "audit.read",
+          "ctx": {
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "request_id": "2083434e-6698-535f-9cf1-3f8d783cb166",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "role": "owner"
+        },
+        "output": null,
+        "signature": "(self, ctx: app.adapters.ports.Context, action: str, role: str) -> None"
+      },
+      "execute": {
+        "input": {
+          "ctx": {
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "request_id": "2083434e-6698-535f-9cf1-3f8d783cb166",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "question": "按年份统计论文数量"
+        },
+        "output": {
+          "columns": [
+            "year",
+            "count"
+          ],
+          "decision": "allowed",
+          "execution_status": "executed",
+          "mock": true,
+          "policy_id": "mock-intents-v1",
+          "reason": null,
+          "request_id": "2083434e-6698-535f-9cf1-3f8d783cb166",
+          "rows": [
+            {
+              "count": 1,
+              "year": 2024
+            }
+          ]
+        },
+        "signature": "(self, ctx: app.adapters.ports.Context, question: str) -> app.schemas.SecureQueryResult"
+      }
+    }
+  },
+  "mock": true,
+  "scenarios": {
+    "ai_unavailable": {
+      "error": {
+        "code": "AI_UNAVAILABLE",
+        "message": "模拟 AI 服务失败，可重试",
+        "status": 502
+      },
+      "input": {
+        "ctx": {
+          "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+          "request_id": "2083434e-6698-535f-9cf1-3f8d783cb166",
+          "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+        },
+        "question": {
+          "paper_ids": [],
+          "question": "模拟失败"
+        },
+        "sources": [
+          {
+            "chunk_id": "70b17c47-566d-59cd-ab8b-ad20f55ac2f8",
+            "citation_id": "1",
+            "excerpt": "【合成片段】本示例展示检索增强生成的来源定位，不代表真实论文或实验结论。",
+            "page_number": 1,
+            "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+            "synthetic": true
+          }
+        ]
+      }
+    },
+    "failed": {
+      "input": {
+        "ctx": {
+          "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+          "request_id": "2083434e-6698-535f-9cf1-3f8d783cb166",
+          "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+        },
+        "question": "模拟执行失败"
+      },
+      "output": {
+        "columns": [],
+        "decision": "undetermined",
+        "execution_status": "failed",
+        "mock": true,
+        "policy_id": "mock-intents-v1",
+        "reason": {
+          "code": "MOCK_EXECUTION_FAILED",
+          "message": "模拟执行失败，无真实 SQL 执行"
+        },
+        "request_id": "2083434e-6698-535f-9cf1-3f8d783cb166",
+        "rows": []
+      }
+    },
+    "gateway_unavailable": {
+      "error": {
+        "code": "GATEWAY_UNAVAILABLE",
+        "message": "安全网关不可用，未执行查询",
+        "status": 503
+      },
+      "input": {
+        "ctx": {
+          "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+          "request_id": "2083434e-6698-535f-9cf1-3f8d783cb166",
+          "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+        },
+        "question": "模拟网关故障"
+      }
+    },
+    "insufficient_evidence": {
+      "input": {
+        "ctx": {
+          "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+          "request_id": "2083434e-6698-535f-9cf1-3f8d783cb166",
+          "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+        },
+        "question": {
+          "paper_ids": [],
+          "question": "检索增强生成"
+        },
+        "sources": []
+      },
+      "output": {
+        "answer": "当前范围内证据不足，无法形成有来源的回答。",
+        "citation_ids": [],
+        "insufficient_evidence": true,
+        "kind": "answer",
+        "mock": true,
+        "sources": []
+      }
+    },
+    "owner_required": {
+      "error": {
+        "code": "OWNER_REQUIRED",
+        "message": "此操作需要项目负责人权限",
+        "status": 403
+      },
+      "input": {
+        "action": "audit.read",
+        "ctx": {
+          "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+          "request_id": "2083434e-6698-535f-9cf1-3f8d783cb166",
+          "user_id": "de1e65f7-5caa-536c-9fdf-f82129476fc2"
+        },
+        "role": "member"
+      }
+    },
+    "rejected": {
+      "input": {
+        "ctx": {
+          "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+          "request_id": "2083434e-6698-535f-9cf1-3f8d783cb166",
+          "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+        },
+        "question": "不支持的问题"
+      },
+      "output": {
+        "columns": [],
+        "decision": "rejected",
+        "execution_status": "not_executed",
+        "mock": true,
+        "policy_id": "mock-intents-v1",
+        "reason": {
+          "code": "UNSUPPORTED_QUERY",
+          "message": "Mock 仅支持三条文档约定的统计演示问题"
+        },
+        "request_id": "2083434e-6698-535f-9cf1-3f8d783cb166",
+        "rows": []
+      }
+    }
+  }
+}

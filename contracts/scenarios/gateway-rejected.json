@@ -1,0 +1,20 @@
+{
+  "mock": true,
+  "request": {
+    "question": "不支持的问题"
+  },
+  "status": 200,
+  "body": {
+    "decision": "rejected",
+    "execution_status": "not_executed",
+    "columns": [],
+    "rows": [],
+    "reason": {
+      "code": "UNSUPPORTED_QUERY",
+      "message": "Mock 仅支持三条文档约定的统计演示问题"
+    },
+    "policy_id": "mock-intents-v1",
+    "request_id": "bec67058-3777-486f-9502-05e9602338af",
+    "mock": true
+  }
+}

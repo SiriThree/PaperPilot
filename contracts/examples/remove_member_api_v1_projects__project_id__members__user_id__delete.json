@@ -1,0 +1,38 @@
+{
+  "method": "delete",
+  "path_template": "/api/v1/projects/{project_id}/members/{user_id}",
+  "mock": true,
+  "success": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/members/de1e65f7-5caa-536c-9fdf-f82129476fc2",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 200,
+      "content_type": "application/json",
+      "body": {
+        "message": "成员已移除，后续请求立即重新校验权限",
+        "mock": true
+      }
+    }
+  },
+  "error": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/members/de1e65f7-5caa-536c-9fdf-f82129476fc2",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 401,
+      "content_type": "application/json",
+      "body": {
+        "code": "UNAUTHENTICATED",
+        "message": "请先登录",
+        "request_id": "843d17ce-35ce-4811-b951-0ceb9c96610b"
+      }
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "method": "post",
+  "path_template": "/api/v1/projects/{project_id}/report-drafts",
+  "mock": true,
+  "success": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/report-drafts",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      },
+      "body": {
+        "question": "文献综述"
+      }
+    },
+    "response": {
+      "status": 202,
+      "content_type": "application/json",
+      "body": {
+        "task_id": "f52dfd79-4128-40f8-bfb1-2773d5d2ec69",
+        "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+        "request_id": "f5d16948-9aec-4d74-86b3-57aea1144ad4",
+        "kind": "draft",
+        "status": "pending",
+        "created_at": "2026-10-26T07:44:45.731870Z",
+        "updated_at": "2026-10-26T07:44:45.731870Z",
+        "attempts": 0,
+        "error": null,
+        "result_ref": null,
+        "result": null,
+        "mock": true
+      }
+    }
+  },
+  "error": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/report-drafts",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      },
+      "body": {
+        "question": "文献综述"
+      }
+    },
+    "response": {
+      "status": 401,
+      "content_type": "application/json",
+      "body": {
+        "code": "UNAUTHENTICATED",
+        "message": "请先登录",
+        "request_id": "9f348c12-7807-4280-989a-a0237776e786"
+      }
+    }
+  }
+}

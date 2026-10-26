@@ -1,0 +1,1280 @@
+{
+  "contract": "AB-1",
+  "methods": {
+    "add_member": {
+      "missing_or_error": {
+        "error": {
+          "code": "USER_NOT_FOUND",
+          "message": "账户不存在",
+          "status": 404
+        },
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "username": "absent"
+        }
+      },
+      "owner": "A",
+      "signature": "(self, ctx: app.adapters.ports.Context, username: str) -> app.schemas.Member",
+      "success": {
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "username": "bob"
+        },
+        "output": {
+          "role": "member",
+          "user": {
+            "display_name": "Bob",
+            "user_id": "de1e65f7-5caa-536c-9fdf-f82129476fc2",
+            "username": "bob"
+          }
+        }
+      }
+    },
+    "append_audit": {
+      "missing_or_error": {
+        "error": {
+          "code": "AUDIT_EVENT_CONFLICT",
+          "message": "审计事件编号已使用",
+          "status": 409
+        },
+        "input": {
+          "event": {
+            "action": "changed",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "decision": "allowed",
+            "duration_ms": 0.0,
+            "event_id": "55bd47f8-1da1-4c77-8f95-4a17918d6243",
+            "execution_status": "completed",
+            "mock": true,
+            "policy_id": null,
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "resource_type": "paper",
+            "timestamp": "2026-10-26T08:10:21.631190Z"
+          }
+        }
+      },
+      "owner": "A",
+      "signature": "(self, event: app.schemas.AuditEvent) -> None",
+      "success": {
+        "input": {
+          "event": {
+            "action": "example",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "decision": "allowed",
+            "duration_ms": 0.0,
+            "event_id": "55bd47f8-1da1-4c77-8f95-4a17918d6243",
+            "execution_status": "completed",
+            "mock": true,
+            "policy_id": null,
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "resource_type": "paper",
+            "timestamp": "2026-10-26T08:10:21.631190Z"
+          }
+        },
+        "output": null
+      }
+    },
+    "audit": {
+      "missing_or_error": {
+        "error": {
+          "code": "RESOURCE_NOT_FOUND",
+          "message": "资源不存在或不可访问",
+          "status": 404
+        },
+        "input": {
+          "action": null,
+          "actor_id": null,
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "e4306214-7a66-4096-84c7-6de53fa3f8e9",
+            "user_id": "b26c7a28-d2ed-56a5-a996-e1128349d49e"
+          },
+          "decision": null,
+          "limit": 20,
+          "offset": 0,
+          "since": null,
+          "until": null
+        }
+      },
+      "owner": "A",
+      "signature": "(self, ctx: app.adapters.ports.Context, *, action: str | None, decision: str | None, actor_id: uuid.UUID | None, since: datetime.datetime | None, until: datetime.datetime | None, offset: int, limit: int) -> app.schemas.AuditList",
+      "success": {
+        "input": {
+          "action": null,
+          "actor_id": null,
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "decision": null,
+          "limit": 20,
+          "offset": 0,
+          "since": null,
+          "until": null
+        },
+        "output": {
+          "items": [
+            {
+              "action": "example",
+              "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+              "decision": "allowed",
+              "duration_ms": 0.0,
+              "event_id": "55bd47f8-1da1-4c77-8f95-4a17918d6243",
+              "execution_status": "completed",
+              "mock": true,
+              "policy_id": null,
+              "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+              "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+              "resource_type": "paper",
+              "timestamp": "2026-10-26T08:10:21.631190Z"
+            }
+          ],
+          "limit": 20,
+          "mock": true,
+          "offset": 0,
+          "total": 1
+        }
+      }
+    },
+    "claim_job": {
+      "missing_or_error": {
+        "input": {},
+        "output": null
+      },
+      "owner": "A",
+      "signature": "(self) -> app.adapters.ports.Job | None",
+      "success": {
+        "input": {},
+        "output": {
+          "context": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "payload": {
+            "file": {
+              "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+              "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+              "storage_key": "example.pdf"
+            },
+            "paper_ids": [
+              "f606716f-3518-47c4-8cf6-c1968ed53b5f"
+            ]
+          },
+          "task": {
+            "attempts": 1,
+            "created_at": "2026-10-26T08:10:21.619359Z",
+            "error": null,
+            "kind": "process",
+            "mock": true,
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "result": null,
+            "result_ref": null,
+            "status": "processing",
+            "task_id": "96f00e0f-db6d-4f2e-9fb7-682446fd6f2c",
+            "updated_at": "2026-10-26T08:10:21.619359Z"
+          }
+        }
+      }
+    },
+    "complete_job": {
+      "missing_or_error": {
+        "error": {
+          "code": "ADAPTER_CONTRACT_ERROR",
+          "message": "论文处理结果不符合契约",
+          "status": 502
+        },
+        "input": {
+          "job": {
+            "context": {
+              "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+              "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+              "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+            },
+            "payload": {
+              "file": {
+                "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+                "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+                "storage_key": "example.pdf"
+              },
+              "paper_ids": [
+                "f606716f-3518-47c4-8cf6-c1968ed53b5f"
+              ]
+            },
+            "task": {
+              "attempts": 1,
+              "created_at": "2026-10-26T08:10:21.619359Z",
+              "error": null,
+              "kind": "process",
+              "mock": true,
+              "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+              "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+              "result": null,
+              "result_ref": null,
+              "status": "processing",
+              "task_id": "96f00e0f-db6d-4f2e-9fb7-682446fd6f2c",
+              "updated_at": "2026-10-26T08:10:21.619359Z"
+            }
+          },
+          "result": {
+            "kind": "process",
+            "mock": true,
+            "paper_id": "69afe10d-d1bb-439a-8433-7b4019594df6",
+            "sources": [
+              {
+                "chunk_id": "37e06c39-3481-4908-aafb-4a3fa4016bee",
+                "citation_id": "1",
+                "excerpt": "【合成】数据层交接示例片段",
+                "page_number": 1,
+                "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+                "synthetic": true
+              }
+            ]
+          }
+        }
+      },
+      "owner": "A",
+      "signature": "(self, job: app.adapters.ports.Job, result: app.schemas.ProcessResult | app.schemas.AnswerResult | app.schemas.EvidenceResult | app.schemas.DraftResult) -> None",
+      "success": {
+        "input": {
+          "job": {
+            "context": {
+              "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+              "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+              "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+            },
+            "payload": {
+              "file": {
+                "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+                "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+                "storage_key": "example.pdf"
+              },
+              "paper_ids": [
+                "f606716f-3518-47c4-8cf6-c1968ed53b5f"
+              ]
+            },
+            "task": {
+              "attempts": 1,
+              "created_at": "2026-10-26T08:10:21.619359Z",
+              "error": null,
+              "kind": "process",
+              "mock": true,
+              "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+              "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+              "result": null,
+              "result_ref": null,
+              "status": "processing",
+              "task_id": "96f00e0f-db6d-4f2e-9fb7-682446fd6f2c",
+              "updated_at": "2026-10-26T08:10:21.619359Z"
+            }
+          },
+          "result": {
+            "kind": "process",
+            "mock": true,
+            "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+            "sources": [
+              {
+                "chunk_id": "37e06c39-3481-4908-aafb-4a3fa4016bee",
+                "citation_id": "1",
+                "excerpt": "【合成】数据层交接示例片段",
+                "page_number": 1,
+                "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+                "synthetic": true
+              }
+            ]
+          }
+        },
+        "output": null
+      }
+    },
+    "controlled_statistics": {
+      "missing_or_error": {
+        "error": {
+          "code": "UNSUPPORTED_INTENT",
+          "message": "不支持的统计意图",
+          "status": 400
+        },
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "intent": "arbitrary_sql"
+        }
+      },
+      "owner": "A",
+      "signature": "(self, ctx: app.adapters.ports.Context, intent: Literal['by_year', 'by_topic', 'missing_evidence']) -> tuple[list[str], list[dict]]",
+      "success": {
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "intent": "by_year"
+        },
+        "output": [
+          [
+            "year",
+            "count"
+          ],
+          [
+            {
+              "count": 1,
+              "year": 2024
+            }
+          ]
+        ]
+      }
+    },
+    "create_project": {
+      "missing_or_error": {
+        "error": {
+          "code": "RESOURCE_NOT_FOUND",
+          "message": "资源不存在或不可访问",
+          "status": 404
+        },
+        "input": {
+          "data": {
+            "description": "合成接口数据",
+            "name": "A/B 交接示例"
+          },
+          "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+          "user_id": "69afe10d-d1bb-439a-8433-7b4019594df6"
+        }
+      },
+      "owner": "A",
+      "signature": "(self, user_id: uuid.UUID, data: app.schemas.ProjectCreate, request_id: uuid.UUID) -> app.schemas.Project",
+      "success": {
+        "input": {
+          "data": {
+            "description": "合成接口数据",
+            "name": "A/B 交接示例"
+          },
+          "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+          "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+        },
+        "output": {
+          "description": "合成接口数据",
+          "mock": true,
+          "name": "A/B 交接示例",
+          "owner_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+          "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+          "role": "owner"
+        }
+      }
+    },
+    "create_task": {
+      "missing_or_error": {
+        "error": {
+          "code": "RESOURCE_NOT_FOUND",
+          "message": "资源不存在或不可访问",
+          "status": 404
+        },
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "e4306214-7a66-4096-84c7-6de53fa3f8e9",
+            "user_id": "b26c7a28-d2ed-56a5-a996-e1128349d49e"
+          },
+          "key": "denied",
+          "kind": "answer",
+          "payload": {
+            "paper_ids": [
+              "f606716f-3518-47c4-8cf6-c1968ed53b5f"
+            ],
+            "question": {
+              "paper_ids": [
+                "f606716f-3518-47c4-8cf6-c1968ed53b5f"
+              ],
+              "question": "合成问题"
+            }
+          }
+        }
+      },
+      "owner": "A",
+      "signature": "(self, ctx: app.adapters.ports.Context, kind: Literal['process', 'answer', 'evidence', 'draft'], payload: app.adapters.ports.TaskPayload, key: str) -> app.schemas.Task",
+      "success": {
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "key": "answer-example",
+          "kind": "answer",
+          "payload": {
+            "paper_ids": [
+              "f606716f-3518-47c4-8cf6-c1968ed53b5f"
+            ],
+            "question": {
+              "paper_ids": [
+                "f606716f-3518-47c4-8cf6-c1968ed53b5f"
+              ],
+              "question": "合成问题"
+            }
+          }
+        },
+        "output": {
+          "attempts": 0,
+          "created_at": "2026-10-26T08:10:21.622922Z",
+          "error": null,
+          "kind": "answer",
+          "mock": true,
+          "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+          "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+          "result": null,
+          "result_ref": null,
+          "status": "pending",
+          "task_id": "83e427aa-d270-4e0f-a94a-d95c0d14404b",
+          "updated_at": "2026-10-26T08:10:21.622922Z"
+        }
+      }
+    },
+    "evidence": {
+      "missing_or_error": {
+        "error": {
+          "code": "RESOURCE_NOT_FOUND",
+          "message": "资源不存在或不可访问",
+          "status": 404
+        },
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "paper_id": "69afe10d-d1bb-439a-8433-7b4019594df6"
+        }
+      },
+      "owner": "A",
+      "signature": "(self, ctx: app.adapters.ports.Context, paper_id: uuid.UUID) -> list[app.schemas.EvidenceResult]",
+      "success": {
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f"
+        },
+        "output": [
+          {
+            "conclusion": {
+              "sources": [
+                {
+                  "chunk_id": "37e06c39-3481-4908-aafb-4a3fa4016bee",
+                  "citation_id": "1",
+                  "excerpt": "【合成】数据层交接示例片段",
+                  "page_number": 1,
+                  "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+                  "synthetic": true
+                }
+              ],
+              "status": "pending_verification",
+              "text": "合成证据"
+            },
+            "evidence_id": "7be7c509-8a38-4039-8d73-07df0382ff01",
+            "kind": "evidence",
+            "limitations": {
+              "sources": [],
+              "status": "not_mentioned",
+              "text": null
+            },
+            "method": {
+              "sources": [
+                {
+                  "chunk_id": "37e06c39-3481-4908-aafb-4a3fa4016bee",
+                  "citation_id": "1",
+                  "excerpt": "【合成】数据层交接示例片段",
+                  "page_number": 1,
+                  "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+                  "synthetic": true
+                }
+              ],
+              "status": "pending_verification",
+              "text": "合成证据"
+            },
+            "mock": true,
+            "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+            "research_question": {
+              "sources": [
+                {
+                  "chunk_id": "37e06c39-3481-4908-aafb-4a3fa4016bee",
+                  "citation_id": "1",
+                  "excerpt": "【合成】数据层交接示例片段",
+                  "page_number": 1,
+                  "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+                  "synthetic": true
+                }
+              ],
+              "status": "pending_verification",
+              "text": "合成证据"
+            },
+            "results": {
+              "sources": [
+                {
+                  "chunk_id": "37e06c39-3481-4908-aafb-4a3fa4016bee",
+                  "citation_id": "1",
+                  "excerpt": "【合成】数据层交接示例片段",
+                  "page_number": 1,
+                  "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+                  "synthetic": true
+                }
+              ],
+              "status": "pending_verification",
+              "text": "合成证据"
+            }
+          }
+        ]
+      }
+    },
+    "fail_job": {
+      "missing_or_error": {
+        "error": {
+          "code": "TASK_STATE_CONFLICT",
+          "message": "任务执行次数或状态已变化",
+          "status": 409
+        },
+        "input": {
+          "code": "AI_UNAVAILABLE",
+          "job": {
+            "context": {
+              "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+              "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+              "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+            },
+            "payload": {
+              "file": {
+                "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+                "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+                "storage_key": "example.pdf"
+              },
+              "paper_ids": [
+                "f606716f-3518-47c4-8cf6-c1968ed53b5f"
+              ]
+            },
+            "task": {
+              "attempts": 1,
+              "created_at": "2026-10-26T08:10:21.619359Z",
+              "error": null,
+              "kind": "process",
+              "mock": true,
+              "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+              "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+              "result": null,
+              "result_ref": null,
+              "status": "processing",
+              "task_id": "96f00e0f-db6d-4f2e-9fb7-682446fd6f2c",
+              "updated_at": "2026-10-26T08:10:21.619359Z"
+            }
+          },
+          "message": "迟到失败"
+        }
+      },
+      "owner": "A",
+      "signature": "(self, job: app.adapters.ports.Job, code: str, message: str) -> None",
+      "success": {
+        "input": {
+          "code": "AI_UNAVAILABLE",
+          "job": {
+            "context": {
+              "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+              "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+              "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+            },
+            "payload": {
+              "paper_ids": [
+                "f606716f-3518-47c4-8cf6-c1968ed53b5f"
+              ],
+              "question": {
+                "paper_ids": [
+                  "f606716f-3518-47c4-8cf6-c1968ed53b5f"
+                ],
+                "question": "合成问题"
+              }
+            },
+            "task": {
+              "attempts": 1,
+              "created_at": "2026-10-26T08:10:21.622922Z",
+              "error": null,
+              "kind": "answer",
+              "mock": true,
+              "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+              "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+              "result": null,
+              "result_ref": null,
+              "status": "processing",
+              "task_id": "83e427aa-d270-4e0f-a94a-d95c0d14404b",
+              "updated_at": "2026-10-26T08:10:21.622922Z"
+            }
+          },
+          "message": "合成失败"
+        },
+        "output": null
+      }
+    },
+    "import_paper": {
+      "missing_or_error": {
+        "error": {
+          "code": "DUPLICATE_PAPER",
+          "message": "当前项目已导入同一文件",
+          "status": 409
+        },
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "file": {
+            "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "storage_key": "example.pdf"
+          },
+          "key": "duplicate",
+          "title": "合成接口论文",
+          "year": 2024
+        }
+      },
+      "owner": "A",
+      "signature": "(self, ctx: app.adapters.ports.Context, title: str, year: int | None, digest: str, file: app.adapters.ports.FileReference, key: str) -> tuple[app.schemas.Paper, app.schemas.Task]",
+      "success": {
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "file": {
+            "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "storage_key": "example.pdf"
+          },
+          "key": "example-import",
+          "title": "合成接口论文",
+          "year": 2024
+        },
+        "output": [
+          {
+            "mock": true,
+            "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "status": "pending",
+            "title": "合成接口论文",
+            "year": 2024
+          },
+          {
+            "attempts": 0,
+            "created_at": "2026-10-26T08:10:21.619359Z",
+            "error": null,
+            "kind": "process",
+            "mock": true,
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "result": null,
+            "result_ref": null,
+            "status": "pending",
+            "task_id": "96f00e0f-db6d-4f2e-9fb7-682446fd6f2c",
+            "updated_at": "2026-10-26T08:10:21.619359Z"
+          }
+        ]
+      }
+    },
+    "members": {
+      "missing_or_error": {
+        "error": {
+          "code": "RESOURCE_NOT_FOUND",
+          "message": "资源不存在或不可访问",
+          "status": 404
+        },
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "e4306214-7a66-4096-84c7-6de53fa3f8e9",
+            "user_id": "b26c7a28-d2ed-56a5-a996-e1128349d49e"
+          }
+        }
+      },
+      "owner": "A",
+      "signature": "(self, ctx: app.adapters.ports.Context) -> list[app.schemas.Member]",
+      "success": {
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          }
+        },
+        "output": [
+          {
+            "role": "owner",
+            "user": {
+              "display_name": "Alice",
+              "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+              "username": "alice"
+            }
+          }
+        ]
+      }
+    },
+    "paper": {
+      "missing_or_error": {
+        "error": {
+          "code": "RESOURCE_NOT_FOUND",
+          "message": "资源不存在或不可访问",
+          "status": 404
+        },
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "paper_id": "69afe10d-d1bb-439a-8433-7b4019594df6"
+        }
+      },
+      "owner": "A",
+      "signature": "(self, ctx: app.adapters.ports.Context, paper_id: uuid.UUID) -> app.schemas.Paper",
+      "success": {
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f"
+        },
+        "output": {
+          "mock": true,
+          "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+          "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+          "status": "pending",
+          "title": "合成接口论文",
+          "year": 2024
+        }
+      }
+    },
+    "papers": {
+      "missing_or_error": {
+        "error": {
+          "code": "RESOURCE_NOT_FOUND",
+          "message": "资源不存在或不可访问",
+          "status": 404
+        },
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "e4306214-7a66-4096-84c7-6de53fa3f8e9",
+            "user_id": "b26c7a28-d2ed-56a5-a996-e1128349d49e"
+          }
+        }
+      },
+      "owner": "A",
+      "signature": "(self, ctx: app.adapters.ports.Context, year_from: int | None = None, year_to: int | None = None) -> list[app.schemas.Paper]",
+      "success": {
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "year_from": 2024,
+          "year_to": 2024
+        },
+        "output": [
+          {
+            "mock": true,
+            "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "status": "pending",
+            "title": "合成接口论文",
+            "year": 2024
+          }
+        ]
+      }
+    },
+    "projects": {
+      "missing_or_error": {
+        "error": {
+          "code": "RESOURCE_NOT_FOUND",
+          "message": "资源不存在或不可访问",
+          "status": 404
+        },
+        "input": {
+          "user_id": "69afe10d-d1bb-439a-8433-7b4019594df6"
+        }
+      },
+      "owner": "A",
+      "signature": "(self, user_id: uuid.UUID) -> list[app.schemas.Project]",
+      "success": {
+        "input": {
+          "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+        },
+        "output": [
+          {
+            "description": "合成数据，仅用于契约演示",
+            "mock": true,
+            "name": "文献研究演示项目",
+            "owner_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "role": "owner"
+          },
+          {
+            "description": "合成接口数据",
+            "mock": true,
+            "name": "A/B 交接示例",
+            "owner_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "role": "owner"
+          }
+        ]
+      }
+    },
+    "remove_member": {
+      "missing_or_error": {
+        "error": {
+          "code": "OWNER_IMMUTABLE",
+          "message": "不能移除项目负责人",
+          "status": 409
+        },
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+        }
+      },
+      "owner": "A",
+      "signature": "(self, ctx: app.adapters.ports.Context, user_id: uuid.UUID) -> None",
+      "success": {
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "user_id": "de1e65f7-5caa-536c-9fdf-f82129476fc2"
+        },
+        "output": null
+      }
+    },
+    "remove_paper": {
+      "missing_or_error": {
+        "error": {
+          "code": "RESOURCE_NOT_FOUND",
+          "message": "资源不存在或不可访问",
+          "status": 404
+        },
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "paper_id": "69afe10d-d1bb-439a-8433-7b4019594df6"
+        }
+      },
+      "owner": "A",
+      "signature": "(self, ctx: app.adapters.ports.Context, paper_id: uuid.UUID) -> None",
+      "success": {
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f"
+        },
+        "output": null
+      }
+    },
+    "reports": {
+      "missing_or_error": {
+        "error": {
+          "code": "RESOURCE_NOT_FOUND",
+          "message": "资源不存在或不可访问",
+          "status": 404
+        },
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "e4306214-7a66-4096-84c7-6de53fa3f8e9",
+            "user_id": "b26c7a28-d2ed-56a5-a996-e1128349d49e"
+          }
+        }
+      },
+      "owner": "A",
+      "signature": "(self, ctx: app.adapters.ports.Context) -> list[app.schemas.ReportVersion]",
+      "success": {
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          }
+        },
+        "output": [
+          {
+            "body": "合成正文 [1]",
+            "created_at": "2026-10-26T08:10:21.627085Z",
+            "mock": true,
+            "number": 1,
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "report_id": "84fa78d9-cbe0-40e9-86ea-1033387abd96",
+            "research_question": "合成问题",
+            "sources": [
+              {
+                "chunk_id": "37e06c39-3481-4908-aafb-4a3fa4016bee",
+                "citation_id": "1",
+                "excerpt": "【合成】数据层交接示例片段",
+                "page_number": 1,
+                "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+                "synthetic": true
+              }
+            ],
+            "title": "合成报告",
+            "version_id": "0d8eebfb-bfd6-4bb8-b653-d0d45c7549c5"
+          }
+        ]
+      }
+    },
+    "retry_task": {
+      "missing_or_error": {
+        "error": {
+          "code": "TASK_NOT_RETRYABLE",
+          "message": "仅失败任务可以重试",
+          "status": 409
+        },
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "task_id": "83e427aa-d270-4e0f-a94a-d95c0d14404b"
+        }
+      },
+      "owner": "A",
+      "signature": "(self, ctx: app.adapters.ports.Context, task_id: uuid.UUID) -> app.schemas.Task",
+      "success": {
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "task_id": "83e427aa-d270-4e0f-a94a-d95c0d14404b"
+        },
+        "output": {
+          "attempts": 1,
+          "created_at": "2026-10-26T08:10:21.622922Z",
+          "error": null,
+          "kind": "answer",
+          "mock": true,
+          "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+          "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+          "result": null,
+          "result_ref": null,
+          "status": "pending",
+          "task_id": "83e427aa-d270-4e0f-a94a-d95c0d14404b",
+          "updated_at": "2026-10-26T08:10:21.622922Z"
+        }
+      }
+    },
+    "role": {
+      "missing_or_error": {
+        "input": {
+          "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+          "user_id": "b26c7a28-d2ed-56a5-a996-e1128349d49e"
+        },
+        "output": null
+      },
+      "owner": "A",
+      "signature": "(self, user_id: uuid.UUID, project_id: uuid.UUID) -> Optional[Literal['owner', 'member']]",
+      "success": {
+        "input": {
+          "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+          "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+        },
+        "output": "owner"
+      }
+    },
+    "save_report": {
+      "missing_or_error": {
+        "error": {
+          "code": "RESOURCE_NOT_FOUND",
+          "message": "资源不存在或不可访问",
+          "status": 404
+        },
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "e4306214-7a66-4096-84c7-6de53fa3f8e9",
+            "user_id": "b26c7a28-d2ed-56a5-a996-e1128349d49e"
+          },
+          "data": {
+            "base_version_id": null,
+            "body": "合成正文 [1]",
+            "report_id": null,
+            "research_question": "合成问题",
+            "sources": [
+              {
+                "chunk_id": "37e06c39-3481-4908-aafb-4a3fa4016bee",
+                "citation_id": "1",
+                "excerpt": "【合成】数据层交接示例片段",
+                "page_number": 1,
+                "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+                "synthetic": true
+              }
+            ],
+            "title": "合成报告"
+          },
+          "key": "denied"
+        }
+      },
+      "owner": "A",
+      "signature": "(self, ctx: app.adapters.ports.Context, data: app.schemas.ReportSave, key: str) -> app.schemas.ReportVersion",
+      "success": {
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "data": {
+            "base_version_id": null,
+            "body": "合成正文 [1]",
+            "report_id": null,
+            "research_question": "合成问题",
+            "sources": [
+              {
+                "chunk_id": "37e06c39-3481-4908-aafb-4a3fa4016bee",
+                "citation_id": "1",
+                "excerpt": "【合成】数据层交接示例片段",
+                "page_number": 1,
+                "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+                "synthetic": true
+              }
+            ],
+            "title": "合成报告"
+          },
+          "key": "report-example"
+        },
+        "output": {
+          "body": "合成正文 [1]",
+          "created_at": "2026-10-26T08:10:21.627085Z",
+          "mock": true,
+          "number": 1,
+          "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+          "report_id": "84fa78d9-cbe0-40e9-86ea-1033387abd96",
+          "research_question": "合成问题",
+          "sources": [
+            {
+              "chunk_id": "37e06c39-3481-4908-aafb-4a3fa4016bee",
+              "citation_id": "1",
+              "excerpt": "【合成】数据层交接示例片段",
+              "page_number": 1,
+              "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+              "synthetic": true
+            }
+          ],
+          "title": "合成报告",
+          "version_id": "0d8eebfb-bfd6-4bb8-b653-d0d45c7549c5"
+        }
+      }
+    },
+    "sources": {
+      "missing_or_error": {
+        "error": {
+          "code": "RESOURCE_NOT_FOUND",
+          "message": "资源不存在或不可访问",
+          "status": 404
+        },
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "e4306214-7a66-4096-84c7-6de53fa3f8e9",
+            "user_id": "b26c7a28-d2ed-56a5-a996-e1128349d49e"
+          },
+          "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f"
+        }
+      },
+      "owner": "A",
+      "signature": "(self, ctx: app.adapters.ports.Context, paper_id: uuid.UUID) -> list[app.schemas.Source]",
+      "success": {
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f"
+        },
+        "output": [
+          {
+            "chunk_id": "37e06c39-3481-4908-aafb-4a3fa4016bee",
+            "citation_id": "1",
+            "excerpt": "【合成】数据层交接示例片段",
+            "page_number": 1,
+            "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+            "synthetic": true
+          }
+        ]
+      }
+    },
+    "task": {
+      "missing_or_error": {
+        "error": {
+          "code": "RESOURCE_NOT_FOUND",
+          "message": "资源不存在或不可访问",
+          "status": 404
+        },
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "task_id": "69afe10d-d1bb-439a-8433-7b4019594df6"
+        }
+      },
+      "owner": "A",
+      "signature": "(self, ctx: app.adapters.ports.Context, task_id: uuid.UUID) -> app.schemas.Task",
+      "success": {
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "task_id": "96f00e0f-db6d-4f2e-9fb7-682446fd6f2c"
+        },
+        "output": {
+          "attempts": 0,
+          "created_at": "2026-10-26T08:10:21.619359Z",
+          "error": null,
+          "kind": "process",
+          "mock": true,
+          "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+          "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+          "result": null,
+          "result_ref": null,
+          "status": "pending",
+          "task_id": "96f00e0f-db6d-4f2e-9fb7-682446fd6f2c",
+          "updated_at": "2026-10-26T08:10:21.619359Z"
+        }
+      }
+    },
+    "user_by_id": {
+      "missing_or_error": {
+        "input": {
+          "user_id": "69afe10d-d1bb-439a-8433-7b4019594df6"
+        },
+        "output": null
+      },
+      "owner": "A",
+      "signature": "(self, user_id: uuid.UUID) -> app.schemas.User | None",
+      "success": {
+        "input": {
+          "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+        },
+        "output": {
+          "display_name": "Alice",
+          "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+          "username": "alice"
+        }
+      }
+    },
+    "user_by_name": {
+      "missing_or_error": {
+        "input": {
+          "username": "absent"
+        },
+        "output": null
+      },
+      "owner": "A",
+      "signature": "(self, username: str) -> app.schemas.User | None",
+      "success": {
+        "input": {
+          "username": "alice"
+        },
+        "output": {
+          "display_name": "Alice",
+          "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+          "username": "alice"
+        }
+      }
+    },
+    "versions": {
+      "missing_or_error": {
+        "error": {
+          "code": "RESOURCE_NOT_FOUND",
+          "message": "资源不存在或不可访问",
+          "status": 404
+        },
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "report_id": "69afe10d-d1bb-439a-8433-7b4019594df6"
+        }
+      },
+      "owner": "A",
+      "signature": "(self, ctx: app.adapters.ports.Context, report_id: uuid.UUID) -> list[app.schemas.ReportVersion]",
+      "success": {
+        "input": {
+          "ctx": {
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "request_id": "96489693-5d8f-4c17-b03f-c51415a8a161",
+            "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc"
+          },
+          "report_id": "84fa78d9-cbe0-40e9-86ea-1033387abd96"
+        },
+        "output": [
+          {
+            "body": "合成正文 [1]",
+            "created_at": "2026-10-26T08:10:21.627085Z",
+            "mock": true,
+            "number": 1,
+            "project_id": "1b073236-1dfb-4fd2-ab6d-9e12a2a969f7",
+            "report_id": "84fa78d9-cbe0-40e9-86ea-1033387abd96",
+            "research_question": "合成问题",
+            "sources": [
+              {
+                "chunk_id": "37e06c39-3481-4908-aafb-4a3fa4016bee",
+                "citation_id": "1",
+                "excerpt": "【合成】数据层交接示例片段",
+                "page_number": 1,
+                "paper_id": "f606716f-3518-47c4-8cf6-c1968ed53b5f",
+                "synthetic": true
+              }
+            ],
+            "title": "合成报告",
+            "version_id": "0d8eebfb-bfd6-4bb8-b653-d0d45c7549c5"
+          }
+        ]
+      }
+    }
+  },
+  "mock": true
+}

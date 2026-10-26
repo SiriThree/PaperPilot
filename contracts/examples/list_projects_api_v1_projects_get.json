@@ -1,0 +1,47 @@
+{
+  "method": "get",
+  "path_template": "/api/v1/projects",
+  "mock": true,
+  "success": {
+    "request": {
+      "path": "/api/v1/projects",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 200,
+      "content_type": "application/json",
+      "body": {
+        "items": [
+          {
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "name": "文献研究演示项目",
+            "description": "合成数据，仅用于契约演示",
+            "owner_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "role": "owner",
+            "mock": true
+          }
+        ],
+        "mock": true
+      }
+    }
+  },
+  "error": {
+    "request": {
+      "path": "/api/v1/projects",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 401,
+      "content_type": "application/json",
+      "body": {
+        "code": "UNAUTHENTICATED",
+        "message": "请先登录",
+        "request_id": "545ec5c2-75e4-48ab-9108-c1b266d1c0ee"
+      }
+    }
+  }
+}

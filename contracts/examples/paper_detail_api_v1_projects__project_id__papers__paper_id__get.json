@@ -1,0 +1,55 @@
+{
+  "method": "get",
+  "path_template": "/api/v1/projects/{project_id}/papers/{paper_id}",
+  "mock": true,
+  "success": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/papers/babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 200,
+      "content_type": "application/json",
+      "body": {
+        "paper": {
+          "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+          "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+          "title": "合成示例：检索增强生成的证据核验",
+          "year": 2024,
+          "status": "searchable",
+          "mock": true
+        },
+        "sources": [
+          {
+            "citation_id": "1",
+            "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+            "chunk_id": "70b17c47-566d-59cd-ab8b-ad20f55ac2f8",
+            "page_number": 1,
+            "excerpt": "【合成片段】本示例展示检索增强生成的来源定位，不代表真实论文或实验结论。",
+            "synthetic": true
+          }
+        ],
+        "mock": true
+      }
+    }
+  },
+  "error": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/papers/babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 401,
+      "content_type": "application/json",
+      "body": {
+        "code": "UNAUTHENTICATED",
+        "message": "请先登录",
+        "request_id": "c5e1341e-db33-4bb9-8ed5-94976b027a61"
+      }
+    }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "method": "post",
+  "path_template": "/api/v1/projects/{project_id}/members",
+  "mock": true,
+  "success": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/members",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      },
+      "body": {
+        "username": "bob"
+      }
+    },
+    "response": {
+      "status": 201,
+      "content_type": "application/json",
+      "body": {
+        "user": {
+          "user_id": "de1e65f7-5caa-536c-9fdf-f82129476fc2",
+          "username": "bob",
+          "display_name": "Bob"
+        },
+        "role": "member"
+      }
+    }
+  },
+  "error": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/members",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      },
+      "body": {
+        "username": "bob"
+      }
+    },
+    "response": {
+      "status": 401,
+      "content_type": "application/json",
+      "body": {
+        "code": "UNAUTHENTICATED",
+        "message": "请先登录",
+        "request_id": "b7591d8d-f973-4492-8c00-d6c244f33c0f"
+      }
+    }
+  }
+}

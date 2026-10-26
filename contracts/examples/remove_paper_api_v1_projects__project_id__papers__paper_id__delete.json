@@ -1,0 +1,38 @@
+{
+  "method": "delete",
+  "path_template": "/api/v1/projects/{project_id}/papers/{paper_id}",
+  "mock": true,
+  "success": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/papers/babaff3e-8201-536d-aa17-ffb7e9b7b91d?confirm_source_impact=true",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 200,
+      "content_type": "application/json",
+      "body": {
+        "message": "已移出项目；历史报告快照仍受项目权限控制",
+        "mock": true
+      }
+    }
+  },
+  "error": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/papers/babaff3e-8201-536d-aa17-ffb7e9b7b91d?confirm_source_impact=true",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 401,
+      "content_type": "application/json",
+      "body": {
+        "code": "UNAUTHENTICATED",
+        "message": "请先登录",
+        "request_id": "2442af92-f4c5-43e4-98f0-466753bd63e4"
+      }
+    }
+  }
+}

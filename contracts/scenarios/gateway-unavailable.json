@@ -1,0 +1,12 @@
+{
+  "mock": true,
+  "request": {
+    "question": "模拟网关故障"
+  },
+  "status": 503,
+  "body": {
+    "code": "GATEWAY_UNAVAILABLE",
+    "message": "安全网关不可用，未执行查询",
+    "request_id": "93e06368-c801-4fae-bad6-7dd47b6d9c25"
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "method": "get",
+  "path_template": "/api/v1/projects/{project_id}/papers/{paper_id}/evidence",
+  "mock": true,
+  "success": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/papers/babaff3e-8201-536d-aa17-ffb7e9b7b91d/evidence",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 200,
+      "content_type": "application/json",
+      "body": {
+        "items": [
+          {
+            "kind": "evidence",
+            "evidence_id": "7aa2e093-c452-40b8-9782-444f1fecf7b7",
+            "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+            "research_question": {
+              "text": "【Mock】待人工核验的合成证据",
+              "status": "pending_verification",
+              "sources": [
+                {
+                  "citation_id": "1",
+                  "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+                  "chunk_id": "70b17c47-566d-59cd-ab8b-ad20f55ac2f8",
+                  "page_number": 1,
+                  "excerpt": "【合成片段】本示例展示检索增强生成的来源定位，不代表真实论文或实验结论。",
+                  "synthetic": true
+                }
+              ]
+            },
+            "method": {
+              "text": "【Mock】待人工核验的合成证据",
+              "status": "pending_verification",
+              "sources": [
+                {
+                  "citation_id": "1",
+                  "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+                  "chunk_id": "70b17c47-566d-59cd-ab8b-ad20f55ac2f8",
+                  "page_number": 1,
+                  "excerpt": "【合成片段】本示例展示检索增强生成的来源定位，不代表真实论文或实验结论。",
+                  "synthetic": true
+                }
+              ]
+            },
+            "results": {
+              "text": "【Mock】待人工核验的合成证据",
+              "status": "pending_verification",
+              "sources": [
+                {
+                  "citation_id": "1",
+                  "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+                  "chunk_id": "70b17c47-566d-59cd-ab8b-ad20f55ac2f8",
+                  "page_number": 1,
+                  "excerpt": "【合成片段】本示例展示检索增强生成的来源定位，不代表真实论文或实验结论。",
+                  "synthetic": true
+                }
+              ]
+            },
+            "conclusion": {
+              "text": "【Mock】待人工核验的合成证据",
+              "status": "pending_verification",
+              "sources": [
+                {
+                  "citation_id": "1",
+                  "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+                  "chunk_id": "70b17c47-566d-59cd-ab8b-ad20f55ac2f8",
+                  "page_number": 1,
+                  "excerpt": "【合成片段】本示例展示检索增强生成的来源定位，不代表真实论文或实验结论。",
+                  "synthetic": true
+                }
+              ]
+            },
+            "limitations": {
+              "text": null,
+              "status": "not_mentioned",
+              "sources": []
+            },
+            "mock": true
+          }
+        ],
+        "mock": true
+      }
+    }
+  },
+  "error": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/papers/babaff3e-8201-536d-aa17-ffb7e9b7b91d/evidence",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 401,
+      "content_type": "application/json",
+      "body": {
+        "code": "UNAUTHENTICATED",
+        "message": "请先登录",
+        "request_id": "23facd91-8f3f-494e-a098-5bc04f7e71b1"
+      }
+    }
+  }
+}

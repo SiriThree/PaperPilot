@@ -1,0 +1,62 @@
+{
+  "method": "post",
+  "path_template": "/api/v1/projects/{project_id}/secure-queries",
+  "mock": true,
+  "success": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/secure-queries",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      },
+      "body": {
+        "question": "按年份统计论文数量"
+      }
+    },
+    "response": {
+      "status": 200,
+      "content_type": "application/json",
+      "body": {
+        "decision": "allowed",
+        "execution_status": "executed",
+        "columns": [
+          "year",
+          "count"
+        ],
+        "rows": [
+          {
+            "year": 2024,
+            "count": 1
+          },
+          {
+            "year": null,
+            "count": 1
+          }
+        ],
+        "reason": null,
+        "policy_id": "mock-intents-v1",
+        "request_id": "707454ab-3bd8-4aee-bde9-291c562315a9",
+        "mock": true
+      }
+    }
+  },
+  "error": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/secure-queries",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      },
+      "body": {
+        "question": "按年份统计论文数量"
+      }
+    },
+    "response": {
+      "status": 401,
+      "content_type": "application/json",
+      "body": {
+        "code": "UNAUTHENTICATED",
+        "message": "请先登录",
+        "request_id": "ffca0033-89bb-4a03-bd37-0f8df772ca4d"
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "method": "get",
+  "path_template": "/api/v1/projects/{project_id}/reports/{report_id}/versions/{version_id}/text",
+  "mock": true,
+  "success": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/reports/73221aa0-7669-4b73-9cd4-c323ca9f2a9b/versions/5cc0bff9-e108-4d93-83ac-0dcbbbbf30bc/text",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 200,
+      "content_type": "text/plain",
+      "body": "合成报告内容 [1]"
+    }
+  },
+  "error": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/reports/73221aa0-7669-4b73-9cd4-c323ca9f2a9b/versions/5cc0bff9-e108-4d93-83ac-0dcbbbbf30bc/text",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 401,
+      "content_type": "application/json",
+      "body": {
+        "code": "UNAUTHENTICATED",
+        "message": "请先登录",
+        "request_id": "80f622be-5296-4690-8dfd-bd73039593a7"
+      }
+    }
+  }
+}

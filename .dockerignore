@@ -1,0 +1,13 @@
+.git
+.venv
+.runtime
+.env
+.env.*
+**/node_modules
+**/__pycache__
+**/*.egg-info
+frontend/dist
+frontend/test-results
+frontend/playwright-report
+output
+tmp

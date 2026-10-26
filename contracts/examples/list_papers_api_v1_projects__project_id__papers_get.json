@@ -1,0 +1,47 @@
+{
+  "method": "get",
+  "path_template": "/api/v1/projects/{project_id}/papers",
+  "mock": true,
+  "success": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/papers",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 200,
+      "content_type": "application/json",
+      "body": {
+        "items": [
+          {
+            "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "title": "合成示例：检索增强生成的证据核验",
+            "year": 2024,
+            "status": "searchable",
+            "mock": true
+          }
+        ],
+        "mock": true
+      }
+    }
+  },
+  "error": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/papers",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 401,
+      "content_type": "application/json",
+      "body": {
+        "code": "UNAUTHENTICATED",
+        "message": "请先登录",
+        "request_id": "39397535-2ba6-43b3-97f9-7c09ff65e400"
+      }
+    }
+  }
+}

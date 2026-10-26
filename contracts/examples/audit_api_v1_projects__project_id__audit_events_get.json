@@ -1,0 +1,322 @@
+{
+  "method": "get",
+  "path_template": "/api/v1/projects/{project_id}/audit-events",
+  "mock": true,
+  "success": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/audit-events",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 200,
+      "content_type": "application/json",
+      "body": {
+        "items": [
+          {
+            "event_id": "d3e2326c-da48-45bd-b651-3c65f47f73ef",
+            "timestamp": "2026-10-26T07:44:45.985348Z",
+            "request_id": "dd90789e-1050-44d6-a73c-6212122097c9",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "answer.completed",
+            "resource_type": "answer",
+            "decision": "allowed",
+            "policy_id": null,
+            "execution_status": "completed",
+            "duration_ms": 0.0,
+            "mock": true
+          },
+          {
+            "event_id": "096d02b9-3a9c-40b1-a88d-6ae5032cd7ce",
+            "timestamp": "2026-10-26T07:44:45.868683Z",
+            "request_id": "dd90789e-1050-44d6-a73c-6212122097c9",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "answer.requested",
+            "resource_type": "answer",
+            "decision": "allowed",
+            "policy_id": null,
+            "execution_status": "pending",
+            "duration_ms": 0.0,
+            "mock": true
+          },
+          {
+            "event_id": "bd0fc2a0-5045-4f62-b32b-b437eaff4354",
+            "timestamp": "2026-10-26T07:44:45.866693Z",
+            "request_id": "93e06368-c801-4fae-bad6-7dd47b6d9c25",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "secure_query.finished",
+            "resource_type": "secure_query",
+            "decision": "undetermined",
+            "policy_id": null,
+            "execution_status": "failed",
+            "duration_ms": 0.0030999653972685337,
+            "mock": true
+          },
+          {
+            "event_id": "4e3f87ab-5891-4bd6-8736-2279822fe123",
+            "timestamp": "2026-10-26T07:44:45.866693Z",
+            "request_id": "93e06368-c801-4fae-bad6-7dd47b6d9c25",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "secure_query.requested",
+            "resource_type": "secure_query",
+            "decision": "allowed",
+            "policy_id": null,
+            "execution_status": "pending",
+            "duration_ms": 0.0,
+            "mock": true
+          },
+          {
+            "event_id": "09a8b03f-561e-4b6b-80d5-13971916cea2",
+            "timestamp": "2026-10-26T07:44:45.864685Z",
+            "request_id": "98fb8c3d-c286-4224-8263-30bda5e216ff",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "secure_query.finished",
+            "resource_type": "secure_query",
+            "decision": "undetermined",
+            "policy_id": "mock-intents-v1",
+            "execution_status": "failed",
+            "duration_ms": 0.012499978765845299,
+            "mock": true
+          },
+          {
+            "event_id": "e6c635e8-9bbd-45d8-a084-9c79dcb8af32",
+            "timestamp": "2026-10-26T07:44:45.864685Z",
+            "request_id": "98fb8c3d-c286-4224-8263-30bda5e216ff",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "secure_query.requested",
+            "resource_type": "secure_query",
+            "decision": "allowed",
+            "policy_id": null,
+            "execution_status": "pending",
+            "duration_ms": 0.0,
+            "mock": true
+          },
+          {
+            "event_id": "aa15f5a6-48fc-4617-a0a6-b0dda9f8219e",
+            "timestamp": "2026-10-26T07:44:45.862683Z",
+            "request_id": "bec67058-3777-486f-9502-05e9602338af",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "secure_query.finished",
+            "resource_type": "secure_query",
+            "decision": "rejected",
+            "policy_id": "mock-intents-v1",
+            "execution_status": "not_executed",
+            "duration_ms": 0.016700010746717453,
+            "mock": true
+          },
+          {
+            "event_id": "3f1d5c55-d4dd-44cb-b27f-120d408c602f",
+            "timestamp": "2026-10-26T07:44:45.862683Z",
+            "request_id": "bec67058-3777-486f-9502-05e9602338af",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "secure_query.requested",
+            "resource_type": "secure_query",
+            "decision": "allowed",
+            "policy_id": null,
+            "execution_status": "pending",
+            "duration_ms": 0.0,
+            "mock": true
+          },
+          {
+            "event_id": "80bdfacd-bf7c-4233-8dfc-76b54256bd9b",
+            "timestamp": "2026-10-26T07:44:45.858682Z",
+            "request_id": "707454ab-3bd8-4aee-bde9-291c562315a9",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "secure_query.finished",
+            "resource_type": "secure_query",
+            "decision": "allowed",
+            "policy_id": "mock-intents-v1",
+            "execution_status": "executed",
+            "duration_ms": 0.06120000034570694,
+            "mock": true
+          },
+          {
+            "event_id": "acaa6ad1-fba7-4717-82a6-bf44e0a897fe",
+            "timestamp": "2026-10-26T07:44:45.858682Z",
+            "request_id": "707454ab-3bd8-4aee-bde9-291c562315a9",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "secure_query.requested",
+            "resource_type": "secure_query",
+            "decision": "allowed",
+            "policy_id": null,
+            "execution_status": "pending",
+            "duration_ms": 0.0,
+            "mock": true
+          },
+          {
+            "event_id": "13bd93f6-cbdc-4f3f-a568-fc64efc27876",
+            "timestamp": "2026-10-26T07:44:45.841468Z",
+            "request_id": "6240f08e-156c-4c92-9b37-c2eb3b9ccb38",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "report.saved",
+            "resource_type": "report",
+            "decision": "allowed",
+            "policy_id": null,
+            "execution_status": "completed",
+            "duration_ms": 0.0,
+            "mock": true
+          },
+          {
+            "event_id": "87b94e19-cead-4161-b376-687b02848f1a",
+            "timestamp": "2026-10-26T07:44:45.836305Z",
+            "request_id": "f5d16948-9aec-4d74-86b3-57aea1144ad4",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "draft.completed",
+            "resource_type": "draft",
+            "decision": "allowed",
+            "policy_id": null,
+            "execution_status": "completed",
+            "duration_ms": 0.0,
+            "mock": true
+          },
+          {
+            "event_id": "5bd3e073-47cb-441f-89db-dd905ed922b9",
+            "timestamp": "2026-10-26T07:44:45.832954Z",
+            "request_id": "a1c4f5e7-c22a-40c2-80e4-013d29fb09ca",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "task.retry_requested",
+            "resource_type": "task",
+            "decision": "allowed",
+            "policy_id": null,
+            "execution_status": "pending",
+            "duration_ms": 0.0,
+            "mock": true
+          },
+          {
+            "event_id": "e53a9ac2-88eb-4302-b1b9-24ca423137a3",
+            "timestamp": "2026-10-26T07:44:45.736570Z",
+            "request_id": "d46fe453-e2f3-461c-af97-71333b7cad42",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "answer.requested",
+            "resource_type": "answer",
+            "decision": "allowed",
+            "policy_id": null,
+            "execution_status": "pending",
+            "duration_ms": 0.0,
+            "mock": true
+          },
+          {
+            "event_id": "05239c82-0702-4c0f-a3df-1d4addf8501e",
+            "timestamp": "2026-10-26T07:44:45.731870Z",
+            "request_id": "f5d16948-9aec-4d74-86b3-57aea1144ad4",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "draft.requested",
+            "resource_type": "draft",
+            "decision": "allowed",
+            "policy_id": null,
+            "execution_status": "pending",
+            "duration_ms": 0.0,
+            "mock": true
+          },
+          {
+            "event_id": "2f17a6e3-4033-4552-a1bb-7ef544dd7f9a",
+            "timestamp": "2026-10-26T07:44:45.723986Z",
+            "request_id": "e88d20f0-a1e9-48bb-8f4a-8839052cacca",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "evidence.completed",
+            "resource_type": "evidence",
+            "decision": "allowed",
+            "policy_id": null,
+            "execution_status": "completed",
+            "duration_ms": 0.0,
+            "mock": true
+          },
+          {
+            "event_id": "7a20b26a-f4e7-4938-9e01-31c4e3ee74f1",
+            "timestamp": "2026-10-26T07:44:45.628175Z",
+            "request_id": "e88d20f0-a1e9-48bb-8f4a-8839052cacca",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "evidence.requested",
+            "resource_type": "evidence",
+            "decision": "allowed",
+            "policy_id": null,
+            "execution_status": "pending",
+            "duration_ms": 0.0,
+            "mock": true
+          },
+          {
+            "event_id": "4fcbe931-a69b-4917-8a19-e2ae6d034789",
+            "timestamp": "2026-10-26T07:44:45.618581Z",
+            "request_id": "ba919f52-89c4-449f-9aab-3fc8706398b2",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "answer.completed",
+            "resource_type": "answer",
+            "decision": "allowed",
+            "policy_id": null,
+            "execution_status": "completed",
+            "duration_ms": 0.0,
+            "mock": true
+          },
+          {
+            "event_id": "b4ccbfeb-fb01-48c2-a876-51bc89f04baa",
+            "timestamp": "2026-10-26T07:44:45.532273Z",
+            "request_id": "ba919f52-89c4-449f-9aab-3fc8706398b2",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "answer.requested",
+            "resource_type": "answer",
+            "decision": "allowed",
+            "policy_id": null,
+            "execution_status": "pending",
+            "duration_ms": 0.0,
+            "mock": true
+          },
+          {
+            "event_id": "519a62e2-9565-47fe-b9ae-bdf6a70da9ef",
+            "timestamp": "2026-10-26T07:44:45.520839Z",
+            "request_id": "0d3f4a89-3312-406d-bd0c-08b2a0aab5aa",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "process.completed",
+            "resource_type": "process",
+            "decision": "allowed",
+            "policy_id": null,
+            "execution_status": "completed",
+            "duration_ms": 0.0,
+            "mock": true
+          }
+        ],
+        "total": 23,
+        "offset": 0,
+        "limit": 20,
+        "mock": true
+      }
+    }
+  },
+  "error": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/audit-events",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 401,
+      "content_type": "application/json",
+      "body": {
+        "code": "UNAUTHENTICATED",
+        "message": "请先登录",
+        "request_id": "4a45115c-12af-4764-b491-20e7dfc87520"
+      }
+    }
+  }
+}

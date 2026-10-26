@@ -1,0 +1,38 @@
+{
+  "method": "post",
+  "path_template": "/api/v1/auth/logout",
+  "mock": true,
+  "success": {
+    "request": {
+      "path": "/api/v1/auth/logout",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 200,
+      "content_type": "application/json",
+      "body": {
+        "message": "已退出开发会话",
+        "mock": true
+      }
+    }
+  },
+  "error": {
+    "request": {
+      "path": "/api/v1/auth/logout",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 401,
+      "content_type": "application/json",
+      "body": {
+        "code": "UNAUTHENTICATED",
+        "message": "请先登录",
+        "request_id": "aeaf1d10-5b3d-449b-94e6-535dc7304201"
+      }
+    }
+  }
+}

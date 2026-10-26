@@ -1,0 +1,49 @@
+{
+  "method": "post",
+  "path_template": "/api/v1/auth/login",
+  "mock": true,
+  "success": {
+    "request": {
+      "path": "/api/v1/auth/login",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      },
+      "body": {
+        "username": "alice"
+      }
+    },
+    "response": {
+      "status": 200,
+      "content_type": "application/json",
+      "body": {
+        "user": {
+          "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+          "username": "alice",
+          "display_name": "Alice"
+        },
+        "mock": true,
+        "authentication": "development_identity_only"
+      }
+    }
+  },
+  "error": {
+    "request": {
+      "path": "/api/v1/auth/login",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      },
+      "body": {
+        "username": "unknown"
+      }
+    },
+    "response": {
+      "status": 401,
+      "content_type": "application/json",
+      "body": {
+        "code": "INVALID_IDENTITY",
+        "message": "开发演示账户不存在",
+        "request_id": "68557d03-b172-46cb-9632-f613d8697009"
+      }
+    }
+  }
+}

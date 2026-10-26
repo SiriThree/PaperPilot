@@ -1,0 +1,43 @@
+{
+  "method": "get",
+  "path_template": "/api/v1/auth/me",
+  "mock": true,
+  "success": {
+    "request": {
+      "path": "/api/v1/auth/me",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 200,
+      "content_type": "application/json",
+      "body": {
+        "user": {
+          "user_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+          "username": "alice",
+          "display_name": "Alice"
+        },
+        "mock": true,
+        "authentication": "development_identity_only"
+      }
+    }
+  },
+  "error": {
+    "request": {
+      "path": "/api/v1/auth/me",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 401,
+      "content_type": "application/json",
+      "body": {
+        "code": "UNAUTHENTICATED",
+        "message": "请先登录",
+        "request_id": "52299767-4906-40d2-a11d-bd11b0a74778"
+      }
+    }
+  }
+}

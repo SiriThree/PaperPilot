@@ -1,0 +1,49 @@
+{
+  "method": "get",
+  "path_template": "/api/v1/health",
+  "mock": true,
+  "success": {
+    "request": {
+      "path": "/api/v1/health",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 200,
+      "content_type": "application/json",
+      "body": {
+        "status": "ok",
+        "modes": {
+          "a": "mock",
+          "c": "mock",
+          "d": "mock"
+        },
+        "mock": true,
+        "limitations": [
+          "development_identity_only",
+          "in_memory_data_lost_on_restart",
+          "synthetic_ai",
+          "no_real_sql_gateway"
+        ]
+      }
+    }
+  },
+  "error": {
+    "request": {
+      "path": "/api/v1/health",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 400,
+      "content_type": "application/json",
+      "body": {
+        "code": "VALIDATION_ERROR",
+        "message": "请求长度格式不正确",
+        "request_id": "ff50369a-7be7-4dd1-8df9-8a0d57ff859f"
+      }
+    }
+  }
+}

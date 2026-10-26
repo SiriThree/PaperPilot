@@ -1,0 +1,60 @@
+{
+  "method": "get",
+  "path_template": "/api/v1/projects/{project_id}/reports",
+  "mock": true,
+  "success": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/reports",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 200,
+      "content_type": "application/json",
+      "body": {
+        "items": [
+          {
+            "report_id": "73221aa0-7669-4b73-9cd4-c323ca9f2a9b",
+            "version_id": "5cc0bff9-e108-4d93-83ac-0dcbbbbf30bc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "number": 1,
+            "title": "Mock 综述",
+            "research_question": "来源核验",
+            "body": "合成报告内容 [1]",
+            "sources": [
+              {
+                "citation_id": "1",
+                "paper_id": "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+                "chunk_id": "70b17c47-566d-59cd-ab8b-ad20f55ac2f8",
+                "page_number": 1,
+                "excerpt": "【合成片段】本示例展示检索增强生成的来源定位，不代表真实论文或实验结论。",
+                "synthetic": true
+              }
+            ],
+            "created_at": "2026-10-26T07:44:45.841468Z",
+            "mock": true
+          }
+        ],
+        "mock": true
+      }
+    }
+  },
+  "error": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/reports",
+      "headers": {
+        "X-PaperPilot-Client": "web"
+      }
+    },
+    "response": {
+      "status": 401,
+      "content_type": "application/json",
+      "body": {
+        "code": "UNAUTHENTICATED",
+        "message": "请先登录",
+        "request_id": "71b84381-939c-4a10-995a-e36238019833"
+      }
+    }
+  }
+}
