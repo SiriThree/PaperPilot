@@ -109,6 +109,7 @@ npm.cmd --prefix frontend run test:e2e
 
 ## 文档入口
 
+- [成员 A：需求分析、分 E-R 图、合并与冲突消解、关系模式及数据字典](docs/data-model/README.md)
 - [成员 A：10 月 26 日 PostgreSQL 开发准备与复跑记录](docs/day0-preparation.md)
 
 - [架构及责任边界](docs/architecture.md)
