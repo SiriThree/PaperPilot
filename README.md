@@ -109,6 +109,8 @@ npm.cmd --prefix frontend run test:e2e
 
 ## 文档入口
 
+- [成员 A：10 月 26 日 PostgreSQL 开发准备与复跑记录](docs/day0-preparation.md)
+
 - [架构及责任边界](docs/architecture.md)
 - [API 契约与错误码](docs/api-contracts.md)
 - [成员开发及交接指南](docs/development-guide.md)

@@ -1,0 +1,2 @@
+# Optional dependencies for scripts/verify_postgres_day0.py; not needed for Mock mode.
+psycopg[binary]>=3.2,<4
