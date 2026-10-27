@@ -1,0 +1,522 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3750" height="3400" viewBox="0 0 3750 3400" role="img" aria-label="PaperPilot 概念总 E-R 图">
+<defs>
+<pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+<path d="M 24 0 L 0 0 0 24" fill="none" stroke="#eeeeee" stroke-width="0.7"/>
+</pattern>
+<style>
+  text { font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', sans-serif; fill: #1b1b1b; }
+  .entity { fill: #ffffff; stroke: #1b1b1b; stroke-width: 1.8; }
+  .rel { fill: #ffffff; stroke: #1b1b1b; stroke-width: 1.8; }
+  .attr { fill: #ffffff; stroke: #1b1b1b; stroke-width: 1.5; }
+  .note-box { fill: #fbfbfb; stroke: #cfcfcf; stroke-width: 1.2; stroke-dasharray: 5 4; }
+  line { stroke: #333333; stroke-width: 1.35; }
+  .title { font-size: 27px; font-weight: 700; }
+  .entity-label { font-weight: 600; }
+  .ident { font-size: 11px; fill: #666666; }
+  .rel-label { font-size: 16px; }
+  .attr-label { font-size: 15px; }
+  .field { font-size: 10.5px; fill: #6a6a6a; }
+  .card { font-size: 17px; }
+  .note { font-size: 13px; fill: #444444; }
+  .legend { font-size: 13px; fill: #555555; }
+  .rule { stroke: #dddddd; stroke-width: 1; }
+  .hop { fill: none; stroke: #333333; stroke-width: 1.35; }
+  .pk-partial { stroke: #1b1b1b; stroke-width: 1.2; stroke-dasharray: 4 3; }
+</style>
+</defs>
+<rect width="3750" height="3400" fill="url(#grid)"/>
+<g class="lines">
+<line x1="1500.0" y1="975.0" x2="1646.1" y2="922.8"/>
+<line x1="1500.0" y1="975.0" x2="1643.0" y2="1019.3"/>
+<line x1="2560.0" y1="1210.0" x2="2494.9" y2="1116.0"/>
+<line x1="3200.0" y1="1450.0" x2="3200.0" y2="1298.0"/>
+<line x1="3200.0" y1="1450.0" x2="3224.6" y2="1622.1"/>
+<line x1="1440.0" y1="455.0" x2="1440.0" y2="368.0"/>
+<line x1="1570.0" y1="455.0" x2="1651.8" y2="354.6"/>
+<line x1="540.0" y1="285.0" x2="459.6" y2="221.3"/>
+<line x1="540.0" y1="375.0" x2="436.9" y2="423.3"/>
+<line x1="650.0" y1="375.0" x2="699.3" y2="463.1"/>
+<line x1="1550.0" y1="1495.0" x2="1587.9" y2="1612.5"/>
+<line x1="1600.0" y1="1495.0" x2="1782.6" y2="1559.7"/>
+<line x1="1600.0" y1="1495.0" x2="1755.4" y2="1723.8"/>
+<line x1="1260.0" y1="1005.0" x2="1296.0" y2="984.8"/>
+<line x1="1260.0" y1="1050.0" x2="1323.3" y2="1081.7"/>
+<line x1="1040.0" y1="1095.0" x2="974.7" y2="1157.0"/>
+<line x1="1106.0" y1="1095.0" x2="1101.0" y2="1282.0"/>
+<line x1="590.0" y1="1455.0" x2="481.4" y2="1419.9"/>
+<line x1="590.0" y1="1500.0" x2="469.0" y2="1519.1"/>
+<line x1="634.0" y1="1545.0" x2="580.0" y2="1643.5"/>
+<line x1="722.0" y1="1545.0" x2="720.4" y2="1692.0"/>
+<line x1="810.0" y1="1545.0" x2="879.2" y2="1664.2"/>
+<line x1="810.0" y1="1536.0" x2="984.3" y2="1580.6"/>
+<line x1="2260.0" y1="1405.0" x2="2246.6" y2="1327.9"/>
+<line x1="2360.0" y1="1405.0" x2="2379.3" y2="1337.3"/>
+<line x1="2280.0" y1="1495.0" x2="2280.0" y2="1602.0"/>
+<line x1="2370.0" y1="1495.0" x2="2411.6" y2="1682.3"/>
+<line x1="2660.0" y1="1005.0" x2="2660.0" y2="918.0"/>
+<line x1="2820.0" y1="1050.0" x2="2878.0" y2="1050.0"/>
+<line x1="2550.0" y1="1995.0" x2="2557.0" y2="2082.0"/>
+<line x1="2750.0" y1="1995.0" x2="2757.2" y2="2092.0"/>
+<line x1="2880.0" y1="1405.0" x2="2880.0" y2="1288.0"/>
+<line x1="3000.0" y1="1495.0" x2="3054.4" y2="1566.4"/>
+<line x1="2990.0" y1="1495.0" x2="2990.0" y2="1722.0"/>
+<line x1="3500.0" y1="1405.0" x2="3500.0" y2="1308.0"/>
+<line x1="3610.0" y1="1495.0" x2="3646.1" y2="1592.6"/>
+<line x1="3456.0" y1="1495.0" x2="3443.7" y2="1622.0"/>
+<line x1="1400.0" y1="2495.0" x2="1297.1" y2="2586.8"/>
+<line x1="1440.0" y1="2495.0" x2="1389.2" y2="2702.4"/>
+<line x1="1500.0" y1="2495.0" x2="1535.0" y2="2762.1"/>
+<line x1="1790.0" y1="2900.0" x2="1710.8" y2="2928.3"/>
+<line x1="1834.0" y1="2945.0" x2="1824.2" y2="3032.1"/>
+<line x1="1966.0" y1="2945.0" x2="2003.9" y2="3032.6"/>
+<line x1="2010.0" y1="2900.0" x2="2138.2" y2="2940.5"/>
+<line x1="2190.0" y1="2405.0" x2="2176.6" y2="2327.9"/>
+<line x1="2322.0" y1="2405.0" x2="2328.0" y2="2288.0"/>
+<line x1="2410.0" y1="2405.0" x2="2456.5" y2="2335.2"/>
+<line x1="2600.0" y1="2945.0" x2="2600.0" y2="3032.0"/>
+<line x1="2490.0" y1="2945.0" x2="2436.7" y2="2989.4"/>
+<line x1="2710.0" y1="2945.0" x2="2772.7" y2="2992.1"/>
+<line x1="3010.0" y1="2405.0" x2="3102.8" y2="2348.7"/>
+<line x1="3010.0" y1="2450.0" x2="3152.0" y2="2450.0"/>
+<line x1="3010.0" y1="2486.0" x2="3155.5" y2="2565.6"/>
+<line x1="3010.0" y1="2495.0" x2="3041.9" y2="2642.3"/>
+<line x1="2000.0" y1="455.0" x2="2000.0" y2="368.0"/>
+<line x1="2200.0" y1="455.0" x2="2200.0" y2="368.0"/>
+<line x1="2590.0" y1="455.0" x2="2569.1" y2="367.7"/>
+<line x1="2711.0" y1="455.0" x2="2714.1" y2="328.0"/>
+<line x1="2810.0" y1="455.0" x2="2845.3" y2="366.6"/>
+<line x1="2590.0" y1="545.0" x2="2461.9" y2="669.1"/>
+<line x1="2700.0" y1="545.0" x2="2700.0" y2="682.0"/>
+<line x1="3306.0" y1="455.0" x2="3294.9" y2="367.9"/>
+<line x1="3460.0" y1="482.0" x2="3549.6" y2="455.1"/>
+<line x1="3460.0" y1="527.0" x2="3547.3" y2="560.0"/>
+<line x1="1500.0" y1="1405.0" x2="1500.0" y2="1023.0"/>
+<line x1="1500.0" y1="545.0" x2="1500.0" y2="927.0"/>
+<line x1="1400.0" y1="545.0" x2="1314.4" y2="763.3"/>
+<line x1="1227.0" y1="1005.0" x2="1286.7" y2="837.3"/>
+<line x1="1260.0" y1="1095.0" x2="1291.6" y2="1233.1"/>
+<line x1="1400.0" y1="1405.0" x2="1321.5" y2="1299.1"/>
+<line x1="1400.0" y1="527.0" x2="927.7" y2="1021.0"/>
+<line x1="700.0" y1="1455.0" x2="882.7" y2="1085.0"/>
+<line x1="810.0" y1="1500.0" x2="1059.6" y2="1484.4"/>
+<line x1="1400.0" y1="1477.0" x2="1206.5" y2="1479.1"/>
+<line x1="760.0" y1="330.0" x2="1001.0" y2="386.2"/>
+<line x1="1400.0" y1="455.0" x2="1125.1" y2="410.5"/>
+<line x1="1400.0" y1="482.0" x2="182.8" y2="1448.9"/>
+<line x1="1400.0" y1="2450.0" x2="183.2" y2="1500.9"/>
+<line x1="1600.0" y1="1450.0" x2="1822.0" y2="1450.0"/>
+<line x1="2200.0" y1="1450.0" x2="1978.0" y2="1450.0"/>
+<line x1="1500.0" y1="1495.0" x2="1500.0" y2="1905.0"/>
+<line x1="1500.0" y1="2405.0" x2="1500.0" y2="1995.0"/>
+<path d="M 1600.0 1405.0 L 2002.9 1154.0 A 9 9 0 0 1 2018.2 1144.5 L 2212.5 1023.4" class="hop"/>
+<line x1="2656.0" y1="545.0" x2="2276.5" y2="970.3"/>
+<line x1="1600.0" y1="545.0" x2="1878.5" y2="967.4"/>
+<line x1="2200.0" y1="1405.0" x2="1923.4" y2="1031.5"/>
+<line x1="2400.0" y1="1405.0" x2="2534.9" y2="1240.5"/>
+<line x1="2620.0" y1="1095.0" x2="2578.0" y2="1175.4"/>
+<line x1="2400.0" y1="1495.0" x2="2571.9" y2="1671.2"/>
+<line x1="2650.0" y1="1905.0" x2="2609.6" y2="1739.4"/>
+<line x1="2400.0" y1="1450.0" x2="2522.0" y2="1450.0"/>
+<line x1="2800.0" y1="1450.0" x2="2678.0" y2="1450.0"/>
+<line x1="3000.0" y1="1450.0" x2="3115.0" y2="1450.0"/>
+<line x1="3390.0" y1="1450.0" x2="3285.0" y2="1450.0"/>
+<line x1="1600.0" y1="500.0" x2="1715.0" y2="500.0"/>
+<line x1="2000.0" y1="500.0" x2="1885.0" y2="500.0"/>
+<line x1="2200.0" y1="500.0" x2="2315.0" y2="500.0"/>
+<line x1="2590.0" y1="500.0" x2="2485.0" y2="500.0"/>
+<line x1="2733.0" y1="545.0" x2="2930.3" y2="705.8"/>
+<line x1="2810.0" y1="536.0" x2="2937.8" y2="701.3"/>
+<line x1="2810.0" y1="500.0" x2="2945.0" y2="500.0"/>
+<line x1="3240.0" y1="500.0" x2="3115.0" y2="500.0"/>
+<line x1="3350.0" y1="545.0" x2="3167.6" y2="914.3"/>
+<line x1="3000.0" y1="1405.0" x2="3137.4" y2="988.3"/>
+<line x1="1600.0" y1="2405.0" x2="1878.0" y2="1983.4"/>
+<line x1="2200.0" y1="1495.0" x2="1922.0" y2="1916.6"/>
+<line x1="1600.0" y1="2495.0" x2="1682.9" y2="2648.3"/>
+<line x1="1790.0" y1="2855.0" x2="1716.5" y2="2712.1"/>
+<line x1="1600.0" y1="2450.0" x2="1822.0" y2="2450.0"/>
+<line x1="2190.0" y1="2450.0" x2="1978.0" y2="2450.0"/>
+<line x1="2010.0" y1="2855.0" x2="2100.8" y2="2710.5"/>
+<line x1="2190.0" y1="2495.0" x2="2133.0" y2="2645.8"/>
+<line x1="2410.0" y1="2495.0" x2="2467.0" y2="2645.8"/>
+<line x1="2490.0" y1="2855.0" x2="2482.3" y2="2720.6"/>
+<line x1="2410.0" y1="2450.0" x2="2580.0" y2="2450.0"/>
+<line x1="2790.0" y1="2450.0" x2="2720.0" y2="2450.0"/>
+<line x1="2710.0" y1="2855.0" x2="2783.5" y2="2712.1"/>
+<line x1="2790.0" y1="2495.0" x2="2797.8" y2="2639.3"/>
+<line x1="2900.0" y1="2405.0" x2="2900.0" y2="2020.0"/>
+<line x1="2900.0" y1="1495.0" x2="2900.0" y2="1930.0"/>
+</g>
+<g class="shapes">
+<rect x="1400.0" y="455.0" width="200.0" height="90.0" rx="2" class="entity"/>
+<rect x="540.0" y="285.0" width="220.0" height="90.0" rx="2" class="entity"/>
+<rect x="1400.0" y="1405.0" width="200.0" height="90.0" rx="2" class="entity"/>
+<rect x="1040.0" y="1005.0" width="220.0" height="90.0" rx="2" class="entity"/>
+<rect x="590.0" y="1455.0" width="220.0" height="90.0" rx="2" class="entity"/>
+<rect x="2200.0" y="1405.0" width="200.0" height="90.0" rx="2" class="entity"/>
+<rect x="2620.0" y="1005.0" width="200.0" height="90.0" rx="2" class="entity"/>
+<rect x="2550.0" y="1905.0" width="200.0" height="90.0" rx="2" class="entity"/>
+<rect x="2800.0" y="1405.0" width="200.0" height="90.0" rx="2" class="entity"/>
+<rect x="3390.0" y="1405.0" width="220.0" height="90.0" rx="2" class="entity"/>
+<rect x="1400.0" y="2405.0" width="200.0" height="90.0" rx="2" class="entity"/>
+<rect x="1790.0" y="2855.0" width="220.0" height="90.0" rx="2" class="entity"/>
+<rect x="2190.0" y="2405.0" width="220.0" height="90.0" rx="2" class="entity"/>
+<rect x="2490.0" y="2855.0" width="220.0" height="90.0" rx="2" class="entity"/>
+<rect x="2790.0" y="2405.0" width="220.0" height="90.0" rx="2" class="entity"/>
+<rect x="2000.0" y="455.0" width="200.0" height="90.0" rx="2" class="entity"/>
+<rect x="2590.0" y="455.0" width="220.0" height="90.0" rx="2" class="entity"/>
+<rect x="3240.0" y="455.0" width="220.0" height="90.0" rx="2" class="entity"/>
+<polygon points="1500.0,927.0 1588.0,975.0 1500.0,1023.0 1412.0,975.0" class="rel"/>
+<polygon points="1300.0,755.0 1378.0,800.0 1300.0,845.0 1222.0,800.0" class="rel"/>
+<polygon points="1300.0,1228.0 1370.0,1270.0 1300.0,1312.0 1230.0,1270.0" class="rel"/>
+<polygon points="900.0,1005.0 978.0,1050.0 900.0,1095.0 822.0,1050.0" class="rel"/>
+<polygon points="1130.0,1435.0 1208.0,1480.0 1130.0,1525.0 1052.0,1480.0" class="rel"/>
+<polygon points="1060.0,355.0 1145.0,400.0 1060.0,445.0 975.0,400.0" class="rel"/>
+<polygon points="150.0,1430.0 228.0,1475.0 150.0,1520.0 72.0,1475.0" class="rel"/>
+<polygon points="1900.0,1405.0 1978.0,1450.0 1900.0,1495.0 1822.0,1450.0" class="rel"/>
+<polygon points="1500.0,1905.0 1578.0,1950.0 1500.0,1995.0 1422.0,1950.0" class="rel"/>
+<polygon points="2250.0,955.0 2328.0,1000.0 2250.0,1045.0 2172.0,1000.0" class="rel"/>
+<polygon points="1900.0,955.0 1978.0,1000.0 1900.0,1045.0 1822.0,1000.0" class="rel"/>
+<polygon points="2560.0,1165.0 2638.0,1210.0 2560.0,1255.0 2482.0,1210.0" class="rel"/>
+<polygon points="2600.0,1655.0 2678.0,1700.0 2600.0,1745.0 2522.0,1700.0" class="rel"/>
+<polygon points="2600.0,1405.0 2678.0,1450.0 2600.0,1495.0 2522.0,1450.0" class="rel"/>
+<polygon points="3200.0,1405.0 3285.0,1450.0 3200.0,1495.0 3115.0,1450.0" class="rel"/>
+<polygon points="1800.0,455.0 1885.0,500.0 1800.0,545.0 1715.0,500.0" class="rel"/>
+<polygon points="2400.0,455.0 2485.0,500.0 2400.0,545.0 2315.0,500.0" class="rel"/>
+<polygon points="2960.0,688.0 3030.0,730.0 2960.0,772.0 2890.0,730.0" class="rel"/>
+<polygon points="3030.0,455.0 3115.0,500.0 3030.0,545.0 2945.0,500.0" class="rel"/>
+<polygon points="3150.0,905.0 3235.0,950.0 3150.0,995.0 3065.0,950.0" class="rel"/>
+<polygon points="1900.0,1905.0 1985.0,1950.0 1900.0,1995.0 1815.0,1950.0" class="rel"/>
+<polygon points="1700.0,2638.0 1770.0,2680.0 1700.0,2722.0 1630.0,2680.0" class="rel"/>
+<polygon points="1900.0,2405.0 1978.0,2450.0 1900.0,2495.0 1822.0,2450.0" class="rel"/>
+<polygon points="2120.0,2638.0 2190.0,2680.0 2120.0,2722.0 2050.0,2680.0" class="rel"/>
+<polygon points="2480.0,2638.0 2550.0,2680.0 2480.0,2722.0 2410.0,2680.0" class="rel"/>
+<polygon points="2650.0,2408.0 2720.0,2450.0 2650.0,2492.0 2580.0,2450.0" class="rel"/>
+<polygon points="2800.0,2638.0 2870.0,2680.0 2800.0,2722.0 2730.0,2680.0" class="rel"/>
+<polygon points="2900.0,1930.0 2978.0,1975.0 2900.0,2020.0 2822.0,1975.0" class="rel"/>
+<ellipse cx="1440.0" cy="330.0" rx="78.0" ry="38.0" class="attr"/>
+<ellipse cx="1680.0" cy="320.0" rx="68.0" ry="38.0" class="attr"/>
+<ellipse cx="420.0" cy="190.0" rx="70.0" ry="38.0" class="attr"/>
+<ellipse cx="380.0" cy="450.0" rx="80.0" ry="38.0" class="attr"/>
+<ellipse cx="720.0" cy="500.0" rx="88.0" ry="38.0" class="attr"/>
+<ellipse cx="1600.0" cy="1650.0" rx="78.0" ry="38.0" class="attr"/>
+<ellipse cx="1840.0" cy="1580.0" rx="68.0" ry="38.0" class="attr"/>
+<ellipse cx="1780.0" cy="1760.0" rx="82.0" ry="38.0" class="attr"/>
+<ellipse cx="1340.0" cy="960.0" rx="58.0" ry="38.0" class="attr"/>
+<ellipse cx="1380.0" cy="1110.0" rx="85.0" ry="38.0" class="attr"/>
+<ellipse cx="940.0" cy="1190.0" rx="70.0" ry="38.0" class="attr"/>
+<ellipse cx="1100.0" cy="1320.0" rx="105.0" ry="38.0" class="attr"/>
+<ellipse cx="420.0" cy="1400.0" rx="72.0" ry="38.0" class="attr"/>
+<ellipse cx="400.0" cy="1530.0" rx="72.0" ry="38.0" class="attr"/>
+<ellipse cx="560.0" cy="1680.0" rx="72.0" ry="38.0" class="attr"/>
+<ellipse cx="720.0" cy="1730.0" rx="60.0" ry="38.0" class="attr"/>
+<ellipse cx="900.0" cy="1700.0" rx="62.0" ry="38.0" class="attr"/>
+<ellipse cx="1060.0" cy="1600.0" rx="88.0" ry="38.0" class="attr"/>
+<ellipse cx="2240.0" cy="1290.0" rx="80.0" ry="38.0" class="attr"/>
+<ellipse cx="2390.0" cy="1300.0" rx="55.0" ry="38.0" class="attr"/>
+<ellipse cx="2280.0" cy="1640.0" rx="52.0" ry="38.0" class="attr"/>
+<ellipse cx="2420.0" cy="1720.0" rx="72.0" ry="38.0" class="attr"/>
+<ellipse cx="2660.0" cy="880.0" rx="75.0" ry="38.0" class="attr"/>
+<ellipse cx="2930.0" cy="1050.0" rx="52.0" ry="38.0" class="attr"/>
+<ellipse cx="2560.0" cy="2120.0" rx="72.0" ry="38.0" class="attr"/>
+<ellipse cx="2760.0" cy="2130.0" rx="68.0" ry="38.0" class="attr"/>
+<ellipse cx="2880.0" cy="1250.0" rx="78.0" ry="38.0" class="attr"/>
+<ellipse cx="3080.0" cy="1600.0" rx="55.0" ry="38.0" class="attr"/>
+<ellipse cx="2990.0" cy="1760.0" rx="70.0" ry="38.0" class="attr"/>
+<ellipse cx="3500.0" cy="1270.0" rx="78.0" ry="38.0" class="attr"/>
+<ellipse cx="3660.0" cy="1630.0" rx="80.0" ry="38.0" class="attr"/>
+<ellipse cx="3440.0" cy="1660.0" rx="72.0" ry="38.0" class="attr"/>
+<ellipse cx="1260.0" cy="2620.0" rx="76.0" ry="38.0" class="attr"/>
+<ellipse cx="1380.0" cy="2740.0" rx="62.0" ry="38.0" class="attr"/>
+<ellipse cx="1540.0" cy="2800.0" rx="62.0" ry="38.0" class="attr"/>
+<ellipse cx="1650.0" cy="2950.0" rx="74.0" ry="38.0" class="attr"/>
+<ellipse cx="1820.0" cy="3070.0" rx="55.0" ry="38.0" class="attr"/>
+<ellipse cx="2020.0" cy="3070.0" rx="90.0" ry="38.0" class="attr"/>
+<ellipse cx="2200.0" cy="2960.0" rx="72.0" ry="38.0" class="attr"/>
+<ellipse cx="2170.0" cy="2290.0" rx="78.0" ry="38.0" class="attr"/>
+<ellipse cx="2330.0" cy="2250.0" rx="62.0" ry="38.0" class="attr"/>
+<ellipse cx="2480.0" cy="2300.0" rx="62.0" ry="38.0" class="attr"/>
+<ellipse cx="2600.0" cy="3070.0" rx="88.0" ry="38.0" class="attr"/>
+<ellipse cx="2400.0" cy="3020.0" rx="62.0" ry="38.0" class="attr"/>
+<ellipse cx="2810.0" cy="3020.0" rx="55.0" ry="38.0" class="attr"/>
+<ellipse cx="3150.0" cy="2320.0" rx="72.0" ry="38.0" class="attr"/>
+<ellipse cx="3230.0" cy="2450.0" rx="78.0" ry="38.0" class="attr"/>
+<ellipse cx="3200.0" cy="2590.0" rx="58.0" ry="38.0" class="attr"/>
+<ellipse cx="3050.0" cy="2680.0" rx="62.0" ry="38.0" class="attr"/>
+<ellipse cx="2000.0" cy="330.0" rx="75.0" ry="38.0" class="attr"/>
+<ellipse cx="2200.0" cy="330.0" rx="72.0" ry="38.0" class="attr"/>
+<ellipse cx="2560.0" cy="330.0" rx="75.0" ry="38.0" class="attr"/>
+<ellipse cx="2715.0" cy="290.0" rx="62.0" ry="38.0" class="attr"/>
+<ellipse cx="2860.0" cy="330.0" rx="55.0" ry="38.0" class="attr"/>
+<ellipse cx="2430.0" cy="700.0" rx="55.0" ry="38.0" class="attr"/>
+<ellipse cx="2700.0" cy="720.0" rx="88.0" ry="38.0" class="attr"/>
+<ellipse cx="3290.0" cy="330.0" rx="72.0" ry="38.0" class="attr"/>
+<ellipse cx="3600.0" cy="440.0" rx="55.0" ry="38.0" class="attr"/>
+<ellipse cx="3600.0" cy="580.0" rx="62.0" ry="38.0" class="attr"/>
+<ellipse cx="1710.0" cy="900.0" rx="80.0" ry="38.0" class="attr"/>
+<ellipse cx="1710.0" cy="1040.0" rx="80.0" ry="38.0" class="attr"/>
+<ellipse cx="2470.0" cy="1080.0" rx="78.0" ry="38.0" class="attr"/>
+<ellipse cx="3200.0" cy="1260.0" rx="75.0" ry="38.0" class="attr"/>
+<ellipse cx="3230.0" cy="1660.0" rx="75.0" ry="38.0" class="attr"/>
+</g>
+<g class="labels">
+<text x="1518.0" y="1321.0" text-anchor="middle" class="card">N</text>
+<text x="1518.0" y="629.0" text-anchor="middle" class="card">M</text>
+<text x="1364.4" y="586.5" text-anchor="middle" class="card">1</text>
+<text x="1257.1" y="974.2" text-anchor="middle" class="card">N</text>
+<text x="1249.4" y="1129.4" text-anchor="middle" class="card">N</text>
+<text x="1397.2" y="1371.0" text-anchor="middle" class="card">1</text>
+<text x="1283.1" y="623.2" text-anchor="middle" class="card">1</text>
+<text x="756.3" y="1381.6" text-anchor="middle" class="card">N</text>
+<text x="866.0" y="1514.5" text-anchor="middle" class="card">N</text>
+<text x="1357.2" y="1459.5" text-anchor="middle" class="card">1</text>
+<text x="808.9" y="359.9" text-anchor="middle" class="card">N</text>
+<text x="1342.4" y="427.4" text-anchor="middle" class="card">1</text>
+<text x="1121.0" y="680.6" text-anchor="middle" class="card">1</text>
+<text x="1143.4" y="2227.0" text-anchor="middle" class="card">N</text>
+<text x="1648.8" y="1432.0" text-anchor="middle" class="card">1</text>
+<text x="2151.2" y="1432.0" text-anchor="middle" class="card">N</text>
+<text x="1518.0" y="1585.2" text-anchor="middle" class="card">1</text>
+<text x="1518.0" y="2314.8" text-anchor="middle" class="card">N</text>
+<text x="1744.3" y="1336.3" text-anchor="middle" class="card">1</text>
+<text x="2559.1" y="626.6" text-anchor="middle" class="card">N</text>
+<text x="1646.2" y="647.8" text-anchor="middle" class="card">1</text>
+<text x="2153.6" y="1312.1" text-anchor="middle" class="card">N</text>
+<text x="2443.6" y="1380.2" text-anchor="middle" class="card">N</text>
+<text x="2594.8" y="1104.4" text-anchor="middle" class="card">M</text>
+<text x="2424.9" y="1546.3" text-anchor="middle" class="card">N</text>
+<text x="2658.6" y="1864.3" text-anchor="middle" class="card">M</text>
+<text x="2426.8" y="1432.0" text-anchor="middle" class="card">1</text>
+<text x="2773.2" y="1432.0" text-anchor="middle" class="card">N</text>
+<text x="3025.3" y="1432.0" text-anchor="middle" class="card">N</text>
+<text x="3366.9" y="1432.0" text-anchor="middle" class="card">M</text>
+<text x="1625.3" y="482.0" text-anchor="middle" class="card">1</text>
+<text x="1974.7" y="482.0" text-anchor="middle" class="card">N</text>
+<text x="2225.3" y="482.0" text-anchor="middle" class="card">1</text>
+<text x="2566.9" y="482.0" text-anchor="middle" class="card">N</text>
+<text x="2765.0" y="594.3" text-anchor="middle" class="card">1</text>
+<text x="2823.9" y="583.4" text-anchor="middle" class="card">1</text>
+<text x="2839.7" y="482.0" text-anchor="middle" class="card">1</text>
+<text x="3212.5" y="482.0" text-anchor="middle" class="card">N</text>
+<text x="3293.7" y="618.3" text-anchor="middle" class="card">N</text>
+<text x="3047.3" y="1319.0" text-anchor="middle" class="card">1</text>
+<text x="1676.2" y="2322.1" text-anchor="middle" class="card">N</text>
+<text x="2123.8" y="1577.9" text-anchor="middle" class="card">M</text>
+<text x="1602.4" y="2537.3" text-anchor="middle" class="card">1</text>
+<text x="1789.8" y="2815.3" text-anchor="middle" class="card">N</text>
+<text x="1648.8" y="2432.0" text-anchor="middle" class="card">1</text>
+<text x="2143.4" y="2432.0" text-anchor="middle" class="card">1</text>
+<text x="2045.2" y="2832.8" text-anchor="middle" class="card">1</text>
+<text x="2160.6" y="2521.8" text-anchor="middle" class="card">1</text>
+<text x="2405.7" y="2534.5" text-anchor="middle" class="card">1</text>
+<text x="2506.3" y="2824.4" text-anchor="middle" class="card">N</text>
+<text x="2447.4" y="2432.0" text-anchor="middle" class="card">1</text>
+<text x="2774.6" y="2432.0" text-anchor="middle" class="card">N</text>
+<text x="2742.2" y="2831.8" text-anchor="middle" class="card">1</text>
+<text x="2773.7" y="2527.7" text-anchor="middle" class="card">N</text>
+<text x="2918.0" y="2320.3" text-anchor="middle" class="card">N</text>
+<text x="2918.0" y="1590.7" text-anchor="middle" class="card">1</text>
+<text x="1500.0" y="495.0" text-anchor="middle" class="entity-label" font-size="18">研究项目</text>
+<text x="1500.0" y="519.0" text-anchor="middle" class="ident">PROJECT</text>
+<text x="650.0" y="325.0" text-anchor="middle" class="entity-label" font-size="18">待投递领域事件</text>
+<text x="650.0" y="349.0" text-anchor="middle" class="ident">OUTBOX_EVENT</text>
+<text x="1500.0" y="1445.0" text-anchor="middle" class="entity-label" font-size="18">用户</text>
+<text x="1500.0" y="1469.0" text-anchor="middle" class="ident">USER</text>
+<text x="1150.0" y="1045.0" text-anchor="middle" class="entity-label" font-size="18">幂等记录</text>
+<text x="1150.0" y="1069.0" text-anchor="middle" class="ident">IDEMPOTENCY_RECORD</text>
+<text x="700.0" y="1495.0" text-anchor="middle" class="entity-label" font-size="18">审计事件</text>
+<text x="700.0" y="1519.0" text-anchor="middle" class="ident">AUDIT_EVENT</text>
+<text x="2300.0" y="1445.0" text-anchor="middle" class="entity-label" font-size="18">论文</text>
+<text x="2300.0" y="1469.0" text-anchor="middle" class="ident">PAPER</text>
+<text x="2720.0" y="1045.0" text-anchor="middle" class="entity-label" font-size="18">作者</text>
+<text x="2720.0" y="1069.0" text-anchor="middle" class="ident">AUTHOR</text>
+<text x="2650.0" y="1945.0" text-anchor="middle" class="entity-label" font-size="18">研究主题</text>
+<text x="2650.0" y="1969.0" text-anchor="middle" class="ident">TOPIC</text>
+<text x="2900.0" y="1445.0" text-anchor="middle" class="entity-label" font-size="18">原文片段</text>
+<text x="2900.0" y="1469.0" text-anchor="middle" class="ident">CHUNK</text>
+<text x="3500.0" y="1445.0" text-anchor="middle" class="entity-label" font-size="18">向量模型</text>
+<text x="3500.0" y="1469.0" text-anchor="middle" class="ident">EMBEDDING_MODEL</text>
+<text x="1500.0" y="2445.0" text-anchor="middle" class="entity-label" font-size="18">处理任务</text>
+<text x="1500.0" y="2469.0" text-anchor="middle" class="ident">TASK</text>
+<text x="1900.0" y="2895.0" text-anchor="middle" class="entity-label" font-size="18">执行尝试</text>
+<text x="1900.0" y="2919.0" text-anchor="middle" class="ident">TASK_ATTEMPT</text>
+<text x="2300.0" y="2445.0" text-anchor="middle" class="entity-label" font-size="18">研究结果</text>
+<text x="2300.0" y="2469.0" text-anchor="middle" class="ident">TASK_RESULT</text>
+<text x="2600.0" y="2895.0" text-anchor="middle" class="entity-label" font-size="18">证据字段</text>
+<text x="2600.0" y="2919.0" text-anchor="middle" class="ident">EVIDENCE_FIELD</text>
+<text x="2900.0" y="2445.0" text-anchor="middle" class="entity-label" font-size="18">结果来源</text>
+<text x="2900.0" y="2469.0" text-anchor="middle" class="ident">RESULT_SOURCE</text>
+<text x="2100.0" y="495.0" text-anchor="middle" class="entity-label" font-size="18">研究报告</text>
+<text x="2100.0" y="519.0" text-anchor="middle" class="ident">REPORT</text>
+<text x="2700.0" y="495.0" text-anchor="middle" class="entity-label" font-size="18">报告版本</text>
+<text x="2700.0" y="519.0" text-anchor="middle" class="ident">REPORT_VERSION</text>
+<text x="3350.0" y="495.0" text-anchor="middle" class="entity-label" font-size="18">版本引用快照</text>
+<text x="3350.0" y="519.0" text-anchor="middle" class="ident">VERSION_SOURCE</text>
+<text x="1500.0" y="980.0" text-anchor="middle" class="rel-label">参与</text>
+<text x="1300.0" y="805.0" text-anchor="middle" class="rel-label">幂等归属</text>
+<text x="1300.0" y="1275.0" text-anchor="middle" class="rel-label">提交请求</text>
+<text x="900.0" y="1055.0" text-anchor="middle" class="rel-label">审计归属</text>
+<text x="1130.0" y="1485.0" text-anchor="middle" class="rel-label">执行动作</text>
+<text x="1060.0" y="405.0" text-anchor="middle" class="rel-label">事件归属</text>
+<text x="150.0" y="1480.0" text-anchor="middle" class="rel-label">调度</text>
+<text x="1900.0" y="1455.0" text-anchor="middle" class="rel-label">上传</text>
+<text x="1500.0" y="1955.0" text-anchor="middle" class="rel-label">发起</text>
+<text x="2250.0" y="1005.0" text-anchor="middle" class="rel-label">保存</text>
+<text x="1900.0" y="1005.0" text-anchor="middle" class="rel-label">导入</text>
+<text x="2560.0" y="1215.0" text-anchor="middle" class="rel-label">撰写</text>
+<text x="2600.0" y="1705.0" text-anchor="middle" class="rel-label">归类</text>
+<text x="2600.0" y="1455.0" text-anchor="middle" class="rel-label">切分</text>
+<text x="3200.0" y="1455.0" text-anchor="middle" class="rel-label">向量化</text>
+<text x="1800.0" y="505.0" text-anchor="middle" class="rel-label">管理报告</text>
+<text x="2400.0" y="505.0" text-anchor="middle" class="rel-label">保存版本</text>
+<text x="2960.0" y="735.0" text-anchor="middle" class="rel-label">基于</text>
+<text x="3030.0" y="505.0" text-anchor="middle" class="rel-label">保留快照</text>
+<text x="3150.0" y="955.0" text-anchor="middle" class="rel-label">快照定位</text>
+<text x="1900.0" y="1955.0" text-anchor="middle" class="rel-label">选定范围</text>
+<text x="1700.0" y="2685.0" text-anchor="middle" class="rel-label">领取</text>
+<text x="1900.0" y="2455.0" text-anchor="middle" class="rel-label">产生</text>
+<text x="2120.0" y="2685.0" text-anchor="middle" class="rel-label">采纳</text>
+<text x="2480.0" y="2685.0" text-anchor="middle" class="rel-label">提取</text>
+<text x="2650.0" y="2455.0" text-anchor="middle" class="rel-label">引用</text>
+<text x="2800.0" y="2685.0" text-anchor="middle" class="rel-label">支撑</text>
+<text x="2900.0" y="1980.0" text-anchor="middle" class="rel-label">定位</text>
+<text x="1440.0" y="327.0" text-anchor="middle" class="attr-label" text-decoration="underline">项目编号</text>
+<text x="1440.0" y="346.0" text-anchor="middle" class="field">project_id</text>
+<text x="1680.0" y="317.0" text-anchor="middle" class="attr-label">项目名称</text>
+<text x="1680.0" y="336.0" text-anchor="middle" class="field">name</text>
+<text x="420.0" y="187.0" text-anchor="middle" class="attr-label" text-decoration="underline">事件编号</text>
+<text x="420.0" y="206.0" text-anchor="middle" class="field">event_id</text>
+<text x="380.0" y="447.0" text-anchor="middle" class="attr-label">投递次数</text>
+<text x="380.0" y="466.0" text-anchor="middle" class="field">delivery_attempts</text>
+<text x="720.0" y="497.0" text-anchor="middle" class="attr-label">确认投递时间</text>
+<text x="720.0" y="516.0" text-anchor="middle" class="field">published_at</text>
+<text x="1600.0" y="1647.0" text-anchor="middle" class="attr-label" text-decoration="underline">用户编号</text>
+<text x="1600.0" y="1666.0" text-anchor="middle" class="field">user_id</text>
+<text x="1840.0" y="1577.0" text-anchor="middle" class="attr-label">用户名</text>
+<text x="1840.0" y="1596.0" text-anchor="middle" class="field">username</text>
+<text x="1780.0" y="1757.0" text-anchor="middle" class="attr-label">显示名</text>
+<text x="1780.0" y="1776.0" text-anchor="middle" class="field">display_name</text>
+<text x="1340.0" y="957.0" text-anchor="middle" class="attr-label">幂等键</text>
+<line x1="1317.5" y1="960.5" x2="1362.5" y2="960.5" class="pk-partial"/>
+<text x="1340.0" y="976.0" text-anchor="middle" class="field">key</text>
+<text x="1380.0" y="1107.0" text-anchor="middle" class="attr-label">响应快照</text>
+<text x="1380.0" y="1126.0" text-anchor="middle" class="field">response_snapshot</text>
+<text x="940.0" y="1187.0" text-anchor="middle" class="attr-label">业务操作</text>
+<line x1="910.0" y1="1190.5" x2="970.0" y2="1190.5" class="pk-partial"/>
+<text x="940.0" y="1206.0" text-anchor="middle" class="field">operation</text>
+<text x="1100.0" y="1317.0" text-anchor="middle" class="attr-label">请求指纹</text>
+<text x="1100.0" y="1336.0" text-anchor="middle" class="field">request_fingerprint</text>
+<text x="420.0" y="1397.0" text-anchor="middle" class="attr-label" text-decoration="underline">事件编号</text>
+<text x="420.0" y="1416.0" text-anchor="middle" class="field">event_id</text>
+<text x="400.0" y="1527.0" text-anchor="middle" class="attr-label">发生时间</text>
+<text x="400.0" y="1546.0" text-anchor="middle" class="field">timestamp</text>
+<text x="560.0" y="1677.0" text-anchor="middle" class="attr-label">请求编号</text>
+<text x="560.0" y="1696.0" text-anchor="middle" class="field">request_id</text>
+<text x="720.0" y="1727.0" text-anchor="middle" class="attr-label">操作动作</text>
+<text x="720.0" y="1746.0" text-anchor="middle" class="field">action</text>
+<text x="900.0" y="1697.0" text-anchor="middle" class="attr-label">安全决策</text>
+<text x="900.0" y="1716.0" text-anchor="middle" class="field">decision</text>
+<text x="1060.0" y="1597.0" text-anchor="middle" class="attr-label">执行状态</text>
+<text x="1060.0" y="1616.0" text-anchor="middle" class="field">execution_status</text>
+<text x="2240.0" y="1287.0" text-anchor="middle" class="attr-label" text-decoration="underline">论文编号</text>
+<text x="2240.0" y="1306.0" text-anchor="middle" class="field">paper_id</text>
+<text x="2390.0" y="1297.0" text-anchor="middle" class="attr-label">标题</text>
+<text x="2390.0" y="1316.0" text-anchor="middle" class="field">title</text>
+<text x="2280.0" y="1637.0" text-anchor="middle" class="attr-label">年份</text>
+<text x="2280.0" y="1656.0" text-anchor="middle" class="field">year</text>
+<text x="2420.0" y="1717.0" text-anchor="middle" class="attr-label">文件摘要</text>
+<text x="2420.0" y="1736.0" text-anchor="middle" class="field">digest</text>
+<text x="2660.0" y="877.0" text-anchor="middle" class="attr-label" text-decoration="underline">作者编号</text>
+<text x="2660.0" y="896.0" text-anchor="middle" class="field">author_id</text>
+<text x="2930.0" y="1047.0" text-anchor="middle" class="attr-label">姓名</text>
+<text x="2930.0" y="1066.0" text-anchor="middle" class="field">name</text>
+<text x="2560.0" y="2117.0" text-anchor="middle" class="attr-label" text-decoration="underline">主题编号</text>
+<text x="2560.0" y="2136.0" text-anchor="middle" class="field">topic_id</text>
+<text x="2760.0" y="2127.0" text-anchor="middle" class="attr-label">主题名称</text>
+<text x="2760.0" y="2146.0" text-anchor="middle" class="field">name</text>
+<text x="2880.0" y="1247.0" text-anchor="middle" class="attr-label" text-decoration="underline">片段编号</text>
+<text x="2880.0" y="1266.0" text-anchor="middle" class="field">chunk_id</text>
+<text x="3080.0" y="1597.0" text-anchor="middle" class="attr-label">页码</text>
+<text x="3080.0" y="1616.0" text-anchor="middle" class="field">page_number</text>
+<text x="2990.0" y="1757.0" text-anchor="middle" class="attr-label">来源摘录</text>
+<text x="2990.0" y="1776.0" text-anchor="middle" class="field">excerpt</text>
+<text x="3500.0" y="1267.0" text-anchor="middle" class="attr-label" text-decoration="underline">模型编号</text>
+<text x="3500.0" y="1286.0" text-anchor="middle" class="field">model_id</text>
+<text x="3660.0" y="1627.0" text-anchor="middle" class="attr-label">模型名称</text>
+<text x="3660.0" y="1646.0" text-anchor="middle" class="field">model_name</text>
+<text x="3440.0" y="1657.0" text-anchor="middle" class="attr-label">向量维度</text>
+<text x="3440.0" y="1676.0" text-anchor="middle" class="field">dimensions</text>
+<text x="1260.0" y="2617.0" text-anchor="middle" class="attr-label" text-decoration="underline">任务编号</text>
+<text x="1260.0" y="2636.0" text-anchor="middle" class="field">task_id</text>
+<text x="1380.0" y="2737.0" text-anchor="middle" class="attr-label">任务类型</text>
+<text x="1380.0" y="2756.0" text-anchor="middle" class="field">kind</text>
+<text x="1540.0" y="2797.0" text-anchor="middle" class="attr-label">任务状态</text>
+<text x="1540.0" y="2816.0" text-anchor="middle" class="field">status</text>
+<text x="1650.0" y="2947.0" text-anchor="middle" class="attr-label">尝试序号</text>
+<line x1="1620.0" y1="2950.5" x2="1680.0" y2="2950.5" class="pk-partial"/>
+<text x="1650.0" y="2966.0" text-anchor="middle" class="field">attempt_no</text>
+<text x="1820.0" y="3067.0" text-anchor="middle" class="attr-label">尝试状态</text>
+<text x="1820.0" y="3086.0" text-anchor="middle" class="field">status</text>
+<text x="2020.0" y="3067.0" text-anchor="middle" class="attr-label">租约到期</text>
+<text x="2020.0" y="3086.0" text-anchor="middle" class="field">lease_expires_at</text>
+<text x="2200.0" y="2957.0" text-anchor="middle" class="attr-label">结束时间</text>
+<text x="2200.0" y="2976.0" text-anchor="middle" class="field">finished_at</text>
+<text x="2170.0" y="2287.0" text-anchor="middle" class="attr-label" text-decoration="underline">任务编号</text>
+<text x="2170.0" y="2306.0" text-anchor="middle" class="field">task_id</text>
+<text x="2330.0" y="2247.0" text-anchor="middle" class="attr-label">结果类型</text>
+<text x="2330.0" y="2266.0" text-anchor="middle" class="field">kind</text>
+<text x="2480.0" y="2297.0" text-anchor="middle" class="attr-label">结果载荷</text>
+<text x="2480.0" y="2316.0" text-anchor="middle" class="field">payload</text>
+<text x="2600.0" y="3067.0" text-anchor="middle" class="attr-label">证据字段名</text>
+<line x1="2562.5" y1="3070.5" x2="2637.5" y2="3070.5" class="pk-partial"/>
+<text x="2600.0" y="3086.0" text-anchor="middle" class="field">field_name</text>
+<text x="2400.0" y="3017.0" text-anchor="middle" class="attr-label">证据状态</text>
+<text x="2400.0" y="3036.0" text-anchor="middle" class="field">status</text>
+<text x="2810.0" y="3017.0" text-anchor="middle" class="attr-label">证据文本</text>
+<text x="2810.0" y="3036.0" text-anchor="middle" class="field">text</text>
+<text x="3150.0" y="2317.0" text-anchor="middle" class="attr-label">引用编号</text>
+<line x1="3120.0" y1="2320.5" x2="3180.0" y2="2320.5" class="pk-partial"/>
+<text x="3150.0" y="2336.0" text-anchor="middle" class="field">citation_id</text>
+<text x="3230.0" y="2447.0" text-anchor="middle" class="attr-label">引用作用域</text>
+<line x1="3192.5" y1="2450.5" x2="3267.5" y2="2450.5" class="pk-partial"/>
+<text x="3230.0" y="2466.0" text-anchor="middle" class="field">scope</text>
+<text x="3200.0" y="2587.0" text-anchor="middle" class="attr-label">页码</text>
+<text x="3200.0" y="2606.0" text-anchor="middle" class="field">page_number</text>
+<text x="3050.0" y="2677.0" text-anchor="middle" class="attr-label">来源摘录</text>
+<text x="3050.0" y="2696.0" text-anchor="middle" class="field">excerpt</text>
+<text x="2000.0" y="327.0" text-anchor="middle" class="attr-label" text-decoration="underline">报告编号</text>
+<text x="2000.0" y="346.0" text-anchor="middle" class="field">report_id</text>
+<text x="2200.0" y="327.0" text-anchor="middle" class="attr-label">创建时间</text>
+<text x="2200.0" y="346.0" text-anchor="middle" class="field">created_at</text>
+<text x="2560.0" y="327.0" text-anchor="middle" class="attr-label" text-decoration="underline">版本编号</text>
+<text x="2560.0" y="346.0" text-anchor="middle" class="field">version_id</text>
+<text x="2715.0" y="287.0" text-anchor="middle" class="attr-label">版本序号</text>
+<text x="2715.0" y="306.0" text-anchor="middle" class="field">number</text>
+<text x="2860.0" y="327.0" text-anchor="middle" class="attr-label">标题</text>
+<text x="2860.0" y="346.0" text-anchor="middle" class="field">title</text>
+<text x="2430.0" y="697.0" text-anchor="middle" class="attr-label">正文</text>
+<text x="2430.0" y="716.0" text-anchor="middle" class="field">body</text>
+<text x="2700.0" y="717.0" text-anchor="middle" class="attr-label">研究问题</text>
+<text x="2700.0" y="736.0" text-anchor="middle" class="field">research_question</text>
+<text x="3290.0" y="327.0" text-anchor="middle" class="attr-label">引用编号</text>
+<line x1="3260.0" y1="330.5" x2="3320.0" y2="330.5" class="pk-partial"/>
+<text x="3290.0" y="346.0" text-anchor="middle" class="field">citation_id</text>
+<text x="3600.0" y="437.0" text-anchor="middle" class="attr-label">页码</text>
+<text x="3600.0" y="456.0" text-anchor="middle" class="field">page_number</text>
+<text x="3600.0" y="577.0" text-anchor="middle" class="attr-label">来源摘录</text>
+<text x="3600.0" y="596.0" text-anchor="middle" class="field">excerpt</text>
+<text x="1710.0" y="897.0" text-anchor="middle" class="attr-label">项目角色</text>
+<text x="1710.0" y="916.0" text-anchor="middle" class="field">role</text>
+<text x="1710.0" y="1037.0" text-anchor="middle" class="attr-label">加入时间</text>
+<text x="1710.0" y="1056.0" text-anchor="middle" class="field">joined_at</text>
+<text x="2470.0" y="1077.0" text-anchor="middle" class="attr-label">作者顺序</text>
+<text x="2470.0" y="1096.0" text-anchor="middle" class="field">author_order</text>
+<text x="3200.0" y="1257.0" text-anchor="middle" class="attr-label">向量值</text>
+<text x="3200.0" y="1276.0" text-anchor="middle" class="field">embedding</text>
+<text x="3230.0" y="1657.0" text-anchor="middle" class="attr-label">创建时间</text>
+<text x="3230.0" y="1676.0" text-anchor="middle" class="field">created_at</text>
+<text x="1875" y="52" text-anchor="middle" class="title">PaperPilot 概念总 E-R 图</text>
+</g>
+<rect x="70" y="3160" width="3610" height="112" rx="8" class="note-box"/><text x="92" y="3190" class="note">概念整合：项目成员、论文作者、论文主题、任务论文范围、片段向量等关联表折叠为菱形联系；外键一律画成联系：上传(imported_by)、发起(tasks.actor_id)、保存(report_versions.created_by)、采纳(committed_attempt)、基于(base_version_id)。</text><text x="92" y="3212" class="note">部分键（虚下划线）须与所属实体主键组合：幂等记录=用户+项目+operation+key，执行尝试=task_id+attempt_no，证据字段=task_id+field_name，结果来源=task_id+scope+citation_id，版本引用快照=version_id+citation_id；研究结果与处理任务 1:1 共享 task_id。</text><text x="92" y="3234" class="note">“保存”与“导入”的一处交叉不可避免（用户/项目/片段 × 论文/任务/报告版本 构成 K3,3），以跨线弧表示不相交。基数只标最大值，最小参与与可空性见数据字典 K01—K15。</text><text x="92" y="3256" class="note">去冗余：不画 projects.owner_id、reports.current_version_id、reports.created_by（=首版保存者）、outbox→audit 等指针/非强制外键；24 张逻辑表与 176 个字段以 resolved-er.svg 和数据字典为准。</text>
+<line x1="70" y1="3326" x2="3680" y2="3326" class="rule"/><text x="1875" y="3356" text-anchor="middle" class="legend">矩形：实体　椭圆：属性　菱形：联系　实下划线：主键　虚下划线：部分键（与所属实体主键组合）　1 / N / M：最大基数　跨线弧：线条不相交</text>
+</svg>

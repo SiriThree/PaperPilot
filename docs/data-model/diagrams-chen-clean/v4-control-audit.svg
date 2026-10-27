@@ -1,0 +1,226 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="2250" viewBox="0 0 1900 2250" role="img" aria-label="分 E-R 图四 · 运行控制与审计">
+<defs>
+<pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+<path d="M 24 0 L 0 0 0 24" fill="none" stroke="#eeeeee" stroke-width="0.7"/>
+</pattern>
+<style>
+  text { font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', sans-serif; fill: #1b1b1b; }
+  .entity { fill: #ffffff; stroke: #1b1b1b; stroke-width: 1.8; }
+  .rel { fill: #ffffff; stroke: #1b1b1b; stroke-width: 1.8; }
+  .attr { fill: #ffffff; stroke: #1b1b1b; stroke-width: 1.5; }
+  .note-box { fill: #fbfbfb; stroke: #cfcfcf; stroke-width: 1.2; stroke-dasharray: 5 4; }
+  line { stroke: #333333; stroke-width: 1.35; }
+  .title { font-size: 27px; font-weight: 700; }
+  .entity-label { font-weight: 600; }
+  .ident { font-size: 11px; fill: #666666; }
+  .rel-label { font-size: 16px; }
+  .attr-label { font-size: 15px; }
+  .field { font-size: 10.5px; fill: #6a6a6a; }
+  .card { font-size: 17px; }
+  .note { font-size: 13px; fill: #444444; }
+  .legend { font-size: 13px; fill: #555555; }
+  .rule { stroke: #dddddd; stroke-width: 1; }
+  .hop { fill: none; stroke: #333333; stroke-width: 1.35; }
+  .pk-partial { stroke: #1b1b1b; stroke-width: 1.2; stroke-dasharray: 4 3; }
+</style>
+</defs>
+<rect width="1900" height="2250" fill="url(#grid)"/>
+<g class="lines">
+<line x1="200.0" y1="273.0" x2="139.5" y2="222.8"/>
+<line x1="200.0" y1="300.0" x2="166.9" y2="303.3"/>
+<line x1="200.0" y1="327.0" x2="133.6" y2="395.3"/>
+<line x1="840.0" y1="255.0" x2="806.1" y2="177.0"/>
+<line x1="912.0" y1="255.0" x2="939.5" y2="157.4"/>
+<line x1="984.0" y1="255.0" x2="1079.0" y2="193.2"/>
+<line x1="1020.0" y1="282.0" x2="1159.6" y2="292.9"/>
+<line x1="1020.0" y1="327.0" x2="1193.8" y2="404.8"/>
+<line x1="1000.0" y1="945.0" x2="1063.2" y2="974.0"/>
+<line x1="860.0" y1="945.0" x2="951.5" y2="1055.5"/>
+<line x1="1000.0" y1="873.0" x2="1252.8" y2="965.4"/>
+<line x1="190.0" y1="855.0" x2="132.2" y2="794.0"/>
+<line x1="190.0" y1="882.0" x2="160.2" y2="878.4"/>
+<line x1="190.0" y1="927.0" x2="140.8" y2="953.1"/>
+<line x1="190.0" y1="945.0" x2="123.3" y2="1045.0"/>
+<line x1="278.0" y1="945.0" x2="256.1" y2="1082.2"/>
+<line x1="410.0" y1="945.0" x2="418.0" y2="1097.0"/>
+<line x1="190.0" y1="1355.0" x2="142.1" y2="1320.4"/>
+<line x1="190.0" y1="1400.0" x2="157.6" y2="1409.7"/>
+<line x1="300.0" y1="1445.0" x2="300.0" y2="1512.0"/>
+<line x1="800.0" y1="1405.0" x2="755.7" y2="1403.2"/>
+<line x1="800.0" y1="1432.0" x2="719.8" y2="1490.8"/>
+<line x1="800.0" y1="1495.0" x2="708.0" y2="1606.1"/>
+<line x1="900.0" y1="1495.0" x2="900.0" y2="1582.0"/>
+<line x1="1610.0" y1="1405.0" x2="1635.8" y2="1337.3"/>
+<line x1="1610.0" y1="1432.0" x2="1646.0" y2="1427.2"/>
+<line x1="1610.0" y1="1486.0" x2="1672.2" y2="1527.8"/>
+<line x1="1390.0" y1="1495.0" x2="1325.6" y2="1584.5"/>
+<line x1="1390.0" y1="1900.0" x2="1328.0" y2="1900.0"/>
+<line x1="1610.0" y1="1900.0" x2="1658.0" y2="1900.0"/>
+<line x1="400.0" y1="300.0" x2="515.0" y2="300.0"/>
+<line x1="780.0" y1="300.0" x2="685.0" y2="300.0"/>
+<line x1="900.0" y1="345.0" x2="900.0" y2="555.0"/>
+<line x1="900.0" y1="855.0" x2="900.0" y2="645.0"/>
+<line x1="800.0" y1="900.0" x2="685.0" y2="900.0"/>
+<line x1="410.0" y1="900.0" x2="515.0" y2="900.0"/>
+<line x1="300.0" y1="345.0" x2="300.0" y2="555.0"/>
+<line x1="300.0" y1="855.0" x2="300.0" y2="645.0"/>
+<line x1="800.0" y1="945.0" x2="628.9" y2="1120.3"/>
+<line x1="410.0" y1="1355.0" x2="572.0" y2="1180.2"/>
+<line x1="1000.0" y1="1450.0" x2="1122.0" y2="1450.0"/>
+<line x1="1390.0" y1="1450.0" x2="1278.0" y2="1450.0"/>
+<line x1="1500.0" y1="1495.0" x2="1500.0" y2="1638.0"/>
+<line x1="1500.0" y1="1855.0" x2="1500.0" y2="1722.0"/>
+</g>
+<g class="shapes">
+<rect x="200.0" y="255.0" width="200.0" height="90.0" rx="2" class="entity"/>
+<rect x="780.0" y="255.0" width="240.0" height="90.0" rx="2" class="entity"/>
+<rect x="800.0" y="855.0" width="200.0" height="90.0" rx="2" class="entity"/>
+<rect x="190.0" y="855.0" width="220.0" height="90.0" rx="2" class="entity"/>
+<rect x="190.0" y="1355.0" width="220.0" height="90.0" rx="2" class="entity"/>
+<rect x="800.0" y="1405.0" width="200.0" height="90.0" rx="2" class="entity"/>
+<rect x="1390.0" y="1405.0" width="220.0" height="90.0" rx="2" class="entity"/>
+<rect x="1390.0" y="1855.0" width="220.0" height="90.0" rx="2" class="entity"/>
+<polygon points="600.0,255.0 685.0,300.0 600.0,345.0 515.0,300.0" class="rel"/>
+<polygon points="900.0,555.0 985.0,600.0 900.0,645.0 815.0,600.0" class="rel"/>
+<polygon points="600.0,855.0 685.0,900.0 600.0,945.0 515.0,900.0" class="rel"/>
+<polygon points="300.0,555.0 385.0,600.0 300.0,645.0 215.0,600.0" class="rel"/>
+<polygon points="600.0,1105.0 685.0,1150.0 600.0,1195.0 515.0,1150.0" class="rel"/>
+<polygon points="1200.0,1405.0 1278.0,1450.0 1200.0,1495.0 1122.0,1450.0" class="rel"/>
+<polygon points="1500.0,1638.0 1570.0,1680.0 1500.0,1722.0 1430.0,1680.0" class="rel"/>
+<ellipse cx="100.0" cy="190.0" rx="78.0" ry="38.0" class="attr"/>
+<ellipse cx="100.0" cy="310.0" rx="68.0" ry="38.0" class="attr"/>
+<ellipse cx="100.0" cy="430.0" rx="82.0" ry="38.0" class="attr"/>
+<ellipse cx="790.0" cy="140.0" rx="70.0" ry="38.0" class="attr"/>
+<ellipse cx="950.0" cy="120.0" rx="58.0" ry="38.0" class="attr"/>
+<ellipse cx="1130.0" cy="160.0" rx="105.0" ry="38.0" class="attr"/>
+<ellipse cx="1250.0" cy="300.0" rx="92.0" ry="38.0" class="attr"/>
+<ellipse cx="1250.0" cy="430.0" rx="75.0" ry="38.0" class="attr"/>
+<ellipse cx="1120.0" cy="1000.0" rx="78.0" ry="38.0" class="attr"/>
+<ellipse cx="980.0" cy="1090.0" rx="68.0" ry="38.0" class="attr"/>
+<ellipse cx="1320.0" cy="990.0" rx="88.0" ry="38.0" class="attr"/>
+<ellipse cx="100.0" cy="760.0" rx="72.0" ry="38.0" class="attr"/>
+<ellipse cx="90.0" cy="870.0" rx="72.0" ry="38.0" class="attr"/>
+<ellipse cx="90.0" cy="980.0" rx="72.0" ry="38.0" class="attr"/>
+<ellipse cx="100.0" cy="1080.0" rx="60.0" ry="38.0" class="attr"/>
+<ellipse cx="250.0" cy="1120.0" rx="62.0" ry="38.0" class="attr"/>
+<ellipse cx="420.0" cy="1135.0" rx="88.0" ry="38.0" class="attr"/>
+<ellipse cx="100.0" cy="1290.0" rx="70.0" ry="38.0" class="attr"/>
+<ellipse cx="90.0" cy="1430.0" rx="80.0" ry="38.0" class="attr"/>
+<ellipse cx="300.0" cy="1550.0" rx="88.0" ry="38.0" class="attr"/>
+<ellipse cx="680.0" cy="1400.0" rx="76.0" ry="38.0" class="attr"/>
+<ellipse cx="680.0" cy="1520.0" rx="62.0" ry="38.0" class="attr"/>
+<ellipse cx="680.0" cy="1640.0" rx="62.0" ry="38.0" class="attr"/>
+<ellipse cx="900.0" cy="1620.0" rx="65.0" ry="38.0" class="attr"/>
+<ellipse cx="1650.0" cy="1300.0" rx="74.0" ry="38.0" class="attr"/>
+<ellipse cx="1700.0" cy="1420.0" rx="55.0" ry="38.0" class="attr"/>
+<ellipse cx="1720.0" cy="1560.0" rx="90.0" ry="38.0" class="attr"/>
+<ellipse cx="1300.0" cy="1620.0" rx="72.0" ry="38.0" class="attr"/>
+<ellipse cx="1250.0" cy="1900.0" rx="78.0" ry="38.0" class="attr"/>
+<ellipse cx="1720.0" cy="1900.0" rx="62.0" ry="38.0" class="attr"/>
+</g>
+<g class="labels">
+<text x="425.3" y="282.0" text-anchor="middle" class="card">1</text>
+<text x="759.1" y="282.0" text-anchor="middle" class="card">N</text>
+<text x="918.0" y="391.2" text-anchor="middle" class="card">N</text>
+<text x="918.0" y="808.8" text-anchor="middle" class="card">1</text>
+<text x="774.7" y="882.0" text-anchor="middle" class="card">1</text>
+<text x="433.1" y="882.0" text-anchor="middle" class="card">N</text>
+<text x="318.0" y="391.2" text-anchor="middle" class="card">1</text>
+<text x="318.0" y="808.8" text-anchor="middle" class="card">N</text>
+<text x="749.5" y="971.0" text-anchor="middle" class="card">1</text>
+<text x="458.8" y="1328.8" text-anchor="middle" class="card">N</text>
+<text x="1026.8" y="1432.0" text-anchor="middle" class="card">1</text>
+<text x="1365.4" y="1432.0" text-anchor="middle" class="card">N</text>
+<text x="1518.0" y="1526.5" text-anchor="middle" class="card">1</text>
+<text x="1518.0" y="1825.7" text-anchor="middle" class="card">1</text>
+<text x="300.0" y="295.0" text-anchor="middle" class="entity-label" font-size="18">用户</text>
+<text x="300.0" y="319.0" text-anchor="middle" class="ident">USER</text>
+<text x="900.0" y="295.0" text-anchor="middle" class="entity-label" font-size="18">幂等记录</text>
+<text x="900.0" y="319.0" text-anchor="middle" class="ident">IDEMPOTENCY_RECORD</text>
+<text x="900.0" y="895.0" text-anchor="middle" class="entity-label" font-size="18">研究项目</text>
+<text x="900.0" y="919.0" text-anchor="middle" class="ident">PROJECT</text>
+<text x="300.0" y="895.0" text-anchor="middle" class="entity-label" font-size="18">审计事件</text>
+<text x="300.0" y="919.0" text-anchor="middle" class="ident">AUDIT_EVENT</text>
+<text x="300.0" y="1395.0" text-anchor="middle" class="entity-label" font-size="18">待投递领域事件</text>
+<text x="300.0" y="1419.0" text-anchor="middle" class="ident">OUTBOX_EVENT</text>
+<text x="900.0" y="1445.0" text-anchor="middle" class="entity-label" font-size="18">处理任务</text>
+<text x="900.0" y="1469.0" text-anchor="middle" class="ident">TASK</text>
+<text x="1500.0" y="1445.0" text-anchor="middle" class="entity-label" font-size="18">执行尝试</text>
+<text x="1500.0" y="1469.0" text-anchor="middle" class="ident">TASK_ATTEMPT</text>
+<text x="1500.0" y="1895.0" text-anchor="middle" class="entity-label" font-size="18">研究结果</text>
+<text x="1500.0" y="1919.0" text-anchor="middle" class="ident">TASK_RESULT</text>
+<text x="600.0" y="305.0" text-anchor="middle" class="rel-label">提交请求</text>
+<text x="900.0" y="605.0" text-anchor="middle" class="rel-label">幂等归属</text>
+<text x="600.0" y="905.0" text-anchor="middle" class="rel-label">审计归属</text>
+<text x="300.0" y="605.0" text-anchor="middle" class="rel-label">执行动作</text>
+<text x="600.0" y="1155.0" text-anchor="middle" class="rel-label">事件归属</text>
+<text x="1200.0" y="1455.0" text-anchor="middle" class="rel-label">领取</text>
+<text x="1500.0" y="1685.0" text-anchor="middle" class="rel-label">采纳</text>
+<text x="100.0" y="187.0" text-anchor="middle" class="attr-label" text-decoration="underline">用户编号</text>
+<text x="100.0" y="206.0" text-anchor="middle" class="field">user_id</text>
+<text x="100.0" y="307.0" text-anchor="middle" class="attr-label">用户名</text>
+<text x="100.0" y="326.0" text-anchor="middle" class="field">username</text>
+<text x="100.0" y="427.0" text-anchor="middle" class="attr-label">显示名</text>
+<text x="100.0" y="446.0" text-anchor="middle" class="field">display_name</text>
+<text x="790.0" y="137.0" text-anchor="middle" class="attr-label">业务操作</text>
+<line x1="760.0" y1="140.5" x2="820.0" y2="140.5" class="pk-partial"/>
+<text x="790.0" y="156.0" text-anchor="middle" class="field">operation</text>
+<text x="950.0" y="117.0" text-anchor="middle" class="attr-label">幂等键</text>
+<line x1="927.5" y1="120.5" x2="972.5" y2="120.5" class="pk-partial"/>
+<text x="950.0" y="136.0" text-anchor="middle" class="field">key</text>
+<text x="1130.0" y="157.0" text-anchor="middle" class="attr-label">请求指纹</text>
+<text x="1130.0" y="176.0" text-anchor="middle" class="field">request_fingerprint</text>
+<text x="1250.0" y="297.0" text-anchor="middle" class="attr-label">原响应快照</text>
+<text x="1250.0" y="316.0" text-anchor="middle" class="field">response_snapshot</text>
+<text x="1250.0" y="427.0" text-anchor="middle" class="attr-label">创建时间</text>
+<text x="1250.0" y="446.0" text-anchor="middle" class="field">created_at</text>
+<text x="1120.0" y="997.0" text-anchor="middle" class="attr-label" text-decoration="underline">项目编号</text>
+<text x="1120.0" y="1016.0" text-anchor="middle" class="field">project_id</text>
+<text x="980.0" y="1087.0" text-anchor="middle" class="attr-label">项目名称</text>
+<text x="980.0" y="1106.0" text-anchor="middle" class="field">name</text>
+<text x="1320.0" y="987.0" text-anchor="middle" class="attr-label">项目描述</text>
+<text x="1320.0" y="1006.0" text-anchor="middle" class="field">description</text>
+<text x="100.0" y="757.0" text-anchor="middle" class="attr-label" text-decoration="underline">事件编号</text>
+<text x="100.0" y="776.0" text-anchor="middle" class="field">event_id</text>
+<text x="90.0" y="867.0" text-anchor="middle" class="attr-label">发生时间</text>
+<text x="90.0" y="886.0" text-anchor="middle" class="field">timestamp</text>
+<text x="90.0" y="977.0" text-anchor="middle" class="attr-label">请求编号</text>
+<text x="90.0" y="996.0" text-anchor="middle" class="field">request_id</text>
+<text x="100.0" y="1077.0" text-anchor="middle" class="attr-label">操作动作</text>
+<text x="100.0" y="1096.0" text-anchor="middle" class="field">action</text>
+<text x="250.0" y="1117.0" text-anchor="middle" class="attr-label">安全决策</text>
+<text x="250.0" y="1136.0" text-anchor="middle" class="field">decision</text>
+<text x="420.0" y="1132.0" text-anchor="middle" class="attr-label">执行状态</text>
+<text x="420.0" y="1151.0" text-anchor="middle" class="field">execution_status</text>
+<text x="100.0" y="1287.0" text-anchor="middle" class="attr-label" text-decoration="underline">事件编号</text>
+<text x="100.0" y="1306.0" text-anchor="middle" class="field">event_id</text>
+<text x="90.0" y="1427.0" text-anchor="middle" class="attr-label">投递次数</text>
+<text x="90.0" y="1446.0" text-anchor="middle" class="field">delivery_attempts</text>
+<text x="300.0" y="1547.0" text-anchor="middle" class="attr-label">确认投递时间</text>
+<text x="300.0" y="1566.0" text-anchor="middle" class="field">published_at</text>
+<text x="680.0" y="1397.0" text-anchor="middle" class="attr-label" text-decoration="underline">任务编号</text>
+<text x="680.0" y="1416.0" text-anchor="middle" class="field">task_id</text>
+<text x="680.0" y="1517.0" text-anchor="middle" class="attr-label">任务类型</text>
+<text x="680.0" y="1536.0" text-anchor="middle" class="field">kind</text>
+<text x="680.0" y="1637.0" text-anchor="middle" class="attr-label">任务状态</text>
+<text x="680.0" y="1656.0" text-anchor="middle" class="field">status</text>
+<text x="900.0" y="1617.0" text-anchor="middle" class="attr-label">领取次数</text>
+<text x="900.0" y="1636.0" text-anchor="middle" class="field">attempts</text>
+<text x="1650.0" y="1297.0" text-anchor="middle" class="attr-label">尝试序号</text>
+<line x1="1620.0" y1="1300.5" x2="1680.0" y2="1300.5" class="pk-partial"/>
+<text x="1650.0" y="1316.0" text-anchor="middle" class="field">attempt_no</text>
+<text x="1700.0" y="1417.0" text-anchor="middle" class="attr-label">尝试状态</text>
+<text x="1700.0" y="1436.0" text-anchor="middle" class="field">status</text>
+<text x="1720.0" y="1557.0" text-anchor="middle" class="attr-label">租约到期</text>
+<text x="1720.0" y="1576.0" text-anchor="middle" class="field">lease_expires_at</text>
+<text x="1300.0" y="1617.0" text-anchor="middle" class="attr-label">结束时间</text>
+<text x="1300.0" y="1636.0" text-anchor="middle" class="field">finished_at</text>
+<text x="1250.0" y="1897.0" text-anchor="middle" class="attr-label" text-decoration="underline">任务编号</text>
+<text x="1250.0" y="1916.0" text-anchor="middle" class="field">task_id</text>
+<text x="1720.0" y="1897.0" text-anchor="middle" class="attr-label">结果类型</text>
+<text x="1720.0" y="1916.0" text-anchor="middle" class="field">kind</text>
+<text x="950" y="52" text-anchor="middle" class="title">分 E-R 图四 · 运行控制与审计</text>
+</g>
+<rect x="70" y="2010" width="1760" height="112" rx="8" class="note-box"/><text x="92" y="2040" class="note">去冗余：outbox 与 audit 只按 event_id 幂等关联，不是强制外键，因此不画“投递为”菱形；审计也可独立追加。</text><text x="92" y="2062" class="note">部分键（虚下划线）：幂等记录 = user_id + project_id + operation + key（所属用户、项目经“提交请求/幂等归属”确定）；执行尝试 = task_id + attempt_no。</text><text x="92" y="2084" class="note">task_results.committed_attempt 画为“执行尝试 —采纳— 研究结果”1:1（每个结果恰好采纳一次尝试）；幂等记录的任务/版本重放外键不重复画成联系。</text><text x="92" y="2106" class="note">基数只标最大值；审计/outbox 的项目、操作者可空（登录事件等），最小参与见数据字典。outbox.actor_id 是可选审计维度，不另画联系。</text>
+<line x1="70" y1="2176" x2="1830" y2="2176" class="rule"/><text x="950" y="2206" text-anchor="middle" class="legend">矩形：实体　椭圆：属性　菱形：联系　实下划线：主键　虚下划线：部分键（与所属实体主键组合）　1 / N / M：最大基数</text>
+</svg>
