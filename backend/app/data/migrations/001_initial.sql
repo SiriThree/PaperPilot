@@ -577,7 +577,8 @@ BEGIN
        OR NEW.created_at IS DISTINCT FROM OLD.created_at THEN
         RAISE EXCEPTION 'outbox identity and payload are immutable';
     END IF;
-    RETURN NULL;
+    -- BEFORE triggers must return NEW: RETURN NULL would silently cancel the row update.
+    RETURN NEW;
 END $$;
 CREATE TRIGGER outbox_identity_protected BEFORE UPDATE ON outbox_events
     FOR EACH ROW EXECUTE FUNCTION protect_outbox_identity();

@@ -11,8 +11,10 @@
 | `backend/app/data/adapter.py` | `PostgresData`：26 个 DataPort 方法（psycopg3），行为对齐 AB-1 与既有共享测试 |
 | `backend/app/data/mapping.py` | 行 → 公开模型映射；成功结果由 `task_results` 派生，不持久化可悬空 result_ref |
 | `backend/app/data/binding.py` | 可信组合入口：`compose_data_binding()` 构造 `DataBinding(data, ready, close)`；`create_app()` 交 B 的工厂以 `a_mode=persistent` 启动 |
+| `backend/app/data/deliverer.py` | `OutboxDeliverer` 事务性 outbox 投递器：`FOR UPDATE SKIP LOCKED` 领取、指数退避、`published_at` 确认；经 DataPort `append_audit` 写审计（event_id 去重，投递 at-least-once、审计效果 exactly-once）；`--once`/循环 CLI（`python -m app.data.deliverer`，凭据读 `PAPERPILOT_DATA_*`） |
 | `backend/app/data/provider.py` | 隔离测试 provider `app.data.provider:build_harness`：每 harness 建一个一次性数据库，含真实提交前故障探针、reopen、expire_claim；`disposable_database()` 辅助供其他真实库测试复用 |
-| `backend/tests/test_persistent_integration.py` | persistent 模式业务联调：B 的真实路由 + worker 跑在真实 DataPort 上（登录、上传幂等重放、任务处理、问答/证据、检索、报告版本与冲突、成员/审计、移出保留、跨进程重启保留）；无库环境自动整体跳过，不影响 Mock 基线 |
+| `backend/tests/test_outbox_delivery.py` | 投递器行为测试：恰好一次审计效果、丢失确认后的仅确认重放、永久失败退避（载荷非法记 `ADAPTER_CONTRACT_ERROR`）、并发投递器、独立构造器 |
+| `backend/tests/test_persistent_integration.py` | persistent 模式业务联调：B 的真实路由 + worker 跑在真实 DataPort 上（登录、上传幂等重放、任务处理、问答/证据、检索、报告版本与冲突、成员/审计、移出保留、HTTP→outbox→投递器→audit 全链路、跨进程重启保留）；无库环境自动整体跳过，不影响 Mock 基线 |
 | `scripts/manage_postgres.py` | 显式 `migrate / seed-demo / check` 命令，读取 `PAPERPILOT_DATA_*` 环境变量 |
 | `scripts/verify_constraints_day2.py` | K01—K15 正反例探针（37 项），产出 `docs/day2-constraint-verification.json` |
 
@@ -51,7 +53,8 @@ $env:PAPERPILOT_A_MODE='persistent'
 - **任务领取**：`SELECT … FOR UPDATE SKIP LOCKED` 保证多 worker 只有一个领取者；租约过期恢复先将旧尝试标 `expired`（部分唯一索引保证同任务至多一个在途尝试），再递增 `attempts` 并新建尝试行。
 - **结果派生**：`tasks` 不存结果 JSON；`task()` 的 `result/result_ref` 从 `task_results` 及其类型化行（evidence_fields/result_sources）按项目重新装配，evidence 来源按 scope 内 ordinal 保序。
 - **searchable 边界**：`complete_job(process)` 置 `status='searchable'` 同时写 `index_state='mock_only'`——这是合成联调标志，真实索引完成语义仍待 C；约束触发器保证 searchable 必有 active process 指针。
-- **outbox**：业务写事务同事务写最小领域事件（动作、资源、决策、状态），`append_audit` 本身不再写 outbox。**投递器未实现**（A/D 待协作），表结构与身份不可变触发器已就绪。
+- **outbox**：业务写事务同事务写最小领域事件（动作、资源、决策、状态），`append_audit` 本身不再写 outbox。投递器独立进程重试，语义为投递 at-least-once、审计效果 exactly-once（event_id 主键去重）；投递列之外的行更新被触发器拒绝（见下条）。**保留周期与死信仍待 A/D**：published 行无限保留，业务入口禁止删除 outbox。
+- **BEFORE 触发器必须 RETURN NEW**：`protect_outbox_identity` 最初误写 `RETURN NULL`，导致包括投递列在内的所有 outbox 更新被 PostgreSQL 静默取消（rowcount 0、无报错）——由投递器测试发现；已修复并在 K01—K15 探针中补上 C13 正反例（投递列可更新、身份与载荷不可更新）。
 - **租约模拟**：测试 provider 的 `expire_claim` 同时回拨 `claimed_at` 与 `lease_expires_at`，保持 `lease_expires_at > claimed_at` CHECK 成立。
 - **延迟触发器读终态**：K11 报告指针触发器在提交时重读行终态而非事件时的 NEW，否则同事务"插报告→加版本→更新指针"会被过期的 INSERT 事件误判。
 
@@ -60,16 +63,17 @@ $env:PAPERPILOT_A_MODE='persistent'
 | 验证 | 命令 | 结果 |
 | --- | --- | --- |
 | 共享行为 + 真实库门槛 | `pytest backend/tests/data_contracts --data-contract-provider app.data.provider:build_harness -q --basetemp .runtime/pytest-local` | **41/41 通过（35 行为 + 6 数据库门槛不再 skip），连续 5 轮稳定** |
-| persistent 业务联调 | `pytest backend/tests/test_persistent_integration.py -q --basetemp .runtime/pytest-local` | **8/8 通过**：B 的真实路由 + worker + 真实库全链路；PG 不可达时整模块 skip，Mock 基线不受影响 |
-| K01—K15 约束正反例 | `python scripts/verify_constraints_day2.py` | **37/37 通过**（12 条反例为真实 SQL 错误，非进程拦截），机器可读结果见 [day2-constraint-verification.json](day2-constraint-verification.json) |
-| 全量回归 | `pytest -q --basetemp .runtime/pytest-local` | 166 passed（158 基线 + 8 业务联调），37 skipped（历史 SQLite 实验未显式运行） |
+| persistent 业务联调 | `pytest backend/tests/test_persistent_integration.py -q --basetemp .runtime/pytest-local` | **9/9 通过**：B 的真实路由 + worker + 真实库全链路（含 outbox 投递链路）；PG 不可达时整模块 skip，Mock 基线不受影响 |
+| outbox 投递器 | `pytest backend/tests/test_outbox_delivery.py -q --basetemp .runtime/pytest-local` | **5/5 通过**（恰好一次、丢失确认、退避、并发） |
+| K01—K15 + C13 约束正反例 | `python scripts/verify_constraints_day2.py` | **39/39 通过**，机器可读结果见 [day2-constraint-verification.json](day2-constraint-verification.json) |
+| 全量回归 | `pytest -q --basetemp .runtime/pytest-local` | 172 passed（158 基线 + 8 业务联调 + 5 投递器 + 1 全链路），37 skipped（历史 SQLite 实验未显式运行） |
 | persistent 组合冒烟 | 一次性数据库 + TestClient | `/health` a=persistent；alice 登录；建项目真实落库（`mock=false`）；关闭后一次性库已删除 |
 
 所有一次性数据库（`paperpilot_contract_*`、`paperpilot_constraints_*`）由 provider/脚本自动 `DROP … WITH (FORCE)`，验证后无残留；预验证库 `paperpilot_day0_preflight` 未被业务使用。本机系统 Temp 的 pytest 权限异常沿用仓库内 `--basetemp .runtime/pytest-local`。
 
 ## 5 尚未完成（不阻塞 AB-1 验收，列入 A/D、A/C、A/B 协作）
 
-1. outbox 可靠投递器、确认与保留周期（表就绪，投递未实现）；D 的执行前关键审计不依赖本表。
+1. outbox 保留周期与死信（投递器已实现；published 行无限保留，删除被业务入口触发器拒绝，策略待 A/D）；D 的执行前关键审计不依赖本表。
 2. 正式认证、密码摘要、会话持久化、账户禁用；当前仍为开发身份。
 3. 数据库受限角色、受控视图、RLS 与可信项目上下文（day0 已预验证机制可行，未接入正式库授权）；`forbid_mutation` 触发器只是业务入口约束，超级用户可绕过，不构成防篡改边界。
 4. C 的真实模型维度、正文/向量私有提交面；`EMBEDDING_DIM=3` 仍为合成占位，`chunk_embeddings` 采用不定维 vector + 版本化模型登记方案。

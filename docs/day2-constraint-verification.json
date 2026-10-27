@@ -259,8 +259,22 @@
       "expect_commit": false,
       "passed": true,
       "detail": null
+    },
+    {
+      "rule": "C13",
+      "name": "outbox 投递状态列可更新（触发器必须放行）",
+      "expect_commit": true,
+      "passed": true,
+      "detail": null
+    },
+    {
+      "rule": "C13",
+      "name": "outbox 身份与载荷不可更新",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "RaiseException"
     }
   ],
-  "passed": 37,
+  "passed": 39,
   "failed": 0
 }

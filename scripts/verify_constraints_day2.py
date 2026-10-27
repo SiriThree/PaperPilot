@@ -654,6 +654,42 @@ def k15_model_mutation(conn, ids):
     )
 
 
+# ---- C13 outbox delivery columns vs identity --------------------------------------------------
+
+
+def outbox_row(conn, ids):
+    event_id = uid()
+    conn.execute(
+        "INSERT INTO outbox_events(event_id, project_id, actor_id, request_id, payload)"
+        " VALUES(%s,%s,%s,%s,%s::jsonb)",
+        (
+            event_id,
+            ids["project"],
+            ids["user"],
+            uid(),
+            '{"action":"probe.action","resource_type":"project","resource_id":"x",'
+            '"decision":"allowed","execution_status":"succeeded","duration_ms":0,"mock":false}',
+        ),
+    )
+    return event_id
+
+
+@probe("C13", "outbox 投递状态列可更新（触发器必须放行）", True)
+def c13_delivery_columns_updatable(conn, ids):
+    event_id = outbox_row(conn, ids)
+    conn.execute(
+        "UPDATE outbox_events SET delivery_attempts=1, next_attempt_at=now(), published_at=now(),"
+        " last_error_code=NULL WHERE event_id=%s",
+        (event_id,),
+    )
+
+
+@probe("C13", "outbox 身份与载荷不可更新", False)
+def c13_identity_immutable(conn, ids):
+    event_id = outbox_row(conn, ids)
+    conn.execute("UPDATE outbox_events SET payload='{}'::jsonb WHERE event_id=%s", (event_id,))
+
+
 def run_probe(conn, function, positive):
     """Execute one probe in its own transaction; negatives must raise, positives must commit."""
     conn.execute("BEGIN")

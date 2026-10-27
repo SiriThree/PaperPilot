@@ -178,6 +178,29 @@ def test_search_hits_searchable_paper(signed, project):
     assert hits[0]["paper"]["status"] == "searchable"
 
 
+def test_outbox_deliverer_publishes_domain_events_to_audit(signed, project, stack):
+    from app.data.deliverer import build_deliverer
+
+    # B's HTTP audit trail uses its own action names; the outbox carries A's domain actions.
+    before = signed.get(
+        f"/api/v1/projects/{project}/audit-events", params={"action": "create_project"}
+    ).json()["total"]
+    assert before == 0
+
+    deliverer = build_deliverer(stack.config)
+    try:
+        assert deliverer.run_once() >= 1
+    finally:
+        deliverer.database.close()
+
+    after = signed.get(
+        f"/api/v1/projects/{project}/audit-events", params={"action": "create_project"}
+    )
+    assert after.status_code == 200
+    body = after.json()
+    assert body["total"] >= 1 and body["items"][0]["project_id"] == project
+
+
 def test_report_versions_conflict_snapshot_and_export(signed, project):
     papers = signed.get(f"/api/v1/projects/{project}/papers").json()["items"]
     paper_id = papers[0]["paper_id"]
