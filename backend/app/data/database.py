@@ -162,7 +162,8 @@ class PostgresDatabase:
                     "SELECT tablename FROM pg_tables WHERE schemaname='public'"
                 ).fetchall()
             }
-            if tables - {"schema_migrations"}:
+            # A foreign non-empty database is refused; an already-migrated one re-verifies checksums.
+            if tables and "schema_migrations" not in tables:
                 raise RuntimeError("Unrecognized database; migration refused")
             connection.execute(
                 "CREATE TABLE IF NOT EXISTS schema_migrations("

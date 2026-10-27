@@ -23,7 +23,8 @@ from app.errors import AppError
 DB_PREFIX = "paperpilot_contract_"
 
 
-def _admin_config():
+def admin_config():
+    """Admin connection for disposable test databases only; never a business URL."""
     values = {}
     path = os.path.join(".runtime", "day0.env")
     if os.path.exists(path):
@@ -48,57 +49,73 @@ def _admin_config():
 
 
 @contextmanager
-def build_harness(*, tmp_path):
-    from data_contracts.harness import DataHarness  # single canonical import path
-
-    admin = _admin_config()
-    dbname = DB_PREFIX + uuid4().hex[:12]
+def disposable_database(prefix=DB_PREFIX):
+    """Create a throwaway database and drop it on exit; yields its ConnectionConfig."""
+    admin = admin_config()
+    dbname = prefix + uuid4().hex[:12]
+    with psycopg.connect(**admin.conninfo(), autocommit=True) as connection:
+        connection.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(dbname)))
     config = ConnectionConfig(
         host=admin.host, port=admin.port, user=admin.user, password=admin.password, dbname=dbname
     )
-    with psycopg.connect(**admin.conninfo(), autocommit=True) as connection:
-        connection.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(dbname)))
-
-    databases = []
-    failure = {"operation": None}
-
-    def make_database():
-        database = PostgresDatabase(config, pool_size=4)
-        databases.append(database)
-        return database
-
-    def before_commit(operation, conn):
-        if operation != failure["operation"]:
-            return
-        try:
-            conn.execute("INSERT INTO users(user_id, username, display_name) VALUES (NULL, NULL, NULL)")
-        except psycopg.Error:
-            raise AppError(503, "DATA_UNAVAILABLE", "隔离测试中的已确认回滚故障") from None
-        raise AppError(503, "DATA_UNAVAILABLE", "隔离测试中的已确认回滚故障")
-
-    @contextmanager
-    def failing_commit(operation):
-        failure["operation"] = operation
-        try:
-            yield
-        finally:
-            failure["operation"] = None
-
-    def expire_claim(job):
-        with database.transaction(write=True) as conn:
-            # Backdate claimed_at too, keeping lease_expires_at > claimed_at (CHECK) intact.
-            conn.execute(
-                "UPDATE task_attempts SET claimed_at = '1999-12-31T00:00:00+00:00',"
-                " lease_expires_at = '2000-01-01T00:00:00+00:00'"
-                " WHERE task_id = %s AND status = 'processing'",
-                (job.task.task_id,),
-            )
-
     try:
+        yield config
+    finally:
+        try:
+            with psycopg.connect(**admin.conninfo(), autocommit=True) as connection:
+                connection.execute(
+                    sql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE)").format(sql.Identifier(dbname))
+                )
+        except psycopg.Error:
+            pass
+
+
+@contextmanager
+def build_harness(*, tmp_path):
+    from data_contracts.harness import DataHarness  # single canonical import path
+
+    with disposable_database() as config:
+        databases = []
+        failure = {"operation": None}
+
+        def make_database():
+            database = PostgresDatabase(config, pool_size=4)
+            databases.append(database)
+            return database
+
+        def before_commit(operation, conn):
+            if operation != failure["operation"]:
+                return
+            try:
+                conn.execute(
+                    "INSERT INTO users(user_id, username, display_name) VALUES (NULL, NULL, NULL)"
+                )
+            except psycopg.Error:
+                raise AppError(503, "DATA_UNAVAILABLE", "隔离测试中的已确认回滚故障") from None
+            raise AppError(503, "DATA_UNAVAILABLE", "隔离测试中的已确认回滚故障")
+
+        @contextmanager
+        def failing_commit(operation):
+            failure["operation"] = operation
+            try:
+                yield
+            finally:
+                failure["operation"] = None
+
         database = make_database()
         database.migrate()
         database.seed_development_users()
         data = PostgresData(database, DataSettings.from_env(), before_commit=before_commit)
+
+        def expire_claim(job):
+            with database.transaction(write=True) as conn:
+                # Backdate claimed_at too, keeping lease_expires_at > claimed_at (CHECK) intact.
+                conn.execute(
+                    "UPDATE task_attempts SET claimed_at = '1999-12-31T00:00:00+00:00',"
+                    " lease_expires_at = '2000-01-01T00:00:00+00:00'"
+                    " WHERE task_id = %s AND status = 'processing'",
+                    (job.task.task_id,),
+                )
 
         def reopen():
             return PostgresData(make_database(), DataSettings.from_env())
@@ -113,13 +130,5 @@ def build_harness(*, tmp_path):
             reopen=reopen,
             expire_claim=expire_claim,
         )
-    finally:
         for database in databases:
             database.close()
-        try:
-            with psycopg.connect(**admin.conninfo(), autocommit=True) as connection:
-                connection.execute(
-                    sql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE)").format(sql.Identifier(dbname))
-                )
-        except psycopg.Error:
-            pass

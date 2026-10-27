@@ -11,7 +11,8 @@
 | `backend/app/data/adapter.py` | `PostgresData`：26 个 DataPort 方法（psycopg3），行为对齐 AB-1 与既有共享测试 |
 | `backend/app/data/mapping.py` | 行 → 公开模型映射；成功结果由 `task_results` 派生，不持久化可悬空 result_ref |
 | `backend/app/data/binding.py` | 可信组合入口：`compose_data_binding()` 构造 `DataBinding(data, ready, close)`；`create_app()` 交 B 的工厂以 `a_mode=persistent` 启动 |
-| `backend/app/data/provider.py` | 隔离测试 provider `app.data.provider:build_harness`：每 harness 建一个一次性数据库，含真实提交前故障探针、reopen、expire_claim |
+| `backend/app/data/provider.py` | 隔离测试 provider `app.data.provider:build_harness`：每 harness 建一个一次性数据库，含真实提交前故障探针、reopen、expire_claim；`disposable_database()` 辅助供其他真实库测试复用 |
+| `backend/tests/test_persistent_integration.py` | persistent 模式业务联调：B 的真实路由 + worker 跑在真实 DataPort 上（登录、上传幂等重放、任务处理、问答/证据、检索、报告版本与冲突、成员/审计、移出保留、跨进程重启保留）；无库环境自动整体跳过，不影响 Mock 基线 |
 | `scripts/manage_postgres.py` | 显式 `migrate / seed-demo / check` 命令，读取 `PAPERPILOT_DATA_*` 环境变量 |
 | `scripts/verify_constraints_day2.py` | K01—K15 正反例探针（37 项），产出 `docs/day2-constraint-verification.json` |
 
@@ -44,6 +45,7 @@ $env:PAPERPILOT_A_MODE='persistent'
 
 ## 3 关键实现决策
 
+- **迁移幂等**：迁移器对已迁移的库只核对版本与校验和后跳过，重复执行安全；仅对"有业务表但没有 schema_migrations"的外来库拒绝（该缺陷由业务联调的重启用例发现并修复）。
 - **事务边界**：每次调用独立借还连接、独立事务；写方法在返回前执行提交前探针（仅供测试注入）。提交失败的 `IntegrityError`（含延迟约束触发器在 COMMIT 抛出的错误）映射 `IDENTIFIER_CONFLICT`，其余已知回滚映射 `DATA_UNAVAILABLE`，无法确认回滚的提交故障映射 `DATA_COMMIT_UNKNOWN`。AppError 一律回滚后原样抛出。
 - **导入并发**：同摘要并发导入时预检查可能同时通过，立即唯一键在 INSERT 处裁决；按约束名翻译，`(project_id,digest)` 冲突返回 `DUPLICATE_PAPER`，其余返回 `IDENTIFIER_CONFLICT`（契约语义，而非笼统 409）。
 - **任务领取**：`SELECT … FOR UPDATE SKIP LOCKED` 保证多 worker 只有一个领取者；租约过期恢复先将旧尝试标 `expired`（部分唯一索引保证同任务至多一个在途尝试），再递增 `attempts` 并新建尝试行。
@@ -58,8 +60,9 @@ $env:PAPERPILOT_A_MODE='persistent'
 | 验证 | 命令 | 结果 |
 | --- | --- | --- |
 | 共享行为 + 真实库门槛 | `pytest backend/tests/data_contracts --data-contract-provider app.data.provider:build_harness -q --basetemp .runtime/pytest-local` | **41/41 通过（35 行为 + 6 数据库门槛不再 skip），连续 5 轮稳定** |
+| persistent 业务联调 | `pytest backend/tests/test_persistent_integration.py -q --basetemp .runtime/pytest-local` | **8/8 通过**：B 的真实路由 + worker + 真实库全链路；PG 不可达时整模块 skip，Mock 基线不受影响 |
 | K01—K15 约束正反例 | `python scripts/verify_constraints_day2.py` | **37/37 通过**（12 条反例为真实 SQL 错误，非进程拦截），机器可读结果见 [day2-constraint-verification.json](day2-constraint-verification.json) |
-| 全量回归（默认 Mock） | `pytest -q --basetemp .runtime/pytest-local` | 158 passed，37 skipped（= day0 基线，历史 SQLite 实验未显式运行） |
+| 全量回归 | `pytest -q --basetemp .runtime/pytest-local` | 166 passed（158 基线 + 8 业务联调），37 skipped（历史 SQLite 实验未显式运行） |
 | persistent 组合冒烟 | 一次性数据库 + TestClient | `/health` a=persistent；alice 登录；建项目真实落库（`mock=false`）；关闭后一次性库已删除 |
 
 所有一次性数据库（`paperpilot_contract_*`、`paperpilot_constraints_*`）由 provider/脚本自动 `DROP … WITH (FORCE)`，验证后无残留；预验证库 `paperpilot_day0_preflight` 未被业务使用。本机系统 Temp 的 pytest 权限异常沿用仓库内 `--basetemp .runtime/pytest-local`。
