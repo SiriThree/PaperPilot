@@ -66,6 +66,8 @@ $env:PAPERPILOT_A_MODE='persistent'
 | persistent 业务联调 | `pytest backend/tests/test_persistent_integration.py -q --basetemp .runtime/pytest-local` | **9/9 通过**：B 的真实路由 + worker + 真实库全链路（含 outbox 投递链路）；PG 不可达时整模块 skip，Mock 基线不受影响 |
 | outbox 投递器 | `pytest backend/tests/test_outbox_delivery.py -q --basetemp .runtime/pytest-local` | **5/5 通过**（恰好一次、丢失确认、退避、并发） |
 | K01—K15 + C13 约束正反例 | `python scripts/verify_constraints_day2.py` | **39/39 通过**，机器可读结果见 [day2-constraint-verification.json](day2-constraint-verification.json) |
+| 性能基线（A/B + EXPLAIN） | `python scripts/benchmark_postgres.py` | 候选索引在合成规模（200 项目/4 千论文/10 万审计）下无计划级收益，**本轮不落地索引**；深分页瓶颈为 OFFSET 算法成本，结论与重启评估条件见 [performance-baseline.md](performance-baseline.md) |
+| 备份/恢复验收 | `python scripts/verify_backup_restore.py` | **7/7 通过**：pg_dump（容器内自定义格式）→ 销毁库 → pg_restore → 业务快照逐字段一致、行数一致、幂等重放有效、outbox 可继续投递，见 [backup-restore-verification.json](backup-restore-verification.json) |
 | 全量回归 | `pytest -q --basetemp .runtime/pytest-local` | 172 passed（158 基线 + 8 业务联调 + 5 投递器 + 1 全链路），37 skipped（历史 SQLite 实验未显式运行） |
 | persistent 组合冒烟 | 一次性数据库 + TestClient | `/health` a=persistent；alice 登录；建项目真实落库（`mock=false`）；关闭后一次性库已删除 |
 
@@ -78,4 +80,4 @@ $env:PAPERPILOT_A_MODE='persistent'
 3. 数据库受限角色、受控视图、RLS 与可信项目上下文（day0 已预验证机制可行，未接入正式库授权）；`forbid_mutation` 触发器只是业务入口约束，超级用户可绕过，不构成防篡改边界。
 4. C 的真实模型维度、正文/向量私有提交面；`EMBEDDING_DIM=3` 仍为合成占位，`chunk_embeddings` 采用不定维 vector + 版本化模型登记方案。
 5. 租约心跳、最大重试、死信；幂等记录演示期无限保留（`expires_at` 由 CHECK 固定为 NULL）。
-6. 文件补偿对账、备份恢复与性能规模实验（索引候选清单见 [最终模型 §7](data-model/03-resolved-model.md)，未做性能验收）。
+6. 文件补偿对账与生产容量验收：索引候选经实测**否决**（重启评估条件见[性能基线](performance-baseline.md)）；审计深分页的游标升级属 AB-1 兼容扩展，待产品需要时另行立项。备份/恢复已验收（见验证表）。
