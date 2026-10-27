@@ -1,0 +1,266 @@
+{
+  "database": "postgres16+pgvector",
+  "probes": [
+    {
+      "rule": "K01",
+      "name": "重复用户名被拒绝",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "UniqueViolation"
+    },
+    {
+      "rule": "K01",
+      "name": "合法用户与项目字段可提交",
+      "expect_commit": true,
+      "passed": true,
+      "detail": null
+    },
+    {
+      "rule": "K01",
+      "name": "超长用户名/项目名被拒绝",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "StringDataRightTruncation"
+    },
+    {
+      "rule": "K02",
+      "name": "项目与负责人同事务提交",
+      "expect_commit": true,
+      "passed": true,
+      "detail": null
+    },
+    {
+      "rule": "K02",
+      "name": "无负责人成员的项目提交被拒绝",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "ForeignKeyViolation"
+    },
+    {
+      "rule": "K02",
+      "name": "第二个负责人被拒绝",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "UniqueViolation"
+    },
+    {
+      "rule": "K03",
+      "name": "负责人不可转让",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "RaiseException"
+    },
+    {
+      "rule": "K03",
+      "name": "负责人成员行不可删除或降级",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "ForeignKeyViolation"
+    },
+    {
+      "rule": "K04",
+      "name": "合法导入元数据与项目论文成对提交",
+      "expect_commit": true,
+      "passed": true,
+      "detail": null
+    },
+    {
+      "rule": "K04",
+      "name": "项目内同摘要重复导入被拒绝",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "UniqueViolation"
+    },
+    {
+      "rule": "K04",
+      "name": "无项目关联的书目元数据提交被拒绝",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "RaiseException"
+    },
+    {
+      "rule": "K05",
+      "name": "跨项目引用资源被复合外键拒绝",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "ForeignKeyViolation"
+    },
+    {
+      "rule": "K06",
+      "name": "非法摘要/年份/状态被拒绝",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "CheckViolation"
+    },
+    {
+      "rule": "K06",
+      "name": "小写十六进制摘要与合法年份可提交",
+      "expect_commit": true,
+      "passed": true,
+      "detail": null
+    },
+    {
+      "rule": "K07",
+      "name": "已提交片段不可原位修改或删除",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "RaiseException"
+    },
+    {
+      "rule": "K08",
+      "name": "同任务第二个在途尝试被拒绝",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "UniqueViolation"
+    },
+    {
+      "rule": "K08",
+      "name": "成功结果必须挂在已成功的尝试上",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "RaiseException"
+    },
+    {
+      "rule": "K08",
+      "name": "成功任务与成功尝试及结果一致提交",
+      "expect_commit": true,
+      "passed": true,
+      "detail": null
+    },
+    {
+      "rule": "K09",
+      "name": "结果类型与任务类型不一致被拒绝",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "CheckViolation"
+    },
+    {
+      "rule": "K10",
+      "name": "证据恰好五个字段时提交成功",
+      "expect_commit": true,
+      "passed": true,
+      "detail": null
+    },
+    {
+      "rule": "K10",
+      "name": "证据字段缺失时提交被拒绝",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "RaiseException"
+    },
+    {
+      "rule": "K10",
+      "name": "重复 evidence_id 被全局唯一索引拒绝",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "UniqueViolation"
+    },
+    {
+      "rule": "K10",
+      "name": "非证据结果不得携带证据字段",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "RaiseException"
+    },
+    {
+      "rule": "K11",
+      "name": "连续版本与最新指针提交成功",
+      "expect_commit": true,
+      "passed": true,
+      "detail": null
+    },
+    {
+      "rule": "K11",
+      "name": "跳号或分叉的版本被拒绝",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "RaiseException"
+    },
+    {
+      "rule": "K11",
+      "name": "历史版本正文不可覆盖",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "RaiseException"
+    },
+    {
+      "rule": "K11",
+      "name": "最新版本指针必须指向最大版本",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "RaiseException"
+    },
+    {
+      "rule": "K12",
+      "name": "幂等键重复插入被主键拒绝",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "ForeignKeyViolation"
+    },
+    {
+      "rule": "K12",
+      "name": "幂等记录目标列与操作不符被拒绝",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "CheckViolation"
+    },
+    {
+      "rule": "K13",
+      "name": "审计事件追加成功且事件编号唯一",
+      "expect_commit": true,
+      "passed": true,
+      "detail": null
+    },
+    {
+      "rule": "K13",
+      "name": "审计历史不可更新或删除",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "RaiseException"
+    },
+    {
+      "rule": "K13",
+      "name": "负值或非有限耗时被拒绝",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "CheckViolation"
+    },
+    {
+      "rule": "K14",
+      "name": "被业务引用的用户不可物理删除",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "ForeignKeyViolation"
+    },
+    {
+      "rule": "K14",
+      "name": "成员撤权后历史操作者引用仍保留",
+      "expect_commit": true,
+      "passed": true,
+      "detail": null
+    },
+    {
+      "rule": "K15",
+      "name": "模型登记与维度一致的向量提交成功",
+      "expect_commit": true,
+      "passed": true,
+      "detail": null
+    },
+    {
+      "rule": "K15",
+      "name": "向量维度与模型登记不一致被拒绝",
+      "expect_commit": false,
+      "passed": true,
+      "detail": "CheckViolation"
+    },
+    {
+      "rule": "K15",
+      "name": "模型维度与版本登记不可原位更改",
+      "expect_commit": false,
+      "passed": true,
+      "detail": null
+    }
+  ],
+  "passed": 37,
+  "failed": 0
+}

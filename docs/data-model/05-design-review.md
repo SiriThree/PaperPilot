@@ -43,3 +43,9 @@
 对概念版 5 图做了一轮 Chen 记法检查后修改，没有改变表、字段、接口或约束。主要修改有七项：幂等记录补上部分键 operation/key；执行尝试、证据字段、结果来源（补上 scope）和版本引用快照的局部编号改用虚下划线部分键；imported_by、tasks.actor_id、base_version_id、committed_attempt 改画为“上传、发起、基于（自联系）、采纳”联系，并删除版本引用快照中与“快照定位”重复的 chunk_id；总图补上用户的“上传、发起、保存”联系；报告版本补正文和研究问题，审计事件补发生时间和请求编号；所有 0..1 改为只标最大基数；统一 TASK_RESULT、IDEMPOTENCY_RECORD 命名，并把重名的“限定项目、包含、定位”改成互不相同的联系名。
 
 补上用户联系后，总图含 K3,3 子图，不能画成平面图，因此保留“保存”与“导入”这一处交叉，并以跨线弧标出；脚本只放行标了 hop 的这一类交叉。`python scripts/render_chen_clean.py --check` 对 5 张图重新检查通过：V1 2 个实体/1 个联系，V2 7/6，V3 11/14，V4 8/7，总图 18/28。修订说明见 [diagrams-chen-clean/README.md](diagrams-chen-clean/README.md)。
+
+## 迁移落地与 K01—K15 实测（2026-10-27）
+
+`docs/data-model/` 的 24 张表已在 `backend/app/data/migrations/001_initial.sql` 落地为 PostgreSQL 16 DDL：跨行规则 K02/K04/K08—K11 用延迟约束触发器实现，历史表不可变由触发器保护，向量列采用不定维 `vector` 加版本化模型登记。26 个 DataPort 方法在 `backend/app/data/adapter.py` 完成，共享契约测试 41 项（含 6 个真实数据库门槛）与 K01—K15 的 37 项正反例探针全部通过；实现细节、运行方式与证据见[正式数据适配器实现记录](../data-adapter.md)与 [day2-constraint-verification.json](../day2-constraint-verification.json)。
+
+本文档此前"不表示 SQL 约束已通过"的保留条款就此关闭；第 8 节列出的待协作事项（正式认证、向量载荷、RLS、outbox 投递等）仍然有效，未因实现而视为完成。概念图与数据字典未因实现改动；实现中发现的唯一设计修正见实现记录第 3 节（K11 报告指针触发器须在提交时读取行终态，避免同事务版本推进被过期事件误判）。
