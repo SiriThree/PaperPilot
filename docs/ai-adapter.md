@@ -2,7 +2,7 @@
 
 C 实现位于 `backend/app/ai/`，交付五个 async AIPort 方法与 `build_ai(data: DataPort) -> AIPort`。公开 Schema、HTTP API、AB-1、前端及任务/报告持久化保持原有边界。默认启动仍为 Mock，真实 C 必须显式注册；配置缺失、解析失败、供应商失败均不回退。
 
-开发基线为 B 的 PR #3 已合入后的 `main@4770732`。同步检查中，A 的 PR #1（`member-a@808ced9`）和 D 的 PR #2 仍为草稿；C 不提前合入或修改同学的实现。合并前应重新 fetch 核对。
+开发基线为 B 的 PR #3 已合入后的 `main@4770732`。同步检查中，A 的 PR #1（`member-a@808ced9`）和 D 的 PR #2 仍为草稿；C 不提前合入或修改同学的实现。已对 C 提交与当前 A 分支执行三方合并检查，无文本冲突；这不等同于真实 PostgreSQL 联调。合并前应重新 fetch 核对。
 
 ## 安装与启动
 
@@ -47,7 +47,7 @@ export PAPERPILOT_AI_LOCAL_MODEL_DIR=/absolute/path/to/prepared/model
 | `PAPERPILOT_AI_CHAT_MODEL` | 支持 Chat Completions 严格 JSON Schema 的实际模型调用名，必填 |
 | `PAPERPILOT_AI_EMBEDDING_BACKEND` | `remote`（默认）或 `fastembed`，无自动切换 |
 | `PAPERPILOT_AI_EMBEDDING_MODEL` / `..._DIMENSIONS` | 实际嵌入模型及期望维度，必填；返回向量必须同维、有限、非零，不做隐式投影 |
-| `PAPERPILOT_AI_EMBEDDING_BASE_URL` / `..._API_KEY` | 可选独立嵌入服务；remote 模式未指定时才使用聊天服务地址/密钥 |
+| `PAPERPILOT_AI_EMBEDDING_BASE_URL` / `..._API_KEY` | 可选独立嵌入服务，两者必须一起配置；remote 模式均未指定时才使用聊天服务地址/密钥，不把聊天密钥自动发送给另一服务 |
 | `PAPERPILOT_AI_LOCAL_MODEL_DIR` | fastembed 必填；显式准备好的模型目录，缺少依赖/文件或维度不符拒绝启动 |
 | `PAPERPILOT_AI_TIMEOUT_SECONDS` | 每个 AIPort 操作总期限，默认 45，范围 (0,90] 秒，包括所有嵌入批次；需小于 A 的租约 |
 | `PAPERPILOT_AI_MIN_SIMILARITY` | 余弦阈值，默认 0.2；是开发阈值，需要按语料校准 |
