@@ -1,6 +1,6 @@
 # PaperPilot Secure
 
-面向科研文献研究的 AI 数据库应用与安全平台。此仓库包含工程骨架、AB-1 数据契约、数据库中立接入及任务恢复，当前完成 **Phase 3：A/C/D 并行开发入口与交接准备**。各成员从 [统一开发指南](docs/development-guide.md) 开始。
+面向科研文献研究的 AI 数据库应用与安全平台。此仓库包含工程骨架、AB-1 数据契约、数据库中立接入及任务恢复；在 Phase 3 协作基线上增加 **Phase 4B：B 侧页面状态、错误处理和业务集成**。各成员从 [统一开发指南](docs/development-guide.md) 开始，实际验收与限制见 [验证记录](docs/verification.md)。
 
 **默认 Mock；正式数据库由 A/团队决定。持久化模式必须显式注册 A 的适配器，未注册就拒绝启动。没有真实密码认证、PDF 解析、向量检索、LLM 或 SQL 安全网关。已有 SQLite 文件保留为历史实验，不代表正式选型。**
 
@@ -61,6 +61,51 @@ $env:PAPERPILOT_D_MODE = 'mock'
 - Cookie 使用 HttpOnly、SameSite=Strict；写请求必须携带 `X-PaperPilot-Client: web`，存在 Origin 时必须匹配允许列表。Vite 代理 `/api`，浏览器采用同源 Cookie，不开放跨源 CORS。
 
 ## Mock 演示流程
+
+### 带默认数据的演示启动
+
+需要直接展示完整页面时，显式使用独立演示入口（普通启动和测试仍保留原最小数据）：
+
+```powershell
+$env:PAPERPILOT_ENV='development'
+$env:PAPERPILOT_A_MODE='mock'
+$env:PAPERPILOT_C_MODE='mock'
+$env:PAPERPILOT_D_MODE='mock'
+.\scripts\start-backend.ps1 -Demo
+# 另一个终端仍按上文启动前端
+```
+
+Alice 登录后进入 **科研证据追溯演示**：6 篇合成文献（5 篇可检索、1 篇处理失败）、10 个来源片段、2 份结构化证据、一份综述的两个版本，以及经 Mock 网关调用产生的成功/拒绝/失败审计记录。原演示项目及 Bob/Eve 的权限关系保留。
+
+研究页点击“检索”→“查看已有证据”读取已保存内容，不会新建提取任务；“提取 Mock 证据”继续用于创建新任务。点击“科研证据追溯综述（合成演示） · v2”，切换“版本 1/2”及“引用清单”，可以对比正文和两条/三条引用快照。
+
+此数据集全部虚构，不对应真实论文、实验或 SQL 执行；只有合成元数据和片段，**不包含真实 PDF 或解析结果**。失败任务编号输出在演示服务启动日志中，登录后可通过现有项目任务查询 API 读取，只有明确请求重试才重新模拟处理。pending/processing 用现场上传或生成任务展示，不预置永远处理中的任务。
+
+`-Demo` 对应 `app.demo:create_demo_app`，仅接受 development/test 且 A/C/D 全部为 mock，遇到真实模式或生产模式明确拒绝，不向 A 的数据层写入。新后端进程会重建初始样例，演示期间新增/修改仍不持久化；没有重置或清空已有数据的 HTTP 入口。
+
+如需保留正在运行的普通服务，可并行预览（沿用上方development及全Mock环境变量）：
+
+```powershell
+# 后端终端
+$env:PAPERPILOT_ALLOWED_ORIGINS='http://localhost:5174,http://127.0.0.1:5174'
+.\scripts\start-backend.ps1 -Demo -Port 8001
+# 前端终端
+$env:PAPERPILOT_PROXY_TARGET='http://127.0.0.1:8001'
+npm.cmd --prefix frontend run dev -- --port 5174 --strictPort
+```
+
+访问 http://localhost:5174；与原来的127.0.0.1站点使用不同主机名，可避免两个独立服务的开发Cookie互相覆盖（仅换端口不能隔离Cookie）。该预览不会停止原8000/5173服务。
+
+演示数据独立验收：
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest backend/tests/test_demo_data.py -q
+npm.cmd --prefix frontend run test:e2e -- --config=playwright.demo.config.ts
+```
+
+浏览器演示测试使用独立8101/5274及临时上传目录，不修改日常演示服务。原68项浏览器回归仍使用原配置运行，不注入扩充数据。
+
+### 原有手工操作流程
 
 1. 选择 Alice 进入演示，创建项目或进入预置项目。
 2. 上传 PDF，查看 pending → processing → succeeded；文件保存到 `.runtime/uploads`，处理结果是明确标注的合成片段。

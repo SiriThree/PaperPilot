@@ -75,20 +75,41 @@ class ResearchService:
 
     def validate_sources(self, ctx, sources, allowed=None):
         seen = set()
+        # Only this validation call: never retain data/authorization across requests.
+        actual_by_paper = {}
+        allowed_keys = (
+            None
+            if allowed is None
+            else {
+                (s.citation_id, s.paper_id, s.chunk_id, s.page_number, s.excerpt, s.synthetic)
+                for s in allowed
+            }
+        )
         for source in sources:
             if source.citation_id in seen:
                 raise AppError(502, "INVALID_CITATION", "来源编号重复")
             seen.add(source.citation_id)
-            actual = self.adapters.data.sources(ctx, source.paper_id)
-            if not any(
-                s.chunk_id == source.chunk_id
-                and s.page_number == source.page_number
-                and s.excerpt == source.excerpt
-                and s.synthetic == source.synthetic
-                for s in actual
-            ):
+            if source.paper_id not in actual_by_paper:
+                actual_by_paper[source.paper_id] = {
+                    (s.chunk_id, s.page_number, s.excerpt, s.synthetic)
+                    for s in self.adapters.data.sources(ctx, source.paper_id)
+                }
+            if (source.chunk_id, source.page_number, source.excerpt, source.synthetic) not in actual_by_paper[
+                source.paper_id
+            ]:
                 raise AppError(502, "INVALID_CITATION", "来源与授权片段不一致")
-            if allowed is not None and not any(s == source for s in allowed):
+            if (
+                allowed_keys is not None
+                and (
+                    source.citation_id,
+                    source.paper_id,
+                    source.chunk_id,
+                    source.page_number,
+                    source.excerpt,
+                    source.synthetic,
+                )
+                not in allowed_keys
+            ):
                 raise AppError(502, "INVALID_CITATION", "引用不属于本次检索结果")
 
     async def search(self, ctx, query):
@@ -97,8 +118,11 @@ class ResearchService:
             if result.mode != query.mode or len(result.items) > query.limit:
                 raise ValueError("invalid search metadata")
             self.validate_sources(ctx, [hit.source for hit in result.items])
+            papers = {}
             for hit in result.items:
-                paper = self.adapters.data.paper(ctx, hit.paper.paper_id)
+                if hit.paper.paper_id not in papers:
+                    papers[hit.paper.paper_id] = self.adapters.data.paper(ctx, hit.paper.paper_id)
+                paper = papers[hit.paper.paper_id]
                 if (
                     hit.paper != paper
                     or hit.source.paper_id != paper.paper_id

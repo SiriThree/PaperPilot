@@ -1,6 +1,8 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { api, ApiError, type Models } from '../api/client'
+import { formatError, taskError } from '../api/errors'
 import { user } from '../state'
+import { pdfProblem } from '../validation'
 
 type Kind = Models['Task']['kind']
 type Phase = 'submitting' | 'unknown' | 'accepted' | 'rejected'
@@ -68,7 +70,7 @@ export function useTaskRecovery(projectId: string, page: RecoveryRecord['page'],
         if (!active()) return
         if (current.task_id !== item.taskId || current.project_id !== projectId || current.kind !== item.kind) throw new ApiError('ADAPTER_CONTRACT_ERROR', '任务响应与恢复记录不一致')
         task.value = current
-        if (current.status === 'failed') { queryUncertain.value = false; message.value = `${current.error?.message || '任务处理失败'}（${current.error?.code || 'TASK_FAILED'}）`; return }
+        if (current.status === 'failed') { queryUncertain.value = false; message.value = formatError(taskError(current)); return }
         if (current.status === 'succeeded') {
           queryUncertain.value = false
           message.value = '任务已完成，已读取已有结果。'
@@ -119,6 +121,8 @@ export function useTaskRecovery(projectId: string, page: RecoveryRecord['page'],
       let payload: unknown
       if (intent.kind === 'process') {
         if (!intent.file || !intent.title?.trim()) throw new Error('请重新选择原 PDF 并填写原论文标题后核对。')
+        const problem = await pdfProblem(intent.file)
+        if (problem) throw new Error(problem)
         payload = { kind: intent.kind, title: intent.title, digest: await hash(await intent.file.arrayBuffer()) }
       } else if (intent.kind === 'evidence') {
         if (!intent.paperId) throw new Error('缺少原论文编号，未提交。')
