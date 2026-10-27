@@ -28,9 +28,9 @@
 
 ## 3 V1 身份与项目分 E-R 图
 
-![分 E-R 图一 身份与项目](diagrams/v1-identity-project.svg)
+![分 E-R 图一 身份与项目](diagrams-chen-clean/v1-identity-project.svg)
 
-[打开可缩放 SVG](diagrams/v1-identity-project.svg) · [图例与联系基数说明](06-chen-notation.md)
+[打开可缩放 SVG](diagrams-chen-clean/v1-identity-project.svg) · [图例与联系基数说明](06-chen-notation.md)
 
 | 对象或联系 | 局部属性 | 规则 |
 | --- | --- | --- |
@@ -42,9 +42,9 @@
 
 ## 4 V2 文献与来源分 E-R 图
 
-![分 E-R 图二 文献与来源](diagrams/v2-literature-source.svg)
+![分 E-R 图二 文献与来源](diagrams-chen-clean/v2-literature-source.svg)
 
-[打开可缩放 SVG](diagrams/v2-literature-source.svg) · [图例与联系基数说明](06-chen-notation.md)
+[打开可缩放 SVG](diagrams-chen-clean/v2-literature-source.svg) · [图例与联系基数说明](06-chen-notation.md)
 
 | 对象或联系 | 局部属性 | 规则 |
 | --- | --- | --- |
@@ -58,9 +58,9 @@
 
 ## 5 V3 研究与报告分 E-R 图
 
-![分 E-R 图三 研究与报告](diagrams/v3-research-report.svg)
+![分 E-R 图三 研究与报告](diagrams-chen-clean/v3-research-report.svg)
 
-[打开可缩放 SVG](diagrams/v3-research-report.svg) · [图例与联系基数说明](06-chen-notation.md)
+[打开可缩放 SVG](diagrams-chen-clean/v3-research-report.svg) · [图例与联系基数说明](06-chen-notation.md)
 
 | 对象或联系 | 局部属性 | 规则 |
 | --- | --- | --- |
@@ -74,9 +74,9 @@ SOURCE 不是独立的“全局引用编号库”；结果内编号可能重新�
 
 ## 6 V4 运行控制与审计分 E-R 图
 
-![分 E-R 图四 运行控制与审计](diagrams/v4-control-audit.svg)
+![分 E-R 图四 运行控制与审计](diagrams-chen-clean/v4-control-audit.svg)
 
-[打开可缩放 SVG](diagrams/v4-control-audit.svg) · [图例与联系基数说明](06-chen-notation.md)
+[打开可缩放 SVG](diagrams-chen-clean/v4-control-audit.svg) · [图例与联系基数说明](06-chen-notation.md)
 
 | 对象或联系 | 局部属性 | 规则 |
 | --- | --- | --- |

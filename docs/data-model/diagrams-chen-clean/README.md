@@ -56,12 +56,7 @@
 
 `total-er.svg` 是**概念总览**，不是 24 张表的字段级图。它把 `project_members`、`papers/project_papers`、`paper_authors`、`paper_topics`、`task_papers`、`chunk_embeddings`、`result_sources/report_version_sources` 等关联结构折叠为联系或独立来源实体，因此只保留 18 个概念实体和关键属性。
 
-字段级完整结构仍以：
-
-- 原 [resolved-er.svg](../diagrams/resolved-er.svg)；
-- [数据字典](../04-data-dictionary.md) 中的 24 张逻辑表和 176 个字段；
-
-为准。总图只用于快速阅读实体、联系和基数，不替代建表依据。
+字段级完整结构以[数据字典](../04-data-dictionary.md)中的 24 张逻辑表和 176 个字段为准；总图只用于快速阅读实体、联系和基数，不替代建表依据。
 
 ## 布局与重新生成
 

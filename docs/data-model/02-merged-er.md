@@ -17,9 +17,7 @@
 
 ## 2 初步合并总图
 
-![初步合并总 E-R 图（冲突消解前）](diagrams/merged-er.svg)
-
-[打开可缩放 SVG](diagrams/merged-er.svg) · [图例与联系基数说明](06-chen-notation.md)
+历史的初步合并图已随旧版绘图移除；合并对应关系见上表，冲突清单见下一节。当前有效的概念总图为 [diagrams-chen-clean/total-er.svg](diagrams-chen-clean/total-er.svg)（已消解冲突后的 18 个概念实体视图），图例见 [联系基数说明](06-chen-notation.md)。
 
 ## 3 合并后发现的冲突
 

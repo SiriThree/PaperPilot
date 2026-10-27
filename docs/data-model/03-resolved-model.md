@@ -24,11 +24,11 @@
 
 ## 2 冲突消解后的总 E-R 图
 
-这是映射后的总图，包含 24 张逻辑表。概念多对多联系已经展开，Source 分拆为结果来源与版本来源，运行控制实体也单独保留。图显示主要联系；所有字段级复合外键、辅助唯一键及可空性以 [数据字典](04-data-dictionary.md) 为准。每项目一个 owner、每报告至少一版、每份证据恰好五字段，属于需额外保证的提交后业务基数，不能只凭图中的“多”表达。
+这是映射后的总图；概念版画作 18 个概念实体（关联表折叠为联系），完整的 24 张逻辑表以[数据字典](04-data-dictionary.md)为准。概念多对多联系已经展开，Source 分拆为结果来源与版本来源，运行控制实体也单独保留。图显示主要联系；所有字段级复合外键、辅助唯一键及可空性以 [数据字典](04-data-dictionary.md) 为准。每项目一个 owner、每报告至少一版、每份证据恰好五字段，属于需额外保证的提交后业务基数，不能只凭图中的“多”表达。
 
-![最终总 E-R 图（冲突消解后）](diagrams/resolved-er.svg)
+![概念总 E-R 图](diagrams-chen-clean/total-er.svg)
 
-[打开可缩放 SVG](diagrams/resolved-er.svg) · [图例与联系基数说明](06-chen-notation.md)
+[打开可缩放 SVG](diagrams-chen-clean/total-er.svg) · [图例与联系基数说明](06-chen-notation.md)
 
 outbox_events 与 audit_events 按相同 event_id 幂等投递，未画成强制外键联系。用户、项目到作者/主题/模型等的辅助外键省略绘制，不代表这些表可以跨项目访问。
 

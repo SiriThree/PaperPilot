@@ -5,29 +5,22 @@
 | 顺序 | 成果 | 阅读内容 |
 | --- | --- | --- |
 | 1 | [需求分析与分 E-R 图](01-requirements-and-local-er.md) | 需求来源、业务规则、四个局部视图及基数 |
-| 2 | [初步合并总 E-R 图](02-merged-er.md) | 合并对应表、尚未消解冲突的概念总图 |
+| 2 | 初步合并总 E-R 图 | 合并思路保留在 [设计检查记录](05-design-review.md)；历史合并图已随旧版绘图移除 |
 | 3 | [冲突消解与最终模型](03-resolved-model.md) | 命名/属性/结构冲突、最终总图、约束及事务设计 |
 | 4 | [关系模式与数据字典](04-data-dictionary.md) | 24 张逻辑表、字段、键及外键、26 个 DataPort 方法的落点 |
 
-概念阶段使用业务实体和联系；关系模式阶段将多对多联系、结果来源及运行控制拆成逻辑表。参照用户提供的样式，四张分图、合并图和最终总图均改用 **Chen 式记法：矩形是实体、椭圆是属性、菱形是联系，连线的 1/N 表示最大联系基数**。主键属性加下划线，最终图中的可空属性用 `?` 标记。
+图形采用 **Chen 式记法：矩形是实体、椭圆是属性、菱形是联系，连线的 1/N/M 表示最大联系基数**。主键属性加实下划线；依附实体（执行尝试、证据字段、结果来源、版本引用快照、幂等记录）的局部编号加虚下划线表示部分键，须与所属实体主键组合。外键一律画成联系（上传、发起、保存、采纳、基于），联系名互不重复，总图仅“保存”与“导入”一处交叉并以跨线弧标示。
 
-分图保留需求分析阶段的核心业务属性；最终图逐一展示 24 张逻辑表的全部 176 个字段属性，与数据字典一致。最小参与数量和一对一/一对多/多对一/多对多的阅读方式见 [图例、属性覆盖和联系基数表](06-chen-notation.md)。不需要 Mermaid 支持即可打开 SVG。
-
-也提供已经渲染并检查的可缩放 SVG，直接打开即可查看，无需安装绘图工具：
+已渲染并检查的可缩放 SVG 在 [diagrams-chen-clean/](diagrams-chen-clean/README.md)，无需安装绘图工具：
 
 | 阶段 | 图像 |
 | --- | --- |
-| 四个分图 | [身份与项目](diagrams/v1-identity-project.svg)、[文献与来源](diagrams/v2-literature-source.svg)、[研究与报告](diagrams/v3-research-report.svg)、[运行控制与审计](diagrams/v4-control-audit.svg) |
-| 合并阶段 | [初步合并总图](diagrams/merged-er.svg) |
-| 冲突消解后 | [最终总图](diagrams/resolved-er.svg) |
+| 四个分图 | [身份与项目](diagrams-chen-clean/v1-identity-project.svg)、[文献与来源](diagrams-chen-clean/v2-literature-source.svg)、[研究与报告](diagrams-chen-clean/v3-research-report.svg)、[运行控制与审计](diagrams-chen-clean/v4-control-audit.svg) |
+| 概念总图 | [总图（18 个概念实体、28 个联系）](diagrams-chen-clean/total-er.svg) |
 
-完成检查见 [设计检查记录](05-design-review.md)。绘图源为 `diagrams/chen-model.json`，可通过 `scripts/render_chen_er.mjs` 重新生成，方法见图例说明。
+分图保留各局部视图的核心业务属性；总图是概念总览，不是 24 张表的字段级图。**需要字段、复合外键和 24 张表时，以 [数据字典](04-data-dictionary.md) 为准**；图上省略的可空审计维度、条件目标键和派生指针等例外见概念版 [README 的合并与省略说明](diagrams-chen-clean/README.md)。图例、属性覆盖和联系基数的阅读方式见 [图例与联系基数说明](06-chen-notation.md)。
 
-### 概念版重绘（独立目录，原图未覆盖）
-
-另有一套按同一参考样式重绘的 5 张图，放在 [diagrams-chen-clean/](diagrams-chen-clean/README.md)：4 张分图加 1 张概念总图。它把项目成员、论文作者、论文主题、任务论文范围、片段向量等关联表直接折叠成菱形联系，并取消了“负责”与成员角色的重复表达；结果来源与版本快照也拆开绘制。新总图因此是 18 个概念实体、28 个联系的总览，不是 24 张表的字段级图。概念版已按 Chen 规范修订：外键改画成联系（上传、发起、保存、采纳、基于），依附实体用虚下划线标出部分键，基数统一只标最大值，联系名不再重复。
-
-原 `diagrams/` 下的 4 张分图、合并图和最终总图全部保留。需要字段、复合外键和 24 张表时仍以 `resolved-er.svg` 与 [数据字典](04-data-dictionary.md) 为准；概念版只用于更清楚地阅读实体、联系和基数。重绘脚本为 `scripts/render_chen_clean.py`，可执行 `python scripts/render_chen_clean.py --check` 重新生成并检查交叉、穿形和文字溢出。
+完成检查见 [设计检查记录](05-design-review.md)。绘图源为 `scripts/render_chen_clean.py`（手工坐标布局内嵌），在仓库根目录执行 `python scripts/render_chen_clean.py --check` 可重新生成 5 张 SVG，并检查关系线交叉（仅放行总图标了 hop 的一处）、连线穿过其他形状、包围盒重叠和文字溢出。脚本只使用 Python 标准库。
 
 已确定的模型规则来自 PRD、AB-1 和现有 Schema；A 对实现方式作出的设计选择均在冲突表标明。C 的模型维度/载荷、D 的实际数据库授权机制、正式认证与审计投递参数仍需协作确认，不能将本设计视为这些能力已经实现。
 
