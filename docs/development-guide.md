@@ -1,5 +1,68 @@
 # A/B/C/D 开发及交接指南
 
+## 默认演示数据（显式选择，不接入正式数据层）
+
+使用 `scripts/start-backend.ps1 -Demo` 或 `uvicorn app.demo:create_demo_app --factory --app-dir backend` 启动扩充样例；具体双端启动及演示顺序见 [README 的演示流程](../README.md#mock-演示流程)。默认 `app.main:create_app`、A/C/D工厂及共享契约测试不变，不需要环境变量开关或新依赖。`-Port` 可选择独立本机预览端口，默认8000。
+
+数据定义和初始化位于 `backend/app/demo.py`。独立 Mock 内存项目保留 Alice/Bob 成员关系及 Eve 隔离；包含6篇虚构文献（5成功、1失败）、10个合成片段、2份证据、两版综述和Mock查询审计。除固定项目/成员fixture外，任务、处理结果、证据、报告版本均沿用DataPort，查询审计经过ResearchService和MockSecurity；没有为B增加真实数据库模型、迁移、解析算法或SQL执行。`FileReference`是Mock占位引用，不在磁盘伪造已上传PDF。
+
+`create_demo_app`只接受development/test与全Mock配置，在worker启动前加载数据；失败即拒绝启动，没有真实模式回退。单应用重复进入生命周期不重复灌入，启动新进程重新创建初始样例。这是Mock重新初始化，不能作为真实持久化恢复证明。启动日志只输出演示标记、项目ID和失败task_id，后者可通过现有认证任务GET读取/明确重试。
+
+前端新增`api.evidenceHistory`封装原有GET证据接口，研究页“查看已有证据”显示最新一份已保存结果，空结果和故障有明确反馈，只读操作不会触发AI。原提取、任务恢复、报告保存、引用及版本流程保留；没有新增HTTP接口、修改Schema/生成类型或AB-1。
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest backend/tests/test_demo_data.py -q
+npm.cmd --prefix frontend run test:e2e -- --config=playwright.demo.config.ts
+```
+
+独立演示浏览器测试在`frontend/demo-tests/`，配置使用8101/5274及临时存储，输出在忽略目录`output/demo-data/`。默认`frontend/tests/`的68项仍以最小fixture执行。两组配置均纳入类型检查，验证记录见 [verification.md](verification.md)。真实A/C/D实现不导入这套演示初始化逻辑。
+
+## Phase 4B：页面状态、错误和业务联调
+
+本轮沿用 Phase 3 的端口和装配方式，不改公开 Schema/OpenAPI、生成类型、依赖锁文件或数据库选型。PRD 第9.3节中已具备的服务端授权、任务编排、报告版本和网关边界直接复用；实现矩阵、A–H验收证据及限制见 [验证记录](verification.md)。
+
+统一客户端 `frontend/src/api/client.ts` 经同源 Cookie 和原 CSRF 头调用既有 API。普通请求15秒超时，任务查询保留10秒上限并组合页面取消信号；不自动重试。网络断开为 NETWORK_ERROR，超时为 REQUEST_TIMEOUT，HTTP业务拒绝保留安全 code/status。请求编号优先使用合法的响应体 UUID，缺失或无效时使用 X-Request-ID。`api/errors.ts` 统一公开提示，未知错误、HTTP代理正文、网关reason和任务失败不直接展示供应商内部消息。C/D仍须遵守安全 AppError 约定，不能将密钥或原始内部 SQL 写入响应。
+
+四页分别展示读取中的状态、成功数据、明确空结果和失败提示。`useResource` 只编排读取，不重放写入；失败清空该区域旧结果并显示对应重查入口，卸载或后续查询使迟到结果失效。项目列表采用同样的身份/请求范围保护。首次连接失败可“重新连接服务”；401清理当前身份与项目视图，返回开发登录并保留可用请求编号。退出失败仍保留当前界面并显示错误，不声称已经退出。
+
+负责人可从文献表“移出项目”，确认“不再参与检索、历史报告保留快照”后调用原 DELETE API（confirm_source_impact=true）。取消不发送请求；成员没有按钮，但这不是授权保证，服务端仍拒绝非负责人。移出是项目关联操作，不负责删除原文件。
+
+报告保存成功后，历史版本和报告列表独立刷新；刷新失败仅重读，不自动再次保存或创建版本。AI检索不可用时仍能手工编辑、保存和读取报告；查询结果与审计列表也分别展示，审计刷新失败不篡改已有查询状态。异步任务继续沿用 Phase 2C 的恢复记录、60秒状态未知、同任务查询和原键核对机制，恢复存储字段、任务编号与幂等规则不变；本轮补充上传前文件校验，未重设计恢复协议。
+
+模式展示区分默认Mock、已注册适配器和未知模式，具体结果保留 mock/synthetic 标记。注册不能证明持久化、真实AI质量或SQL防护；页面不再只凭 persistent 模式承诺重启保留。
+
+```powershell
+# B 的实际故障隔离/权限集成测试（使用端口替身，不是正式模块验收）
+.\.venv\Scripts\python.exe -m pytest backend/tests/test_business_integration.py -q
+# 已安装依赖时，按下文统一命令跑全套；也可仅运行新页面用例
+$env:PAPERPILOT_E2E_API_PORT='8100'
+$env:PAPERPILOT_E2E_WEB_PORT='5273'
+$env:PAPERPILOT_E2E_DATA_MODE='mock'
+npm.cmd --prefix frontend run test:e2e -- business-states.spec.ts
+```
+
+启动及构建方式不变；浏览器用例自行启动隔离Mock服务，不能对日常运行库执行移出/成员变更测试。同步项目创建、成员变更和移出没有新增服务端幂等承诺，连接确认丢失时先重查/核对。报告保存的跨刷新未知提交、正式身份认证、真实数据库恢复与容器部署仍需独立验收；Docker未启动时只能检查 compose 配置，不能据此声称容器构建/启动通过。
+
+## Phase 4B：本轮优化与复验
+
+四页继续沿用原路由/API与Element Plus。项目名称支持就近校验和Enter提交；PDF在完整读取摘要前检查空文件、20 MiB和头部（不等于PDF解析/安全扫描）；年份倒置不发送查询。研究编辑器在草稿生成期间保留新编辑，结果到达后允许明确载入，显示字符/引用数与未保存状态。查询区分策略通过和实际执行，清除仅影响当前结果展示。
+
+客户端只消费JSON业务端点，超时包括读取响应正文；健康元数据不完整、非JSON或HTTP 200错误信封均明确失败。未来文件/流式响应需要独立客户端边界，不能直接接入此JSON传输。服务端安全AppError仍由模块提供，不应携带内部SQL、凭据或资源秘密。
+
+上传重放或已知回滚后，若本请求未采纳文件删除失败，仅记录`upload_cleanup_deferred`和request_id，保留已知业务结果。未知提交保留文件，禁止按超时自动删除。孤立文件对账/清理由A/B在真实存储接入时确认，本轮没有后台清理器。
+
+来源校验的索引只存活于一次方法调用，检索论文元数据也只在单次请求复用；不跨请求缓存授权。A仍在资源访问和最终写入执行权限及事务约束；C/D不需改接口或前端。
+
+本轮新增测试：
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest backend/tests/test_sprint_reliability.py -q
+# 沿用上节8100/5273和mock环境变量
+npm.cmd --prefix frontend run test:e2e -- tests/sprint-quality.spec.ts
+```
+
+浏览器测试覆盖390/768/1440px四页和键盘跳转，截图保存在忽略目录`output/sprint-20261026/after/`。优化前后截图使用隔离演示数据，不能当作真实AI、持久化或SQL安全证据。逐检查点、实际命令和未验证项见[验证记录](verification.md)。Docker引擎可用后仍需补容器构建与启动；页面内未保存正文不具备跨刷新恢复。
+
 ## Phase 3：统一开工入口
 
 本阶段只补齐独立适配器开发、注册和验收入口。AB-1（26 方法）、AIPort（5 方法）、SecurityPort（2 方法）、公开 Schema 和前端生成类型不变；没有新增数据库、算法或 SQL 网关实现。
