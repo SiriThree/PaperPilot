@@ -6,8 +6,8 @@
 
 | 成员 / PR | 本次查看的版本与状态 | 对 D 的实际影响 |
 |---|---|---|
-| [A / #1](https://github.com/SiriThree/PaperPilot/pull/1) | `member-a@808ced9`，Open / Draft | 已提供 PostgreSQL 16、psycopg3、24 表迁移、26 方法 DataPort、DataBinding、隔离库 provider 和 outbox 投递器。移除“等待 A 实现数据层/provider/outbox”的旧前置条件；正式受限角色、统计视图、RLS/可信项目上下文和 outbox 保留/死信仍待 A/D 完成。 |
-| [B / #3](https://github.com/SiriThree/PaperPilot/pull/3) | 已合并到 `main@4770732` | 业务反馈、来源校验和查询/审计页面已更新，页面明确区分 allowed 与 executed。D 下一阶段应先同步该基线并回归，不需要另做前端。 |
+| [A / #1](https://github.com/SiriThree/PaperPilot/pull/1) | 执行前复核为 `member-a@0b2953c`，Open / Draft | 已提供 PostgreSQL 16、psycopg3、24 表迁移、26 方法 DataPort、DataBinding、隔离库 provider 和 outbox 投递器；最新另完成性能基线及备份恢复记录。移除“等待 A 实现数据层/provider/outbox”的旧前置条件；正式受限角色、统计视图、RLS/可信项目上下文和 outbox 保留/死信仍待 A/D 完成。 |
+| [B / #3](https://github.com/SiriThree/PaperPilot/pull/3) | 已合并到 `main@4770732`；本轮已同步 D 分支并回归 | 业务反馈、来源校验和查询/审计页面已更新，页面明确区分 allowed 与 executed；D 无需另做前端。 |
 | [C / #4](https://github.com/SiriThree/PaperPilot/pull/4) | `feat/member-c-ai@1f43093`，Open / 非 Draft，未合并 | 已提供五方法真实 AI、PDF reader、检索和受控生成；`app.ai.bootstrap.create_app` 接受 `data_binding` 与 `security_factory`。可用于最终组合，当前没有 NL2SQL 方法，D 的三条固定统计不以 C 的模型或向量索引为前置。 |
 | [D / #2](https://github.com/SiriThree/PaperPilot/pull/2) | `feature/member-d-security@2f781e0`，Open / Draft | 任务 1/2 与任务 3 校验阶段已交付。真实 SQL 始终未执行，受限执行器、关键审计、真实 D provider 及正式攻防尚未完成。 |
 
@@ -31,7 +31,7 @@ A 的 41 项真实库共享测试、9 项业务联调及 5 项 outbox 测试，C
 
 ## 下一步顺序与完成门槛
 
-1. **同步 B 的已合并基线并复验。** D 当前提交没有包含 `4770732`；本次未自动合并或 rebase。A/C/D 最终合入时应同时保留 D 的 sqlglot、A 的数据层依赖及 C 的 pypdf/可选 AI 配置，不以覆盖整个 pyproject/锁文件处理差异。
+1. **同步 B 的已合并基线并复验：已完成。** 本轮从 origin/main 合入 `4770732`，无文本冲突；Python 3.12 默认后端 371 passed / 37 skipped，前端类型及构建、公开契约和静态检查通过。A/C/D 最终合入时仍须同时保留 D 的 sqlglot、A 的数据层依赖及 C 的 pypdf/可选 AI 配置，不以覆盖整个 pyproject/锁文件处理差异。
 2. **冻结 A/D 接入约定和任务 3 的正式模板。** PostgreSQL 16/psycopg3 已是 A 的实现路线；现在要确认受控视图、驱动参数格式、每种统计的行粒度、独立只读身份、项目上下文和审计连接权限。确认前不把当前 `:project_id` 模板原样送给驱动。
 3. **先完成任务 6 的审计失败关闭。** 可先用隔离 DataPort/可控依赖验证；A 代码集成后再验证真实持久化。执行前必须确认关键事件已写入；执行后审计无法确认则不返回结果。异步 outbox 和 B 的 requested/finished 都不能替代这一门槛。
 4. **一起实现任务 4/5，并配套任务 7。** 先保持真实执行默认关闭，在隔离库用受限身份接通成功、失败、超时/取消、结果过滤及资源清理；每项都有对应测试再形成可评审提交。
@@ -45,10 +45,20 @@ A 的 41 项真实库共享测试、9 项业务联调及 5 项 outbox 测试，C
 - A 的未提取统计用同项目、同论文 `task_results.kind='evidence'` 的存在性判断。D 的 has_evidence 应对齐此语义；C 返回不足且已保存证据记录，不等于“尚未提取”，也不代表研究结论得到验证。
 - 正式迁移已经有 `audit_events` 和 `outbox_events`，没有创建 D 草案视图、正式 RLS 策略或受限角色。表的不可变触发器及 day0 RLS 样例不构成正式最小权限/防篡改验收；SQL 读取身份和审计写入权限应分离。
 
-## 本次调整范围与验证口径
+## 进度复核时的范围与验证口径（历史）
 
 本次只读查看 PR 信息、选定源码和本地已缓存的 origin/main，并更新 D 的进度与交接文档；未合并、修改或执行 A/B/C 的代码，未改公开接口、前端或执行开关，未发布 GitHub 评论/评审或修改 PR。
 
 D 的 Python 3.12.10 基线验证仍为 **344 passed / 37 skipped / 0 failed**（见[网关验证记录](member-d-gateway.md)），属于当时 D 分支，不能声称覆盖 B 新基线或 A/C 的联合运行。PR #2 的在线正文仍使用较早的 3.14/分组测试口径，后续应同步该基线复验记录；本轮未修改远程正文。
 
 真实 SQL 保持关闭，执行前关键审计、正式数据库权限与隔离 provider 尚待实现；此次进度调整不能计为这些任务完成。
+
+## 2026-10-28：按计划执行——已同步 B 基线
+
+用户授权按顺序推进后，先单独提交此前进度文档，再从 origin/main 合并 B 的 `4770732`，保留 D 的全部功能提交与依赖；无文本冲突，未合并尚未进入 main 的 A/C 分支。
+
+- Python 3.12.10 默认后端：371 passed、37 skipped、0 failed；跳过仍为 31 项历史 SQLite 实验与 6 项真实数据库门槛，未计作通过。报告位于 Git 忽略的 `.runtime/d-main-sync-tests.xml`。
+- Node 24.15.0，按 frontend/package-lock.json 执行 npm ci；前端 typecheck 与 Vite build 通过，保留既有大包提示。未调整 npm 的脚本许可配置，未运行浏览器 E2E。
+- OpenAPI、C/D Mock 示例一致性、Ruff 检查及 68 个文件格式检查通过。保留既有 Starlette/httpx TestClient 弃用提示。
+- 执行前已重读 A 最新 `0b2953c`：数据库受限角色、RLS 项目上下文及正式视图仍是 A/D 协作项，不能标记为已确认。
+- 本机 Docker 引擎当前不可达，且没有 `.runtime/day0.env`；尚未建立或修改真实数据库，也未启用 SQL 执行。

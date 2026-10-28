@@ -1,5 +1,5 @@
 from hashlib import sha256
-from contextlib import suppress
+import logging
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, File, Form, Request, UploadFile
@@ -22,6 +22,20 @@ ROLLED_BACK_IMPORT_ERRORS = {
     "IDEMPOTENCY_CONFLICT",
     "DATA_UNAVAILABLE",
 }
+
+
+def cleanup_unadopted(path, request):
+    """Only call for this request's file after ownership/rollback is established.
+
+    A failed cleanup leaves an orphan for later reconciliation; it cannot change
+    an acknowledged commit or a known rejection into an unknown commit.
+    """
+    try:
+        path.unlink(missing_ok=True)
+    except OSError:
+        logging.getLogger("paperpilot").warning(
+            "upload_cleanup_deferred request_id=%s", request.state.request_id
+        )
 
 
 @router.get("/papers", response_model=PaperList)
@@ -68,8 +82,7 @@ async def upload_paper(
             target.write(payload)
     except OSError:
         if created:
-            with suppress(OSError):
-                path.unlink(missing_ok=True)
+            cleanup_unadopted(path, request)
         raise AppError(503, "FILE_STORAGE_UNAVAILABLE", "文件保存失败，尚未提交论文，请稍后重试") from None
     try:
         paper, task = request.app.state.adapters.data.import_paper(
@@ -80,18 +93,18 @@ async def upload_paper(
             FileReference(storage_key, paper_id, project_id),
             ident,
         )
-        if paper.paper_id != paper_id:
-            path.unlink(missing_ok=True)  # Only the file created by this request.
-        return UploadResult(paper=paper, task=task)
     except AppError as exc:
         if exc.code in ROLLED_BACK_IMPORT_ERRORS:
-            path.unlink(missing_ok=True)
+            cleanup_unadopted(path, request)
             raise
         raise AppError(503, "DATA_COMMIT_UNKNOWN", "数据提交状态待确认，请使用原幂等键重试") from None
     except Exception:
         # A lost commit acknowledgement may mean this file has already been adopted by the DB.
         # Preserve it until idempotent replay/reconciliation establishes ownership.
         raise AppError(503, "DATA_COMMIT_UNKNOWN", "数据提交状态待确认，请使用原幂等键重试") from None
+    if paper.paper_id != paper_id:
+        cleanup_unadopted(path, request)
+    return UploadResult(paper=paper, task=task)
 
 
 @router.delete("/papers/{paper_id}", response_model=Acknowledgement)
