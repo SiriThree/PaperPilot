@@ -6,8 +6,8 @@ from uuid import UUID
 
 
 def _name(role):
-    if not isinstance(role, str) or re.fullmatch(r"pp_(reader|audit)_[a-z0-9_]{1,48}", role) is None:
-        raise ValueError("Use a pp_reader_ or pp_audit_ managed login name")
+    if not isinstance(role, str) or re.fullmatch(r"pp_(reader|audit|business)_[a-z0-9_]{1,48}", role) is None:
+        raise ValueError("Use a pp_reader_, pp_audit_ or pp_business_ managed login name")
 
 
 def _idle_admin(connection):
@@ -39,6 +39,7 @@ def install(connection, *, existing_views=False):
         connection.execute(
             files("app.security").joinpath("migrations/002_service_logins.sql").read_text(encoding="utf-8")
         )
+        upgrade_business_registry(connection)
         # These are database-wide PUBLIC grants; only this explicit install command changes them.
         database = connection.execute("SELECT current_database()").fetchone()[0]
         connection.execute(
@@ -55,12 +56,28 @@ def _verifier(connection, role, password):
     ).decode("ascii")
 
 
-def create_login(connection, role, password, *, project_id=None):
+def upgrade_business_registry(connection):
+    """Explicit upgrade for installations that already have the 002 registry."""
+    if not connection.autocommit:
+        raise ValueError("Use an administrator autocommit connection")
+    with connection.transaction():
+        connection.execute(
+            files("app.security").joinpath("migrations/003_business_login.sql").read_text(encoding="utf-8")
+        )
+
+
+BUSINESS_READ_TABLES = "users,projects,project_members,papers,project_papers,topics,paper_topics,chunks,embedding_models,chunk_embeddings,process_indexes,tasks,task_papers,task_attempts,task_results,result_sources,evidence_fields,reports,report_versions,report_version_sources,audit_events,outbox_events,idempotency_records,schema_migrations"
+BUSINESS_INSERT_TABLES = "projects,project_members,papers,project_papers,chunks,embedding_models,chunk_embeddings,process_indexes,tasks,task_papers,task_attempts,task_results,result_sources,evidence_fields,reports,report_versions,report_version_sources,audit_events,outbox_events,idempotency_records"
+
+
+def create_login(connection, role, password, *, project_id=None, business=False):
     from psycopg import sql
 
     _name(role)
     _idle_admin(connection)
-    kind = "reader" if project_id is not None else "audit"
+    kind = "business" if business else "reader" if project_id is not None else "audit"
+    if business and project_id is not None:
+        raise ValueError("Business login cannot have a reader binding")
     if not role.startswith(f"pp_{kind}_") or (project_id is not None and type(project_id) is not UUID):
         raise ValueError("Login kind and project binding do not match")
     with connection.transaction():
@@ -86,13 +103,25 @@ def create_login(connection, role, password, *, project_id=None):
                 "GRANT USAGE ON SCHEMA paperpilot_security TO {}",
                 "GRANT SELECT ON paperpilot_security.paper_statistics,paperpilot_security.paper_topics TO {}",
             ]
-        else:
+        elif kind == "audit":
             grants = [
                 "GRANT USAGE ON SCHEMA public TO {}",
                 "GRANT INSERT ON public.audit_events TO {}",
                 "GRANT SELECT(event_id,event_fingerprint) ON public.audit_events TO {}",
                 "GRANT SELECT(user_id) ON public.users TO {}",
                 "GRANT SELECT(project_id) ON public.projects TO {}",
+            ]
+        else:
+            grants = [
+                "GRANT USAGE ON SCHEMA public TO {}",
+                "GRANT SELECT ON "
+                + ",".join("public." + t for t in BUSINESS_READ_TABLES.split(","))
+                + " TO {}",
+                "GRANT INSERT ON "
+                + ",".join("public." + t for t in BUSINESS_INSERT_TABLES.split(","))
+                + " TO {}",
+                "GRANT UPDATE ON public.project_papers,public.tasks,public.task_attempts,public.reports,public.outbox_events TO {}",
+                "GRANT DELETE ON public.project_members TO {}",
             ]
         for statement in grants:
             connection.execute(sql.SQL(statement).format(sql.Identifier(role)))
@@ -152,12 +181,17 @@ def revoke_login(connection, role):
                 "REVOKE ALL ON paperpilot_security.paper_statistics,paperpilot_security.paper_topics FROM {}",
                 "REVOKE ALL ON SCHEMA paperpilot_security FROM {}",
             ]
-        else:
+        elif kind == "audit":
             statements = [
                 "REVOKE INSERT ON public.audit_events FROM {}",
                 "REVOKE SELECT(event_id,event_fingerprint) ON public.audit_events FROM {}",
                 "REVOKE SELECT(user_id) ON public.users FROM {}",
                 "REVOKE SELECT(project_id) ON public.projects FROM {}",
+            ]
+        else:
+            statements = [
+                "REVOKE ALL ON ALL TABLES IN SCHEMA public FROM {}",
+                "REVOKE ALL ON SCHEMA public FROM {}",
             ]
         for statement in statements:
             connection.execute(sql.SQL(statement).format(sql.Identifier(role)))

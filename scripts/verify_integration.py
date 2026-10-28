@@ -13,6 +13,9 @@ sys.path[:0] = [str(ROOT / "backend"), str(ROOT / "backend/tests")]
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--report", type=Path, default=ROOT / ".runtime/integration-results.xml")
+    parser.add_argument(
+        "--business-login", action="store_true", help="Run A contracts with a non-owner runtime login"
+    )
     parser.add_argument("tests", nargs="*", default=["backend/tests"])
     args = parser.parse_args()
     args.report.parent.mkdir(parents=True, exist_ok=True)
@@ -45,7 +48,9 @@ def main():
                 "-q",
                 "--tb=short",
                 "--data-contract-provider",
-                "app.data.provider:build_harness",
+                "data_contracts.business_provider:build_harness"
+                if args.business_login
+                else "app.data.provider:build_harness",
                 "--ai-contract-provider",
                 "ai_contracts.real_provider:build_harness",
                 "--security-contract-provider",

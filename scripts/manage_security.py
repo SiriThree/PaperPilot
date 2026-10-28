@@ -9,7 +9,13 @@ from uuid import UUID
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 
-from app.security.provision import create_login, install, revoke_login, rotate_login  # noqa: E402
+from app.security.provision import (
+    create_login,
+    install,
+    revoke_login,
+    rotate_login,
+    upgrade_business_registry,
+)  # noqa: E402
 
 
 def secret(name):
@@ -20,7 +26,18 @@ def secret(name):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["install", "reader-create", "audit-create", "rotate", "revoke"])
+    parser.add_argument(
+        "command",
+        choices=[
+            "install",
+            "business-upgrade",
+            "reader-create",
+            "audit-create",
+            "business-create",
+            "rotate",
+            "revoke",
+        ],
+    )
     parser.add_argument(
         "--admin-dsn-env", required=True, help="Name of the administrator DSN environment variable"
     )
@@ -38,7 +55,7 @@ def main():
     try:
         import psycopg
 
-        if options.command != "install" and not options.role:
+        if options.command not in ("install", "business-upgrade") and not options.role:
             raise ValueError("An explicit managed role is required")
         if options.command == "reader-create" and options.project is None:
             raise ValueError("An explicit project is required")
@@ -49,9 +66,16 @@ def main():
         with psycopg.connect(secret(options.admin_dsn_env), autocommit=True) as connection:
             if options.command == "install":
                 install(connection, existing_views=options.existing_views)
-            elif options.command in ("reader-create", "audit-create"):
+            elif options.command == "business-upgrade":
+                with connection.transaction():
+                    upgrade_business_registry(connection)
+            elif options.command in ("reader-create", "audit-create", "business-create"):
                 create_login(
-                    connection, options.role, secret(options.password_env), project_id=options.project
+                    connection,
+                    options.role,
+                    secret(options.password_env),
+                    project_id=options.project,
+                    business=options.command == "business-create",
                 )
             elif options.command == "rotate":
                 rotate_login(connection, options.role, secret(options.password_env))

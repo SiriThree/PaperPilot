@@ -66,9 +66,11 @@ def main():
         uploads = directory / "uploads"
         uploads.mkdir()
         audit_role, audit_password = "pp_audit_" + uuid4().hex, secrets.token_urlsafe(32)
+        business_role, business_password = "pp_business_" + uuid4().hex, secrets.token_urlsafe(32)
         readers, passwords = [], {}
         with psycopg.connect(**pg.config.conninfo(), autocommit=True) as admin:
             install(admin, existing_views=True)
+            create_login(admin, business_role, business_password, business=True)
             create_login(admin, audit_role, audit_password)
             for index, ctx in enumerate(pg.contexts):
                 role, password = "pp_reader_" + uuid4().hex, secrets.token_urlsafe(32)
@@ -109,8 +111,8 @@ def main():
             PAPERPILOT_ALLOWED_ORIGINS=f"http://127.0.0.1:{web_port}",
             PAPERPILOT_DATA_HOST=pg.config.host,
             PAPERPILOT_DATA_PORT=str(pg.config.port),
-            PAPERPILOT_DATA_USER=pg.config.user,
-            PAPERPILOT_DATA_PASSWORD=pg.config.password,
+            PAPERPILOT_DATA_USER=business_role,
+            PAPERPILOT_DATA_PASSWORD=business_password,
             PAPERPILOT_DATA_DBNAME=pg.config.dbname,
             PAPERPILOT_PREVIEW_AUDIT_PASSWORD=audit_password,
             PAPERPILOT_AI_BASE_URL=model.url,
@@ -166,7 +168,7 @@ def main():
             "project_id": str(pg.contexts[0].project_id),
             "paper_id": str(paper.paper_id),
             "stop_file": str(stop),
-            "scope": "disposable_postgres_real_adapters_local_model_double",
+            "scope": "disposable_postgres_nonowner_business_real_adapters_local_model_double",
             "logs": str(directory),
         }
         args.state.write_text(json.dumps(state), encoding="utf-8")
