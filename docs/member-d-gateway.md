@@ -1,6 +1,6 @@
 # 成员 D 任务 3：自然语言统计网关的 AST 校验
 
-2026-10-28 已依据 A 的正式模型完成第二步的双视图、PostgreSQL/psycopg 参数与独立项目登录适配，见[接入约定与复现](ad-security-contract-proposal.md)。审计和执行器仍待后续实现，应用真实 SQL 继续关闭；进度见[成员 D 当前进度](member-d-progress.md)。
+2026-10-28 已依据 A 的正式模型完成双视图、PostgreSQL/psycopg 参数与独立项目登录适配，见[接入约定与复现](ad-security-contract-proposal.md)。其后已完成[任务 6 关键审计门槛](member-d-audit.md)；默认入口仍无 SQL 执行器，应用真实 SQL 继续关闭。下文保留任务 3 阶段说明，最新进度见[成员 D 当前进度](member-d-progress.md)。
 
 本阶段交付自然语言路由、D 私有候选生成入口、严格 SQL AST 允许清单、可信项目参数绑定和公开结果状态。复用任务 1/2 的 SecurityPort、授权与注册；不修改 AIPort、DataPort、HTTP Schema 或前端。受限数据库执行器属于下一项任务，本阶段不执行数据库查询。
 
@@ -44,7 +44,7 @@
 | 生成器/策略内部故障、权限查询不可用 | 无业务结果，HTTP 503 | GATEWAY_UNAVAILABLE，脱敏且无降级 |
 | 非成员或生成期间被撤权 | 无业务结果，HTTP 404 | RESOURCE_NOT_FOUND |
 
-当前策略标识为 `postgres-statistics-v2`（初版为 statistics-ast-v1），结果沿用 request_id，明确 `mock=false`；这只说明由 D 适配器生成，A/C 与开发身份仍可能为 Mock。只有 executed 才能携带结果，此阶段所有响应均无 columns/rows 数据。B 原有 requested/finished 业务审计继续保留；D 的执行级关键审计尚待后续接入。
+当前策略标识为 `postgres-statistics-v2`（初版为 statistics-ast-v1），结果沿用 request_id，明确 `mock=false`；这只说明由 D 适配器生成，A/C 与开发身份仍可能为 Mock。只有 executed 才能携带结果，默认入口仍无 columns/rows 数据。B 原有 requested/finished 业务审计继续保留；D 已另行接入执行级关键审计，故障返回 AUDIT_UNAVAILABLE，见[任务 6](member-d-audit.md)。
 
 ## 与 A/D 的后续接入要求
 
@@ -53,7 +53,7 @@
 - 论文视图每个有效导入身份一行，主题视图每个论文/主题关联一行；按主题 DISTINCT paper_id 防重复。排除已移出论文；保留年份空值组；证据按同项目同论文 evidence 结果存在性判断，不代表提取质量。
 - 已验证 PostgreSQL/psycopg 参数和双视图名称。正式部署时仍需核对视图所有者、角色生命周期与凭据分发；没有兼容视图时不得自动转查业务表。
 - 受限只读数据库身份、适用的 RLS、不可绕过的项目隔离、连接池上下文复位，以及数据库端 3 秒超时、100 行和响应体限制。AST 的 LIMIT 不是数据库权限或资源限制验收。
-- 执行前/后关键审计与失败关闭、事务/outbox 和资源清理；上述门槛落实之前，维持 not_executed。
+- 执行前/后关键审计与失败关闭已落实；正式审计写身份、事务/outbox 部署与资源清理仍待完成。默认入口继续 not_executed。
 
 ## 验证
 

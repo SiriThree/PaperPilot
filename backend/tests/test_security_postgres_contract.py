@@ -18,7 +18,7 @@ from app.adapters.mock_ai import MockAI
 from app.adapters.ports import Context, FileReference
 from app.schemas import ProjectCreate, QuestionRequest
 from app.errors import AppError
-from app.security import build_security
+from app.security import SecurityAdapter, build_security
 from app.security.sql_policy import SQL_BY_QUESTION, prepare_query
 
 A_COMMIT = "0b2953c218668af71a4bf869e5c6d238cc0d588d"
@@ -379,3 +379,88 @@ def test_d_authorization_uses_a_roles_and_keeps_application_execution_closed(pg_
         assert error.value.code == "RESOURCE_NOT_FOUND"
     finally:
         data.remove_member(owner, member.user_id)
+
+
+def audit_events(pg_contract, ctx):
+    result = pg_contract.data.audit(
+        ctx, action=None, decision=None, actor_id=None, since=None, until=None, offset=0, limit=100
+    )
+    return [event for event in result.items if event.request_id == ctx.request_id]
+
+
+def test_d_audit_gates_commit_through_a_and_support_event_replay(pg_contract):
+    import psycopg
+
+    owner = pg_contract.contexts[0]
+    ctx = Context(owner.user_id, owner.project_id, uuid4())
+
+    async def execute(actual_ctx, plan):
+        # A separate connection must observe the pre-event before the reader runs any SQL.
+        with psycopg.connect(**pg_contract.config.conninfo()) as observer:
+            assert observer.execute(
+                "SELECT action, execution_status FROM audit_events WHERE request_id=%s", (ctx.request_id,)
+            ).fetchall() == [("security.query.prepared", "pending")]
+        with pg_contract.connect() as reader:
+            cursor = reader.execute(plan.sql, plan.parameters)
+            return [column.name for column in cursor.description], cursor.fetchall()
+
+    result = asyncio.run(
+        SecurityAdapter(pg_contract.data, query_executor=execute).execute(ctx, "按年份统计论文数量")
+    )
+    assert result.rows == [{"year": 2024, "count": 1}, {"year": None, "count": 1}]
+    recorded = sorted(audit_events(pg_contract, ctx), key=lambda event: event.timestamp)
+    assert [event.execution_status for event in recorded] == ["pending", "executed"]
+    assert all(not event.mock for event in recorded)
+    assert len({event.event_id for event in recorded}) == 2
+    pg_contract.data.append_audit(recorded[0])
+    assert len(audit_events(pg_contract, ctx)) == 2
+    with pytest.raises(AppError) as error:
+        pg_contract.data.append_audit(recorded[0].model_copy(update={"action": "changed"}))
+    assert error.value.code == "AUDIT_EVENT_CONFLICT"
+    assert len(audit_events(pg_contract, ctx)) == 2
+
+
+@pytest.mark.parametrize("stage", ["prepared", "finished"])
+@pytest.mark.parametrize("failure", ["rollback", "lost_ack"])
+def test_a_audit_commit_failure_closes_d_gate(pg_contract, monkeypatch, stage, failure):
+    data = pg_contract.data
+    owner = pg_contract.contexts[0]
+    ctx = Context(owner.user_id, owner.project_id, uuid4())
+    append = data.append_audit
+    attempted = []
+    calls = 0
+
+    def before_commit(operation, connection):
+        if operation == "append_audit" and attempted[-1].action == f"security.query.{stage}":
+            # Fail after INSERT inside A's real transaction, not before append_audit.
+            connection.execute("SELECT 1 / 0")
+
+    def audit(event):
+        attempted.append(event)
+        append(event)
+        if failure == "lost_ack" and event.action == f"security.query.{stage}":
+            # Simulate lost acknowledgment after a confirmed real commit; no wire-fault claim.
+            raise AppError(503, "DATA_COMMIT_UNKNOWN", "PRIVATE_AUDIT_CONNECTION")
+
+    async def execute(actual_ctx, plan):
+        nonlocal calls
+        calls += 1
+        with pg_contract.connect() as reader:
+            cursor = reader.execute(plan.sql, plan.parameters)
+            return [column.name for column in cursor.description], cursor.fetchall()
+
+    if failure == "rollback":
+        monkeypatch.setattr(data, "_before_commit", before_commit)
+    monkeypatch.setattr(data, "append_audit", audit)
+    with pytest.raises(AppError) as error:
+        asyncio.run(SecurityAdapter(data, query_executor=execute).execute(ctx, "按年份统计论文数量"))
+    assert (error.value.status, error.value.code) == (503, "AUDIT_UNAVAILABLE")
+    assert "PRIVATE" not in error.value.message and "未执行" not in error.value.message
+    assert calls == (stage == "finished")
+    recorded = audit_events(pg_contract, ctx)
+    assert len(recorded) == (stage == "finished") + (failure == "lost_ack")
+    assert len(attempted) == 1 + (stage == "finished")
+    if failure == "lost_ack":
+        # Reconcile the identical event through A's idempotency without rerunning SQL.
+        append(attempted[-1])
+        assert len(audit_events(pg_contract, ctx)) == len(recorded)

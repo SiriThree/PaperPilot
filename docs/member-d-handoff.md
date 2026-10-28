@@ -1,12 +1,12 @@
 # 成员 D 开工交接
 
-2026-10-28 已根据团队 PR 更新[当前进度与下一阶段顺序](member-d-progress.md)：A 已提交正式 PostgreSQL DataPort 与 outbox，B 的 PR #3/#5 已合入 D，C 已提交真实 AI 与可组合入口。D 已依据 A 实现并验证双视图和独立项目登录，接下来完成关键审计和受限执行器；联合安全能力尚未验收。
+2026-10-28 已根据团队 PR 更新[当前进度与下一阶段顺序](member-d-progress.md)：A 已提交正式 PostgreSQL DataPort 与 outbox，B 的 PR #3/#5 已合入 D，C 已提交真实 AI 与可组合入口。D 已依据 A 实现并验证双视图、独立项目登录及[关键审计门槛](member-d-audit.md)，下一步完成受限执行器/结果映射和 SecurityHarness；联合安全能力尚未验收。
 
 任务 1 已提供非 Mock `SecurityAdapter`、`build_security` 和 `app.security.main:create_app` 开发入口，详见 [任务 1 接入说明](member-d-task1.md)。尚无真实 SQL 执行能力；下文真实执行、审计与数据库验收要求仍有效。
 
 任务 2 已补齐应用层项目授权：按可信 Context 重新查询当前角色、核对 B 的角色快照、未知动作默认拒绝、撤权与查询故障拒绝授权。权限矩阵、验证及数据库边界见 [授权策略说明](member-d-authorization.md)。
 
-任务 3 已接通三条自然语言统计的候选生成、完整 AST 允许清单与项目参数绑定；2026-10-28 第二步已依据 A 的实现落地双视图和 PostgreSQL/psycopg3 适配，并在独立真实库对照验证，见[现行接入约定](ad-security-contract-proposal.md)和[网关校验说明](member-d-gateway.md)。策略通过仍返回 allowed/not_executed，关键审计和受限执行器尚未接入，不能计为应用真实执行完成。
+任务 3 已接通三条自然语言统计的候选生成、完整 AST 允许清单与项目参数绑定；2026-10-28 已依据 A 的实现落地双视图和 PostgreSQL/psycopg3 适配，并在独立真实库对照验证，见[现行接入约定](ad-security-contract-proposal.md)和[网关校验说明](member-d-gateway.md)。任务 6 审计门槛已接入；受限执行器尚未实现，默认策略通过仍返回 allowed/not_executed，不能计为应用真实执行完成。
 
 ## 1. 职责范围
 
@@ -16,7 +16,7 @@
 
 - `backend/app/adapters/ports.py:SecurityPort`、`schemas.py:SecureQueryResult/AuditEvent`。
 - 参考：`adapters/mock_security.py`；身份和基础项目授权：`auth.py:project_context`；调用：`services.py:secure_query`、`routes/security.py`。
-- `backend/app/security/adapter.py` 已提供端口、授权与网关校验，`sql_policy.py` 提供封闭 AST 允许清单；受限执行器与关键审计仍需后续交付。共享测试：`backend/tests/security_contracts/`。
+- `backend/app/security/adapter.py` 已提供端口、授权、网关校验与关键审计门槛，`sql_policy.py` 提供封闭 AST 允许清单；受限执行器仍需后续交付。共享测试：`backend/tests/security_contracts/`。
 - 正常/拒绝/故障及审计的可执行合成样例：`contracts/module-port-examples.json`；HTTP 示例沿用 `contracts/examples/` 和 `scenarios/`。
 
 ## 3. 完整接口（2 个方法）
@@ -123,4 +123,4 @@ SecurityPort 实现和构造入口、策略及标识、SQL 允许/拒绝规则�
 
 已知基线：A 的 PR #1 已实现 PostgreSQL 16/psycopg3、正式 DataPort、一次性数据库 provider 与 outbox 投递器；B 的 PR #3 已合并；C 的 PR #4 已提供五方法真实 AI 和接受 security_factory 的组合入口。D 已固定 SQLGlot 校验实现。
 
-仍需对齐正式受限身份/视图/RLS、PostgreSQL 方言与参数格式、多主题计数及空值语义、限时限量与连接池项目上下文复位、执行级关键审计、outbox 保留/死信、生产身份及资源关闭。当前 AIPort 仍无 SQL 生成方法，C/D NL2SQL 私有协作是可选项。D 可优先实现关键审计与隔离执行器测试，真实数据库安全验证按[最新进度](member-d-progress.md)推进。
+双视图、PostgreSQL 参数、多主题/空值语义与执行级审计门槛已有 D 侧实现和隔离验证；正式受限身份/视图所有者、适用的 RLS、审计写身份、限时限量与连接状态复位、outbox 保留/死信及资源关闭仍待联合落实。当前 AIPort 仍无 SQL 生成方法，C/D NL2SQL 私有协作是可选项。D 下一步实现受限执行器/结果映射及 SecurityHarness，按[最新进度](member-d-progress.md)推进。

@@ -30,7 +30,7 @@ has_evidence 为同项目、同论文是否存在已提交的 task_results.kind=
 - 已实测读取登录无超级用户/BYPASSRLS/建库/建角色权限；无应用过滤也只见绑定项目，伪造项目参数或自设项目 GUC 不越界，不能 SET ROLE 到另一项目或 SET SESSION AUTHORIZATION 到管理员。撤销绑定后既有连接也不再看见数据。正式项目创建/移除时的账号、凭据分发和吊销属于后续执行器/联合部署，不由应用自动创建角色。
 - 每次查询独立只读事务，资源配置和角色选择只来自可信组合入口。会话设置限于本事务；失败、取消或超时后先确认回滚/关闭，连接状态不确定时不得归还供后续请求使用。
 
-## 3．后续执行级关键审计要求（尚未实现）
+## 3．执行级关键审计（D 门槛已实现）
 
 复用 A 的 append_audit 和 event_id 幂等语义，不新建第二套用户/审计表或重复开发 outbox 投递器。
 
@@ -40,6 +40,8 @@ has_evidence 为同项目、同论文是否存在已提交的 task_results.kind=
 4. 只读 SQL 身份与审计写入权限分离。审计连接/受控写入身份的配置及保护由 A/D 对齐，不给统计读取身份直接修改审计和 outbox 的权限。
 
 A 的业务 outbox 为独立异步投递，B 的 requested/finished 为业务日志，均不能替代执行前的确认门槛。现有 published 无限保留策略先保持；本草案不新增自动删除、过期或死信清理。保留/死信策略后续单独确认。
+
+2026-10-28 已在 SecurityAdapter 落地上述门槛，事件为 security.query.prepared 与 security.query.finished；拒绝、默认关闭、故障和取消也有对应完成状态。审计确认失败返回脱敏 AUDIT_UNAVAILABLE，不执行或不返回结果，不自动重跑 SQL。A 的真实 append_audit 提交、回滚和 event_id 幂等已有独立 PostgreSQL 验证；正式最小权限审计写身份仍待部署。内部可控执行依赖仅用于验证，默认工厂没有 SQL 执行器。事件语义、复现和限制见 [任务 6 说明](member-d-audit.md)。
 
 ## 4．后续结果与资源限制建议（尚未实现）
 
@@ -66,10 +68,10 @@ $env:PAPERPILOT_SECURITY_TEST_A_SOURCE=(Resolve-Path '.runtime/member-a-step2-re
 
 要求 Docker 已运行，首次需能拉取固定镜像。默认 pytest 不开启该组测试，明确跳过；显式开启但缺依赖、Docker、正确 A 参考或验证失败则报错，不冒充通过。只有测试管理员可以安装迁移/视图、建立角色和绑定；不能用该管理员连接作为被测读取身份。
 
-2026-10-28 在 Windows / Python 3.12.10 实测：全量后端 **401 passed、37 skipped、0 failed**，其中本组 22 项确实连接 PostgreSQL 16 执行，没有计入跳过项。剩余跳过为 31 项历史 SQLite 实验和 6 项默认 Mock 数据层 provider 门槛；本组不替代这些 provider 测试。JUnit 报告为 Git 忽略的 `.runtime/d-step2-combined-results.xml`，记录数据库版本、A 提交及镜像摘要。保留既有 Starlette/httpx 弃用提示；公开契约、C/D Mock 示例、Ruff 和依赖检查通过。
+2026-10-28 第二步在 Windows / Python 3.12.10 实测：全量后端 **401 passed、37 skipped、0 failed**，其中本组 22 项确实连接 PostgreSQL 16 执行，没有计入跳过项。剩余跳过为 31 项历史 SQLite 实验和 6 项默认 Mock 数据层 provider 门槛；本组不替代这些 provider 测试。JUnit 报告为 Git 忽略的 `.runtime/d-step2-combined-results.xml`，记录数据库版本、A 提交及镜像摘要。随后第三步加入关键审计验证，全量 **430 passed / 37 skipped**，其中 PostgreSQL 27 项，报告 `.runtime/d-step3-combined-results.xml`，详见[任务 6](member-d-audit.md)。保留既有 Starlette/httpx 弃用提示；公开契约、C/D Mock 示例、Ruff 和依赖检查通过。
 
 ## 6．完成边界
 
 第二步的 D 侧统计/驱动/隔离约定已有代码与真实 PostgreSQL 对照证据，不再因没有 A 的人工评论而阻塞独立实现。正式部署时仍需 A/D 共同核对角色生命周期、视图所有者、审计写入身份和业务库安装窗口；未改 A 的原始迁移，未替团队批准生产部署。
 
-后续按计划进入关键审计 → 受限执行器和结果映射（配套 SecurityHarness）→ 真实受限身份 40+20 攻防 → A+D 再 A+C+D 联调。当前网关仍只返回 allowed/not_executed；本组只验证查询计划和数据库边界，不代表应用执行器、审计或资源限制验收完成。
+关键审计门槛已按顺序完成，见 [任务 6 说明](member-d-audit.md)。后续进入受限执行器和结果映射（配套 SecurityHarness）→ 真实受限身份 40+20 攻防 → A+D 再 A+C+D 联调。默认网关仍返回 allowed/not_executed；隔离测试中的执行依赖不代表应用受限执行器或资源限制验收完成。
