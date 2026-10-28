@@ -36,9 +36,17 @@ class MockAI:
         )
 
     async def search(self, ctx, query):
+        return await self.search_scoped(ctx, query, None)
+
+    async def search_scoped(self, ctx, query, paper_ids):
         items = []
+        if paper_ids is not None:
+            for paper_id in paper_ids:
+                self.data.paper(ctx, paper_id)
         if "无结果" not in query.query and "证据不足" not in query.query:
             for paper in self.data.papers(ctx, query.year_from, query.year_to):
+                if paper_ids is not None and paper.paper_id not in paper_ids:
+                    continue
                 if paper.status != "searchable":
                     continue
                 for source in self.data.sources(ctx, paper.paper_id):

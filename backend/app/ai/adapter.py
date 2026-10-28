@@ -103,10 +103,15 @@ class RealAI:
             ]
             return ProcessResult(paper_id=file.paper_id, sources=sources, mock=False)
 
-    def _corpus(self, ctx, query):
+    def _corpus(self, ctx, query, paper_ids=None):
         self._authorize(ctx)
+        if paper_ids is not None:
+            for paper_id in paper_ids:
+                self.data.paper(ctx, paper_id)
         items = []
         for paper in self.data.papers(ctx, query.year_from, query.year_to):
+            if paper_ids is not None and paper.paper_id not in paper_ids:
+                continue
             if paper.project_id != ctx.project_id or paper.status != "searchable":
                 continue
             if query.year_from is not None and (paper.year is None or paper.year < query.year_from):
@@ -124,8 +129,14 @@ class RealAI:
         )
 
     async def search(self, ctx: Context, query: SearchRequest) -> SearchResult:
+        return await self._search(ctx, query)
+
+    async def search_scoped(self, ctx, query, paper_ids):
+        return await self._search(ctx, query, frozenset(paper_ids))
+
+    async def _search(self, ctx, query, paper_ids=None):
         async with self._operation():
-            corpus = await asyncio.to_thread(self._corpus, ctx, query)
+            corpus = await asyncio.to_thread(self._corpus, ctx, query, paper_ids)
             scores = []
             if corpus and query.query.strip():
                 documents = [f"{paper.title}\n{source.excerpt}" for paper, source in corpus]

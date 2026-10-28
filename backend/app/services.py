@@ -112,11 +112,20 @@ class ResearchService:
             ):
                 raise AppError(502, "INVALID_CITATION", "引用不属于本次检索结果")
 
-    async def search(self, ctx, query):
+    async def search(self, ctx, query, *, paper_ids=None):
         try:
-            result = SearchResult.model_validate(await self.adapters.ai.search(ctx, query))
+            if paper_ids is None:
+                raw = await self.adapters.ai.search(ctx, query)
+            else:
+                scoped = getattr(self.adapters.ai, "search_scoped", None)
+                if not callable(scoped):
+                    raise AppError(503, "AI_SCOPE_UNAVAILABLE", "检索模块尚不支持指定论文范围")
+                raw = await scoped(ctx, query, paper_ids)
+            result = SearchResult.model_validate(raw)
             if result.mode != query.mode or len(result.items) > query.limit:
                 raise ValueError("invalid search metadata")
+            if paper_ids is not None and any(h.paper.paper_id not in paper_ids for h in result.items):
+                raise ValueError("invalid search scope")
             self.validate_sources(ctx, [hit.source for hit in result.items])
             papers = {}
             for hit in result.items:
@@ -174,7 +183,9 @@ class ResearchService:
             else:
                 question = job.payload.get("question", QuestionRequest(question="证据提取"))
                 search = await self.search(
-                    ctx, SearchRequest(query=question.question, mode="hybrid", limit=50)
+                    ctx,
+                    SearchRequest(query=question.question, mode="hybrid", limit=50),
+                    paper_ids=job.payload["paper_ids"],
                 )
                 sources = [h.source for h in search.items if h.paper.paper_id in job.payload["paper_ids"]]
                 sources = [s.model_copy(update={"citation_id": str(i + 1)}) for i, s in enumerate(sources)]
