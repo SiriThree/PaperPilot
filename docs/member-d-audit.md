@@ -26,7 +26,7 @@ append_audit 的成功返回是本地持久化确认，既不等待也不依赖�
 
 该依赖负责数据库取消与连接清理；门槛只在 await 退出后处理完成事件，不把普通返回包装成资源限制证据。PostgresQueryExecutor 现已实现独立只读连接、权限检查、3 秒/100 行/256 KiB、驱动映射与取消清理，并通过真实 SecurityHarness/攻防验证，见[执行器说明](member-d-executor.md)。同步 DataPort 审计调用的耗时仍由 A 的连接/事务行为决定，没有新增异步审计投递器或审计超时保证。完成审计后还复查成员关系，finished/executed 描述 SQL 完成，不保证客户端已收到结果。
 
-只读登录已在隔离测试中禁止访问 audit_events/outbox；审计调用使用注入的 DataPort。测试中的 A DataPort 使用独立测试管理员连接，不证明正式审计写身份已最小授权或防篡改。正式角色生命周期、审计写身份和业务库部署仍需 A/D 联合落实。
+只读登录禁止访问 audit_events/outbox。早期测试使用业务 DataPort 的管理员审计连接；随后已完成[独立审计身份与防篡改验证](member-d-identities.md)，新[组合启动入口](member-d-startup.md)强制注入专用绑定。该绑定复用 A append_audit，检查专用登录 ACL 并在提交前复查；B 普通日志仍使用业务 DataPort，不把专用身份的保护扩展声称为防御 DBA 或其他管理员连接。正式库安装仍需 A/D 落实。
 
 ## 验证与复现
 

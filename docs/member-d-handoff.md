@@ -2,6 +2,8 @@
 
 2026-10-28 已完成 D 的本地开发任务与固定参考验证，见[当前进度](member-d-progress.md)。A 正式 PostgreSQL DataPort、B 已合并基线、C RealAI/bootstrap 与 D 实际受限执行器已通过组合测试；C 模型端为本地可控 HTTP 替身。正式库/角色部署与生产认证仍未验收，见[验证记录及剩余部署事项](member-d-security-validation.md)。
 
+按用户限定的前三项，现已补齐[独立审计身份/防篡改与角色生命周期](member-d-identities.md)、[严格配置和可直接运行启动入口](member-d-startup.md)。全量后端 645 passed / 37 skipped，真实共享 provider 另行 8 项通过；均为隔离验证。本轮没有浏览器验收、正式库操作、推送或远程 PR 修改。
+
 任务 1 已提供非 Mock `SecurityAdapter`、`build_security` 和 `app.security.main:create_app` 开发入口，见[任务 1 历史接入说明](member-d-task1.md)。该阶段未启用 SQL；当前真实执行能力与可信配置见[执行器说明](member-d-executor.md)。
 
 任务 2 已补齐应用层项目授权：按可信 Context 重新查询当前角色、核对 B 的角色快照、未知动作默认拒绝、撤权与查询故障拒绝授权。权限矩阵、验证及数据库边界见 [授权策略说明](member-d-authorization.md)。

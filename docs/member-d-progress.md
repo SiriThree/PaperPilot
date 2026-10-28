@@ -25,10 +25,10 @@ A 的 41 项真实库共享测试、9 项业务联调及 5 项 outbox 测试，C
 | 3．自然语言统计网关 | 已完成 | 三棵 PostgreSQL AST、psycopg 命名参数和双视图已对照 A 验证；显式配置读取身份后可真实执行。 |
 | 4．受限数据库执行器 | 本地实现和真实库验证已完成 | 独立连接、身份/权限检查、只读事务、3 秒数据库/应用预算、100 行、256 KiB、取消并等待清理。正式库角色部署另由 A/D 落实。 |
 | 5．执行结果与异常映射 | 已完成 | JSON 类型/UUID 转换、成功、连接不可用、执行故障、超时/取消、结果超限及错误脱敏已有验证。 |
-| 6．关键安全审计 | D 门槛已完成，已接 A 真实提交/回滚验证 | 执行前确认、执行后确认再返回结果；拒绝/故障/取消脱敏记录。复用 A append_audit 和 event_id 幂等；正式写身份、防篡改及保留/死信仍待联合部署。见[任务 6](member-d-audit.md)。 |
+| 6．关键安全审计 | 门槛及独立最小权限写身份已完成隔离验证 | 复用 A append_audit/event_id，提交前检查身份权限；禁止专用登录修改/删除审计或读取业务内容。见[身份说明](member-d-identities.md)。正式安装和 outbox 保留/死信仍待联合部署。 |
 | 7．隔离 SecurityHarness provider | 已完成 | security_contracts.postgres_provider:build_harness 的 8 项真实共享契约通过；故障来自真实锁超时/错误凭据，不使用 Mock 伪造成功。 |
 | 8．真实安全测试 | 本地隔离攻防已完成 | 44 攻击 + 21 正常、44 项直接绕过，以及权限变化、审计、限时限量、断连/取消/清理和并发隔离；见[验证记录](member-d-security-validation.md)。 |
-| 9．团队交付与联调 | 固定参考的本地后端组合已完成 | A+D、C=Mock 和 A+C RealAI+D 的 HTTP 流程通过；C 模型 HTTP 端使用本地可控替身，未验收外部模型、向量索引或生产认证。 |
+| 9．团队交付与联调 | 固定参考本地组合与可信启动入口已完成 | bootstrap、严格 JSON/秘密引用配置及显式 A/C 工作树加载入口已验证。见[启动说明](member-d-startup.md)。未验收外部模型、向量索引、浏览器或生产认证。 |
 
 ## 下一步顺序与完成门槛
 
@@ -99,3 +99,13 @@ Python 3.12.10 全量 **430 passed / 37 skipped / 0 failed**，含 27 项真实 
 最终 Python 3.12.10 全量 **594 passed / 37 skipped / 0 failed**，含 174 项实际 PostgreSQL 测试；真实共享 Provider 8 项另行通过，不重复相加。Ruff、77 个文件格式、公开契约、Mock 示例、依赖及 wheel 资源检查通过；报告 `.runtime/d-remaining-combined-results.xml` 与 `.runtime/d-executor-harness.xml`。测试容器已自动清理，未推送或修改远程 PR。
 
 尚需联合部署/验收：正式库视图安装和所有者、项目读取角色/凭据生命周期、最小权限审计写身份与防篡改、outbox 保留/死信、生产认证，以及实际合并版本的最终团队验收。默认工厂不配置 readers 继续禁用执行；显式可信配置后已能真实执行。本轮没有前端改动，未运行浏览器 E2E。完整范围和复现见[验证记录](member-d-security-validation.md)。
+
+## 2026-10-28：按用户限定，仅补齐前三项
+
+1. **独立审计身份**：compose_audit 复用 A append_audit/event_id，独立连接池、最小表/列权限、启动及提交前 ACL 检查；专用登录不能修改/删除审计或读取业务内容。D 的两阶段关键事件不再需要业务管理员审计连接。B 普通日志保持原业务 DataPort；不声称防御 DBA 或其他管理员身份。
+2. **读取身份生命周期**：manage_security.py 显式安装 D 资源/登记表，创建项目读取及审计登录、轮换密码、撤销权限/绑定并终止旧会话。角色名+OID 登记校验避免误改已有账号；不保存/输出密码，不自动重试未知提交，不删除业务数据。见[身份与管理说明](member-d-identities.md)。
+3. **实际启动入口**：app.security.bootstrap:create_app + 严格 JSON/环境秘密引用配置；run_security.py 可明确加载已审阅 A/C 工作树，支持 A+D、A+C+D。错误配置/身份拒绝启动并清理资源，默认生产拒绝规则不变。见[启动说明](member-d-startup.md)。
+
+第一阶段本地提交为 `cd7faf7`。最终 Python 3.12.10 全量 **645 passed / 37 skipped / 0 failed**，其中实际 PostgreSQL 211 项；真实共享 SecurityHarness 另行 8 项通过，不重复累加。新增 50 项定向测试与读取转授权回归已包括在全量中。Ruff、86 文件格式、OpenAPI、C/D Mock 示例、依赖及 wheel 新模块/SQL 资源验证通过。报告 `.runtime/d-operations-combined-results.xml`、`.runtime/d-operations-harness.xml`。
+
+本轮严格不扩展到浏览器验收、正式库部署、生产认证、outbox 策略或真实模型效果；未推送或修改远程 PR。正式库实际安装/角色分发仍由团队部署流程执行；本轮管理操作仅在自动清理的独立测试库完成。

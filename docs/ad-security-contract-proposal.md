@@ -52,6 +52,8 @@ A 的业务 outbox 为独立异步投递，B 的 requested/finished 为业务日
 
 可信组合使用 build_security(data, readers=...) 启用 PostgresQueryExecutor，未配置时保持校验模式。身份/权限运行时检查、只读事务、驱动类型及错误代码见[执行器说明](member-d-executor.md)；共享 Provider、44+21 攻防与 A+D/A+C+D HTTP 组合见[验证记录](member-d-security-validation.md)。正式业务库安装、角色与审计写身份仍未部署。
 
+后续已补充可部署的身份/角色管理实现：独立审计绑定通过 A append_audit 追加并在提交前检查 ACL，管理工具负责登记身份开通/轮换/撤销；严格可信配置由 app.security.bootstrap 组合 A+D/A+C+D。见[身份说明](member-d-identities.md)和[启动说明](member-d-startup.md)。这些实现已在独立库验证，但仍未操作正式库。
+
 ## 5．隔离验证与复现
 
 `backend/tests/test_security_postgres_contract.py` 显式 opt-in，固定参考 A 的 `0b2953c218668af71a4bf869e5c6d238cc0d588d`，不把 A 未合并源码复制进 D 或自动加载到业务启动路径。测试临时将该参考加入 app 的包搜索路径，使用 A 的 PostgresDatabase 迁移、PostgresData 和公开方法创建项目/论文/证据；主题关联因公共端口暂无写入方法，仅在管理员测试夹具中建立。

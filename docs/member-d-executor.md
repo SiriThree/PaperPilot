@@ -63,3 +63,5 @@ $env:PAPERPILOT_SECURITY_TEST_A_SOURCE=(Resolve-Path '.runtime/member-a-step2-re
 ```
 
 8 项真实共享契约通过。每个共享测试模块复用一个独立容器，退出自动清理。显式选择 provider 后缺依赖、Docker 或正确 A 参考直接报错；未指定 provider 仍测试 Mock，不能混计。正式审计写身份和防篡改部署、生产认证及外部模型服务验收见[剩余部署事项](member-d-security-validation.md)。
+
+随后已提供[独立最小权限审计身份与服务角色管理](member-d-identities.md)及[可信配置/组合启动入口](member-d-startup.md)。实际运行优先使用 app.security.bootstrap:create_app；原手工注入示例仅展示底层组合形状。读取身份也拒绝转授权能力，新增审计身份在提交前复查 ACL；没有自动在正式库安装角色。
