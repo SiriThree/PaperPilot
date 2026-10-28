@@ -177,6 +177,10 @@ def test_privileged_role_flags_fail_closed(pg, change):
 @pytest.mark.parametrize(
     "grant,revoke",
     [
+        (
+            "GRANT SELECT ON paperpilot_security.paper_statistics TO {} WITH GRANT OPTION",
+            "REVOKE GRANT OPTION FOR SELECT ON paperpilot_security.paper_statistics FROM {}",
+        ),
         ("GRANT SELECT ON public.papers TO {}", "REVOKE SELECT ON public.papers FROM {}"),
         ("GRANT SELECT(title) ON public.papers TO {}", "REVOKE SELECT(title) ON public.papers FROM {}"),
         ("GRANT INSERT ON public.papers TO {}", "REVOKE INSERT ON public.papers FROM {}"),

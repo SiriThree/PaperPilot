@@ -71,7 +71,7 @@ def normalize_row(columns, values):
     return row
 
 
-def verify_reader(connection, configured_user):
+def verify_login(connection, configured_user):
     # Check effective privileges too: NOINHERIT alone does not prevent SET ROLE or PUBLIC grants.
     role = connection.execute(
         "SELECT session_user, current_user, rolsuper, rolbypassrls, rolcreatedb, rolcreaterole, "
@@ -82,18 +82,25 @@ def verify_reader(connection, configured_user):
     if connection.execute(
         "SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_auth_members WHERE member=%s) "
         "OR has_database_privilege(current_database(), 'CREATE,TEMPORARY') "
+        "OR has_database_privilege(current_database(), 'CONNECT WITH GRANT OPTION') "
         "OR EXISTS(SELECT 1 FROM pg_catalog.pg_namespace "
         " WHERE nspname !~ '^pg_' AND nspname <> 'information_schema' "
-        " AND has_schema_privilege(oid, 'CREATE'))",
+        " AND (has_schema_privilege(oid, 'CREATE') OR has_schema_privilege(oid, 'USAGE WITH GRANT OPTION')))",
         (role[8],),
     ).fetchone()[0]:
         raise QueryUnavailable()
+    return role[8]
+
+
+def verify_reader(connection, configured_user):
+    role_oid = verify_login(connection, configured_user)
     if connection.execute(
         "SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c "
         "JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace "
         "WHERE n.nspname !~ '^pg_' AND n.nspname <> 'information_schema' AND ("
         " (c.relkind IN ('r','p','v','m','f') AND ("
         "  has_table_privilege(c.oid,'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER') "
+        "  OR has_any_column_privilege(c.oid,'SELECT WITH GRANT OPTION') "
         "  OR has_any_column_privilege(c.oid,'INSERT,UPDATE,REFERENCES') "
         "  OR ((has_table_privilege(c.oid,'SELECT') OR has_any_column_privilege(c.oid,'SELECT')) "
         "      AND NOT (n.nspname='paperpilot_security' AND c.relname IN ('paper_statistics','paper_topics'))))) "
@@ -109,7 +116,7 @@ def verify_reader(connection, configured_user):
         "WHERE n.nspname='paperpilot_security' AND c.relname IN ('paper_statistics','paper_topics') "
         "AND c.relkind='v' AND c.relowner<>%s AND 'security_barrier=true'=ANY(c.reloptions) "
         "AND has_table_privilege(c.oid,'SELECT')",
-        (role[8],),
+        (role_oid,),
     ).fetchall()
     if {row[0] for row in views} != {"paper_statistics", "paper_topics"}:
         raise QueryUnavailable()

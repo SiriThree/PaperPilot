@@ -21,6 +21,7 @@ from app.security.sql_policy import (
 )
 
 QueryExecutor = Callable[[Context, QueryPlan], Awaitable[tuple[list[str], list[dict]]]]
+AuditAppend = Callable[[AuditEvent], None]
 
 
 class SecurityAdapter:
@@ -32,18 +33,22 @@ class SecurityAdapter:
         *,
         candidate_generator: CandidateGenerator = generate_candidate,
         query_executor: QueryExecutor | None = None,
+        audit_append: AuditAppend | None = None,
     ):
         if not callable(candidate_generator):
             raise ValueError("Candidate generator must be callable")
         if query_executor is not None and not callable(query_executor):
             raise ValueError("Query executor must be callable")
+        if audit_append is not None and not callable(audit_append):
+            raise ValueError("Audit append must be callable")
         self.data = data
         self._candidate_generator = candidate_generator
         self._query_executor = query_executor
+        self._audit_append = audit_append
 
     def _audit(self, ctx: Context, action: str, decision: str, status: str, start: float) -> None:
         try:
-            self.data.append_audit(
+            (self._audit_append if self._audit_append is not None else self.data.append_audit)(
                 AuditEvent(
                     event_id=uuid4(),
                     timestamp=datetime.now(UTC),
@@ -181,9 +186,16 @@ class SecurityAdapter:
         )
 
 
-def build_security(data: DataPort, *, readers: Mapping[UUID, ReaderConfig] | None = None) -> SecurityPort:
+def build_security(
+    data: DataPort,
+    *,
+    readers: Mapping[UUID, ReaderConfig] | None = None,
+    audit_append: AuditAppend | None = None,
+) -> SecurityPort:
     from app.security.executor import PostgresQueryExecutor
 
     return SecurityAdapter(
-        data, query_executor=PostgresQueryExecutor(readers) if readers is not None else None
+        data,
+        query_executor=PostgresQueryExecutor(readers) if readers is not None else None,
+        audit_append=audit_append,
     )
