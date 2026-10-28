@@ -268,9 +268,36 @@ class ResearchService:
                 continue
             if job:
                 await asyncio.sleep(0.08)
-                await self.run_job(job)
+                await self._run_leased(job)
             else:
                 await asyncio.sleep(0.04)
+
+    async def _run_leased(self, job):
+        renew = getattr(self.adapters.data, "renew_job", None)
+        if not callable(renew):
+            await self.run_job(job)
+            return
+
+        async def heartbeat():
+            while True:
+                await asyncio.sleep(self.adapters.data.settings.lease_seconds / 3)
+                await asyncio.to_thread(renew, job)
+
+        work = asyncio.create_task(self.run_job(job))
+        pulse = asyncio.create_task(heartbeat())
+        try:
+            done, _ = await asyncio.wait({work, pulse}, return_when=asyncio.FIRST_COMPLETED)
+            if work in done:
+                await work
+            else:
+                try:
+                    pulse.result()
+                except Exception:
+                    logging.getLogger("paperpilot").warning("task_lease_lost task_id=%s", job.task.task_id)
+        finally:
+            work.cancel()
+            pulse.cancel()
+            await asyncio.gather(work, pulse, return_exceptions=True)
 
     async def secure_query(self, ctx, question):
         self.audit(ctx, "secure_query.requested", "secure_query", execution_status="pending")

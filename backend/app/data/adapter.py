@@ -597,7 +597,7 @@ class PostgresData:
             raise AppError(409, "TASK_NOT_RETRYABLE", "仅失败任务可以重试")
         self._db.execute(
             "UPDATE tasks SET status='pending', actor_id=%s, request_id=%s, updated_at=%s,"
-            " error_code=NULL, error_message=NULL"
+            " error_code=NULL, error_message=NULL, recovery_failures=0"
             " WHERE task_id=%s AND project_id=%s AND status='failed'",
             (ctx.user_id, ctx.request_id, now(), task_id, ctx.project_id),
         )
@@ -613,13 +613,20 @@ class PostgresData:
     @operation(write=True)
     def claim_job(self):
         row = self._one(
-            "SELECT t.task_id FROM tasks t WHERE t.status='pending'"
+            "SELECT t.task_id,t.status,t.recovery_failures FROM tasks t WHERE t.status='pending'"
             " OR (t.status='processing' AND EXISTS (SELECT 1 FROM task_attempts a"
             "     WHERE a.task_id=t.task_id AND a.status='processing'"
             "     AND a.lease_expires_at <= now()))"
             " ORDER BY t.created_at, t.task_id LIMIT 1 FOR UPDATE SKIP LOCKED"
         )
         if row is None:
+            return None
+        if (
+            row["status"] == "processing"
+            and row["recovery_failures"] >= self.settings.max_automatic_attempts - 1
+        ):
+            job = self._job_of(self._task_full_row(row["task_id"]))
+            self._fail_job(job, "TASK_RETRY_LIMIT", "自动恢复次数已达上限，请核对后明确重试")
             return None
         # Expire the stale attempt first: only one processing attempt per task may exist.
         self._db.execute(
@@ -628,7 +635,8 @@ class PostgresData:
             (row["task_id"],),
         )
         self._db.execute(
-            "UPDATE tasks SET status='processing', attempts=attempts+1, updated_at=now() WHERE task_id=%s",
+            "UPDATE tasks SET recovery_failures=recovery_failures+CASE WHEN status='processing' THEN 1 ELSE 0 END,"
+            " status='processing', attempts=attempts+1, updated_at=now() WHERE task_id=%s",
             (row["task_id"],),
         )
         task_row = self._one("SELECT * FROM tasks WHERE task_id=%s", (row["task_id"],))
@@ -654,6 +662,27 @@ class PostgresData:
                 (job.context.project_id, job.payload["file"].paper_id),
             )
         return job
+
+    def _require_live_lease(self, job):
+        row = self._one(
+            "SELECT 1 FROM task_attempts WHERE task_id=%s AND attempt_no=%s"
+            " AND status='processing' AND lease_expires_at>now()",
+            (job.task.task_id, job.task.attempts),
+        )
+        if row is None:
+            self._state_conflict()
+
+    @operation(write=True)
+    def renew_job(self, job):
+        stored = self._job_record(job)
+        self._scope(job.context)
+        if stored.task.status != "processing":
+            self._state_conflict()
+        self._require_live_lease(job)
+        self._db.execute(
+            "UPDATE task_attempts SET lease_expires_at=%s WHERE task_id=%s AND attempt_no=%s",
+            (now() + timedelta(seconds=self.settings.lease_seconds), job.task.task_id, job.task.attempts),
+        )
 
     @operation(write=True)
     def complete_job(self, job, result):
@@ -695,6 +724,7 @@ class PostgresData:
             return
         if stored.task.status != "processing":
             self._state_conflict()
+        self._require_live_lease(job)
         if job.task.kind == "process":
             if (
                 result.paper_id != job.payload["file"].paper_id
@@ -918,6 +948,9 @@ class PostgresData:
 
     @operation(write=True)
     def fail_job(self, job, code, message):
+        self._fail_job(job, code, message)
+
+    def _fail_job(self, job, code, message):
         stored = self._job_record(job)
         error = TaskError(code=code, message=message)
         if stored.task.status == "failed" and stored.task.error == error:

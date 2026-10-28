@@ -156,3 +156,19 @@ def test_model_dimensions_conflict_rolls_back(pg, tmp_path):
     assert conflict.value.code == "INDEX_MODEL_CONFLICT"
     assert not pg.data.sources(job.context, result.paper_id)
     pg.data.fail_job(job, "INDEX_MODEL_CONFLICT", "fixture dimension conflict")
+
+
+@pytest.mark.parametrize("mutation", ["nan", "zero", "dimension", "content"])
+def test_invalid_index_never_publishes_partial_state(pg, tmp_path, mutation):
+    job, result, index, _ = prepare(pg, tmp_path)
+    if mutation == "content":
+        index.chunks[0].content = "unattributed content"
+    else:
+        index.chunks[0].vector = {"nan": [float("nan"), 0, 1], "zero": [0, 0, 0], "dimension": [1, 0]}[
+            mutation
+        ]
+    with pytest.raises(AppError) as invalid:
+        pg.data.complete_indexed_job(job, result, index)
+    assert invalid.value.code == "ADAPTER_CONTRACT_ERROR"
+    assert not pg.data.sources(job.context, result.paper_id)
+    pg.data.fail_job(job, "FIXTURE_END", "fixture cleanup")
