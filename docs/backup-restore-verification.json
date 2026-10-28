@@ -1,0 +1,110 @@
+{
+  "generated_at": "2026-10-27T12:31:33.461443+00:00",
+  "container": "paperpilot-day0-postgres-1",
+  "checks": [
+    {
+      "name": "business_state_before_backup",
+      "passed": true,
+      "detail": {
+        "paper_id": "eaee9485-043c-428b-9830-9fbb2b7c0af6",
+        "paper_status": "searchable",
+        "sources": [
+          {
+            "citation_id": "1",
+            "paper_id": "eaee9485-043c-428b-9830-9fbb2b7c0af6",
+            "chunk_id": "2451a735-4f3f-47a7-bab3-f53c568a0abd",
+            "page_number": 3,
+            "excerpt": "备份验收片段",
+            "synthetic": false
+          }
+        ],
+        "evidence_count": 0,
+        "reports": [
+          {
+            "report_id": "012842b3-2c75-4d42-bff5-ef34fdb8be17",
+            "version_id": "4f9d1547-412c-41db-bca7-488161fd48ba",
+            "project_id": "afca85a5-a7df-4ce3-9f25-b402e01d3cbd",
+            "number": 1,
+            "title": "备份报告",
+            "research_question": "备份问题",
+            "body": "备份正文 [1]",
+            "sources": [
+              {
+                "citation_id": "1",
+                "paper_id": "eaee9485-043c-428b-9830-9fbb2b7c0af6",
+                "chunk_id": "2451a735-4f3f-47a7-bab3-f53c568a0abd",
+                "page_number": 3,
+                "excerpt": "备份验收片段",
+                "synthetic": false
+              }
+            ],
+            "created_at": "2026-10-27T12:31:33.887234Z",
+            "mock": false
+          }
+        ],
+        "row_counts": {
+          "project_papers": 1,
+          "chunks": 1,
+          "task_results": 1,
+          "report_versions": 1,
+          "audit_events": 1,
+          "outbox_events": 5,
+          "idempotency_records": 3
+        }
+      }
+    },
+    {
+      "name": "pg_dump_custom_format",
+      "passed": true,
+      "detail": {
+        "bytes": 91091
+      }
+    },
+    {
+      "name": "pg_restore_into_empty_database",
+      "passed": true
+    },
+    {
+      "name": "business_state_identical_after_restore",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "row_counts_identical_after_restore",
+      "passed": true,
+      "detail": {
+        "before": {
+          "project_papers": 1,
+          "chunks": 1,
+          "task_results": 1,
+          "report_versions": 1,
+          "audit_events": 1,
+          "outbox_events": 5,
+          "idempotency_records": 3
+        },
+        "after": {
+          "project_papers": 1,
+          "chunks": 1,
+          "task_results": 1,
+          "report_versions": 1,
+          "audit_events": 1,
+          "outbox_events": 5,
+          "idempotency_records": 3
+        }
+      }
+    },
+    {
+      "name": "idempotent_replay_after_restore",
+      "passed": true
+    },
+    {
+      "name": "outbox_deliverable_after_restore",
+      "passed": true,
+      "detail": {
+        "pending_before": 5,
+        "delivered": 5
+      }
+    }
+  ],
+  "passed": true
+}

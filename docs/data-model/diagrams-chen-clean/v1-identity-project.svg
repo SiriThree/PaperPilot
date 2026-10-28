@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-label="分 E-R 图一 · 身份与项目">
+<defs>
+<pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+<path d="M 24 0 L 0 0 0 24" fill="none" stroke="#eeeeee" stroke-width="0.7"/>
+</pattern>
+<style>
+  text { font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', sans-serif; fill: #1b1b1b; }
+  .entity { fill: #ffffff; stroke: #1b1b1b; stroke-width: 1.8; }
+  .rel { fill: #ffffff; stroke: #1b1b1b; stroke-width: 1.8; }
+  .attr { fill: #ffffff; stroke: #1b1b1b; stroke-width: 1.5; }
+  .note-box { fill: #fbfbfb; stroke: #cfcfcf; stroke-width: 1.2; stroke-dasharray: 5 4; }
+  line { stroke: #333333; stroke-width: 1.35; }
+  .title { font-size: 27px; font-weight: 700; }
+  .entity-label { font-weight: 600; }
+  .ident { font-size: 11px; fill: #666666; }
+  .rel-label { font-size: 16px; }
+  .attr-label { font-size: 15px; }
+  .field { font-size: 10.5px; fill: #6a6a6a; }
+  .card { font-size: 17px; }
+  .note { font-size: 13px; fill: #444444; }
+  .legend { font-size: 13px; fill: #555555; }
+  .rule { stroke: #dddddd; stroke-width: 1; }
+  .hop { fill: none; stroke: #333333; stroke-width: 1.35; }
+  .pk-partial { stroke: #1b1b1b; stroke-width: 1.2; stroke-dasharray: 4 3; }
+</style>
+</defs>
+<rect width="1600" height="1000" fill="url(#grid)"/>
+<g class="lines">
+<line x1="800.0" y1="470.0" x2="800.0" y2="308.0"/>
+<line x1="800.0" y1="470.0" x2="800.0" y2="642.0"/>
+<line x1="260.0" y1="443.0" x2="127.5" y2="226.7"/>
+<line x1="260.0" y1="470.0" x2="137.8" y2="343.8"/>
+<line x1="260.0" y1="497.0" x2="167.2" y2="456.9"/>
+<line x1="260.0" y1="515.0" x2="205.0" y2="652.6"/>
+<line x1="1140.0" y1="425.0" x2="1077.0" y2="287.2"/>
+<line x1="1240.0" y1="425.0" x2="1240.0" y2="258.0"/>
+<line x1="1340.0" y1="425.0" x2="1410.9" y2="287.2"/>
+<line x1="1340.0" y1="515.0" x2="1411.0" y2="653.0"/>
+<line x1="460.0" y1="470.0" x2="710.0" y2="470.0"/>
+<line x1="1140.0" y1="470.0" x2="890.0" y2="470.0"/>
+</g>
+<g class="shapes">
+<rect x="260.0" y="425.0" width="200.0" height="90.0" rx="2" class="entity"/>
+<rect x="1140.0" y="425.0" width="200.0" height="90.0" rx="2" class="entity"/>
+<polygon points="800.0,420.0 890.0,470.0 800.0,520.0 710.0,470.0" class="rel"/>
+<ellipse cx="105.0" cy="190.0" rx="85.0" ry="38.0" class="attr"/>
+<ellipse cx="105.0" cy="310.0" rx="72.0" ry="38.0" class="attr"/>
+<ellipse cx="105.0" cy="430.0" rx="88.0" ry="38.0" class="attr"/>
+<ellipse cx="190.0" cy="690.0" rx="85.0" ry="38.0" class="attr"/>
+<ellipse cx="1060.0" cy="250.0" rx="85.0" ry="38.0" class="attr"/>
+<ellipse cx="1240.0" cy="220.0" rx="78.0" ry="38.0" class="attr"/>
+<ellipse cx="1430.0" cy="250.0" rx="95.0" ry="38.0" class="attr"/>
+<ellipse cx="1430.0" cy="690.0" rx="85.0" ry="38.0" class="attr"/>
+<ellipse cx="800.0" cy="270.0" rx="82.0" ry="38.0" class="attr"/>
+<ellipse cx="800.0" cy="680.0" rx="85.0" ry="38.0" class="attr"/>
+</g>
+<g class="labels">
+<text x="515.0" y="452.0" text-anchor="middle" class="card">N</text>
+<text x="1085.0" y="452.0" text-anchor="middle" class="card">M</text>
+<text x="360.0" y="465.0" text-anchor="middle" class="entity-label" font-size="18">用户</text>
+<text x="360.0" y="489.0" text-anchor="middle" class="ident">USER</text>
+<text x="1240.0" y="465.0" text-anchor="middle" class="entity-label" font-size="18">研究项目</text>
+<text x="1240.0" y="489.0" text-anchor="middle" class="ident">PROJECT</text>
+<text x="800.0" y="475.0" text-anchor="middle" class="rel-label">参与</text>
+<text x="105.0" y="187.0" text-anchor="middle" class="attr-label" text-decoration="underline">用户编号</text>
+<text x="105.0" y="206.0" text-anchor="middle" class="field">user_id</text>
+<text x="105.0" y="307.0" text-anchor="middle" class="attr-label">用户名</text>
+<text x="105.0" y="326.0" text-anchor="middle" class="field">username</text>
+<text x="105.0" y="427.0" text-anchor="middle" class="attr-label">显示名</text>
+<text x="105.0" y="446.0" text-anchor="middle" class="field">display_name</text>
+<text x="190.0" y="687.0" text-anchor="middle" class="attr-label">创建时间</text>
+<text x="190.0" y="706.0" text-anchor="middle" class="field">created_at</text>
+<text x="1060.0" y="247.0" text-anchor="middle" class="attr-label" text-decoration="underline">项目编号</text>
+<text x="1060.0" y="266.0" text-anchor="middle" class="field">project_id</text>
+<text x="1240.0" y="217.0" text-anchor="middle" class="attr-label">项目名称</text>
+<text x="1240.0" y="236.0" text-anchor="middle" class="field">name</text>
+<text x="1430.0" y="247.0" text-anchor="middle" class="attr-label">项目描述</text>
+<text x="1430.0" y="266.0" text-anchor="middle" class="field">description</text>
+<text x="1430.0" y="687.0" text-anchor="middle" class="attr-label">创建时间</text>
+<text x="1430.0" y="706.0" text-anchor="middle" class="field">created_at</text>
+<text x="800.0" y="267.0" text-anchor="middle" class="attr-label">项目角色</text>
+<text x="800.0" y="286.0" text-anchor="middle" class="field">role</text>
+<text x="800.0" y="677.0" text-anchor="middle" class="attr-label">加入时间</text>
+<text x="800.0" y="696.0" text-anchor="middle" class="field">joined_at</text>
+<text x="800" y="52" text-anchor="middle" class="title">分 E-R 图一 · 身份与项目</text>
+</g>
+<rect x="70" y="782" width="1460" height="90" rx="8" class="note-box"/><text x="92" y="812" class="note">模型修正：取消“项目成员”实体，也取消重复的“负责”联系。用户与项目直接用“参与”联系表达多对多；</text><text x="92" y="834" class="note">项目角色、加入时间是联系属性；每个项目恰好一名 role = owner 的成员，负责人不可移除或转让（K02、K03）。</text><text x="92" y="856" class="note">projects.owner_id / owner_role 是复合外键实现，不再作为重复联系或重复属性绘制。</text>
+<line x1="70" y1="926" x2="1530" y2="926" class="rule"/><text x="800" y="956" text-anchor="middle" class="legend">矩形：实体　椭圆：属性　菱形：联系　实下划线：主键　虚下划线：部分键（与所属实体主键组合）　1 / N / M：最大基数</text>
+</svg>

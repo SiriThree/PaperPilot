@@ -1,0 +1,21 @@
+name: paperpilot-day0
+services:
+  postgres:
+    # pg16 image resolved on 2026-10-26; pin for repeatable preflight results.
+    image: pgvector/pgvector@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${PAPERPILOT_DAY0_PASSWORD:?Set a local preflight password}
+      POSTGRES_DB: paperpilot_day0_preflight
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    ports:
+      - "127.0.0.1:${PAPERPILOT_DAY0_PORT:-54326}:5432"
+    volumes:
+      - day0-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d paperpilot_day0_preflight"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+volumes:
+  day0-postgres:

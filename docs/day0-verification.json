@@ -1,0 +1,65 @@
+{
+  "timestamp_utc": "2026-10-26T13:58:51.642659+00:00",
+  "checks": {
+    "psycopg3_transactions": {
+      "passed": true,
+      "committed": [
+        1
+      ],
+      "rolled_back": [
+        2
+      ]
+    },
+    "vector_similarity": {
+      "passed": true,
+      "ranking": [
+        [
+          "a-near",
+          1.0
+        ],
+        [
+          "a-far",
+          0.0
+        ]
+      ]
+    },
+    "rls_two_login_roles": {
+      "passed": true,
+      "roles": [
+        {
+          "project": "project_a",
+          "visible_rows": 2,
+          "own_write_allowed": true,
+          "cross_write_denied": true
+        },
+        {
+          "project": "project_b",
+          "visible_rows": 1,
+          "own_write_allowed": true,
+          "cross_write_denied": true
+        }
+      ]
+    },
+    "readonly_no_write": {
+      "passed": true,
+      "denied": [
+        "insert",
+        "update",
+        "delete",
+        "create_table",
+        "create_public_table",
+        "create_temp",
+        "assume_business_role"
+      ],
+      "tested_with_readonly_default_disabled": true
+    }
+  },
+  "passed": true,
+  "postgres": "16.15 (Debian 16.15-1.pgdg12+2)",
+  "psycopg": "3.3.6",
+  "pgvector": "0.8.7",
+  "embedding_dim": 3,
+  "embedding_status": "synthetic placeholder; MockAI has no embeddings; awaiting member C",
+  "lease_seconds": 120,
+  "idempotency_retention_seconds": null
+}
