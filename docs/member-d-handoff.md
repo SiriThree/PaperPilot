@@ -1,10 +1,12 @@
 # 成员 D 开工交接
 
+2026-10-28 已根据团队 PR 更新[当前进度与下一阶段顺序](member-d-progress.md)：A 已提交正式 PostgreSQL DataPort 与 outbox，B 的 PR #3 已合并，C 已提交真实 AI 与可组合入口。D 接下来重点是正式统计视图/权限约定、关键审计和受限执行器，不再等待 A 从头实现数据层；联合安全能力尚未验收。
+
 任务 1 已提供非 Mock `SecurityAdapter`、`build_security` 和 `app.security.main:create_app` 开发入口，详见 [任务 1 接入说明](member-d-task1.md)。尚无真实 SQL 执行能力；下文真实执行、审计与数据库验收要求仍有效。
 
 任务 2 已补齐应用层项目授权：按可信 Context 重新查询当前角色、核对 B 的角色快照、未知动作默认拒绝、撤权与查询故障拒绝授权。权限矩阵、验证及数据库边界见 [授权策略说明](member-d-authorization.md)。
 
-任务 3 已接通三条自然语言统计的候选生成、完整 AST 允许清单与项目参数绑定，详见 [网关校验说明](member-d-gateway.md)。策略通过返回 allowed/not_executed，仍不执行 SQL；正式视图/方言与受限执行器待 A/D 确认和交付。
+任务 3 已接通三条自然语言统计的候选生成、完整 AST 允许清单与项目参数绑定，详见 [网关校验说明](member-d-gateway.md)。校验阶段已完成，策略通过返回 allowed/not_executed；与 A 的 PostgreSQL/psycopg3、多对多主题及正式受控视图适配仍列为后续待办，不能计为已完成真实执行。
 
 ## 1. 职责范围
 
@@ -26,7 +28,7 @@ async def execute(ctx: Context, question: str) -> SecureQueryResult: ...
 
 Context 为 UUID 类型的 user_id/project_id/request_id。B 从开发会话查询 A 的身份/角色，先拒绝非成员，再调用 authorize。现有 action 为 project.read、members.manage、paper.remove、audit.read，role 为 owner/member；后三种要求负责人。role 是可信服务端查询的值，不是前端声明。D 返回 None 表示放行，拒绝用安全 AppError；执行器仍必须把可信项目绑定到数据库访问，不能只依赖前端或角色字符串。
 
-execute 只接收自然语言问题，不接收客户端凭据、Context JSON 或任意 SQL。D 独立拥有 SQL 候选处理、AST/允许清单/项目条件、受限数据库身份、执行资源限制和关键审计；数据库类型和受限身份机制与 A 商定。DataPort.controlled_statistics 只为三个固定意图服务，不是任意 SQL 执行器。真实执行连接/视图在 D/A 模块内注入，不能扩成 B 的通用 SQL API。
+execute 只接收自然语言问题，不接收客户端凭据、Context JSON 或任意 SQL。D 独立拥有 SQL 候选处理、AST/允许清单/项目条件、受限数据库身份、执行资源限制和关键审计；按 A 已提交的 PostgreSQL 16/psycopg3 实现对齐，正式受限身份和统计视图仍需 A/D 确认。DataPort.controlled_statistics 只为三个固定意图服务，不是任意 SQL 执行器。真实执行连接/视图在 D/A 模块内注入，不能扩成 B 的通用 SQL API。
 
 ## 4. 正常请求/响应示例
 
@@ -119,4 +121,6 @@ SecurityPort 实现和构造入口、策略及标识、SQL 允许/拒绝规则�
 
 ## 10. 待团队确认
 
-正式数据库与受限身份/视图/行级隔离、SQL 方言和解析库、允许函数/聚合范围、schema/view暴露、限时限量与连接池上下文复位、审计事务/outbox、生产身份、C/D NL2SQL协作与资源关闭方式。当前 AIPort 没有 SQL 生成方法，不能假定已有。D 可立即从固定 fixture、策略、AST 和假执行器开始，不需等待前端或数据库最终选型；真实数据库验证是后续联合依赖。
+已知基线：A 的 PR #1 已实现 PostgreSQL 16/psycopg3、正式 DataPort、一次性数据库 provider 与 outbox 投递器；B 的 PR #3 已合并；C 的 PR #4 已提供五方法真实 AI 和接受 security_factory 的组合入口。D 已固定 SQLGlot 校验实现。
+
+仍需对齐正式受限身份/视图/RLS、PostgreSQL 方言与参数格式、多主题计数及空值语义、限时限量与连接池项目上下文复位、执行级关键审计、outbox 保留/死信、生产身份及资源关闭。当前 AIPort 仍无 SQL 生成方法，C/D NL2SQL 私有协作是可选项。D 可优先实现关键审计与隔离执行器测试，真实数据库安全验证按[最新进度](member-d-progress.md)推进。
