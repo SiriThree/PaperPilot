@@ -21,7 +21,9 @@ dependencies = [
 
 [project.optional-dependencies]
 security-test = ["psycopg[binary]==3.3.6"]
-dev = ["pytest>=8,<10", "httpx>=0.27,<1", "ruff>=0.9,<1", "jsonschema>=4.23,<5"]
+ai = ["httpx>=0.27,<1", "pypdf>=6.21.3,<7"]
+ai-local = ["httpx>=0.27,<1", "pypdf>=6.21.3,<7", "fastembed==0.9.1"]
+dev = ["pytest>=8,<10", "httpx>=0.27,<1", "ruff>=0.9,<1", "jsonschema>=4.23,<5", "pypdf>=6.21.3,<7"]
 
 [tool.pytest.ini_options]
 pythonpath = ["backend"]
