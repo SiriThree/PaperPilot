@@ -1,14 +1,16 @@
 # 成员 C 开工交接
 
+> C 已基于 B PR #3 合入后的代码交付 `app.ai.adapter:build_ai` 和 `app.ai.bootstrap:create_app`。实际实现、交大 API/本地嵌入配置、A 分支对接边界见 [C 交付说明](ai-adapter.md)，真实论文评测见 [评测记录](ai-evaluation/README.md)。下文保留公共端口契约与责任分工。
+
 ## 1. 职责范围
 
-负责论文解析/片段与页码、关键词/语义/组合检索、证据提取、问答与报告草稿算法、模型配置和效果评测。只实现 AIPort，向 B 返回公共 Schema；不改前端，不自行保存业务报告或实现数据库持久化。真实 AI 尚未交付，当前结果均为合成 Mock。
+负责论文解析/片段与页码、关键词/语义/组合检索、证据提取、问答与报告草稿算法、模型配置和效果评测。只实现 AIPort，向 B 返回公共 Schema；不改前端，不自行保存业务报告或实现数据库持久化。默认启动仍为合成 Mock；真实 C 需显式配置并注册。
 
 ## 2. 代码入口与建议位置
 
 - 端口：`backend/app/adapters/ports.py:AIPort`；类型：`backend/app/schemas.py`。
 - 参考形状：`adapters/mock_ai.py`；调用与严格来源校验：`services.py`；HTTP 映射：`routes/research.py`、`literature.py`。
-- 建议新增 `backend/app/ai/adapter.py` 及模块内解析/检索/生成实现（建议目录尚不存在）。独立测试：`backend/tests/ai_contracts/`。
+- 实现：`backend/app/ai/adapter.py` 及模块内解析/检索/生成实现。独立测试：`backend/tests/ai_contracts/`。
 - 七个 C/D 方法及场景的实际 Mock 示例：`contracts/module-port-examples.json`。HTTP Schema 在 `contracts/openapi.json` 的 components/schemas 中，没有独立的 contracts/schema.json。
 
 ## 3. 完整接口（5 个 async 方法）
@@ -64,7 +66,7 @@ C 应在 SDK 边界将超时/不可用等映射为安全 AppError（502/503/504�
 C 完成后交付 `build_ai(data:DataPort) -> AIPort`，工厂闭包持有 C 自身配置和受控文件/检索依赖，B 不引入 SDK。可信组合入口调用：
 
 ```python
-# build_ai 由 C 实现；不是仓库中已存在的算法类。
+from app.ai.adapter import build_ai
 from app.config import Settings
 from app.main import create_app as create_business_app
 
@@ -82,7 +84,7 @@ def create_app():
 .\.venv\Scripts\python.exe -m pytest backend/tests/ai_contracts -q
 .\.venv\Scripts\python.exe scripts/export_module_examples.py --check
 # C 交付隔离 provider 后替换为实际模块名，不能指向生产配置
-.\.venv\Scripts\python.exe -m pytest backend/tests/ai_contracts --ai-contract-provider your_package:build_harness -q
+.\.venv\Scripts\python.exe -m pytest backend/tests/ai_contracts --ai-contract-provider ai_contracts.real_provider:build_harness -q
 ```
 
 provider 为 `build_harness(*,tmp_path)` context manager，返回 `ai_contracts.harness.AIHarness`。字段定义以该 dataclass 为准：实际 ai、配置故障的 failing_ai、DataPort、两个合法项目上下文、task_id、项目绑定 file、能匹配 fixture 的 query/source、failure_question、is_mock=False。provider 自备合法 PDF/可控 reader、可检索来源和故障 SDK；默认 Mock 不解析文件。测试不应依赖真实收费模型或用户库。
@@ -103,4 +105,4 @@ AIPort 实现及 build_ai、可控测试 provider/fixture、SDK 配置示例（�
 
 ## 10. 待团队确认及阶段边界
 
-B/C 需确定真实受控文件读取注入（当前只有 FileReference，没有已实现的远程文件 API）；A/C 需定全文、向量、索引准备/提交及模型版本、作者/主题结构；C/D 若需 NL2SQL 协作另行商定私有边界，当前 AIPort 没有 generate_sql 方法。超时/取消/流式与 SDK 生命周期、模型选择和性能预算待协商。这些不阻碍 C 先在隔离文件/数据 fixture 上实现五方法，但属于真实端到端联调前的依赖，不声称已解决。
+同进程受控本地文件读取、C 总超时/取消/模型资源清理由本次实现提供；远程文件 API、A/C 全文/向量持久化提交面与大库性能仍待团队确认。交大聊天模型与本地 BGE 嵌入可显式组合，不使用 A 的三维占位向量。C/D 若需 NL2SQL 协作另行商定私有边界，当前 AIPort 没有 generate_sql 方法。流式与跨模块租约心跳未实现，真实 PostgreSQL 联调和模型效果边界见本次交付文档。

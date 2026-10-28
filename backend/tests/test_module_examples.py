@@ -17,6 +17,7 @@ from app.schemas import (
     SearchResult,
     SecureQueryResult,
 )
+from signature_contracts import assert_signature_matches
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -24,15 +25,20 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_module_examples_match_executed_ports_and_frozen_signatures():
     document = json.loads((ROOT / "contracts/module-port-examples.json").read_text(encoding="utf-8"))
     build = runpy.run_path(str(ROOT / "scripts/export_module_examples.py"))["build_examples"]
-    assert document == build() and document["mock"] is True
+    generated = build()
+    assert document["mock"] is True
     for port in (AIPort, SecurityPort):
         methods = {name for name in vars(port) if not name.startswith("_")}
         assert set(document["methods"][port.__name__]) == methods
         for name in methods:
             example = document["methods"][port.__name__][name]
             signature = inspect.signature(getattr(port, name))
-            assert example["signature"] == str(signature)
+            assert_signature_matches(example["signature"], signature)
+            generated_example = generated["methods"][port.__name__][name]
+            assert_signature_matches(generated_example["signature"], signature)
+            generated_example["signature"] = example["signature"]
             signature.bind(None, **example["input"])
+    assert document == generated
     models = {
         "process": ProcessResult,
         "search": SearchResult,

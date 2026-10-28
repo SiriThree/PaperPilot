@@ -56,6 +56,7 @@ async function remove(paper: Models['Paper']) {
       <div class="heading-summary"><span class="summary-icon"><AppIcon name="book" :size="23" /></span><div><strong>{{ rangeReady ? papers.length : '—' }}<small>篇文献</small></strong><span>当前筛选范围 · {{ rangeReady ? searchable : '—' }} 篇可检索</span></div></div>
     </div>
     <Feedback :busy="busy" :error="error" />
+    <p v-if="tasks.busy.value && !tasks.task.value" class="task-next-step" role="status">正在提交并等待确认。超时不代表提交失败，请保留文件与原请求进行核对。</p>
     <TaskRecoveryPanel :records="tasks.records.value" :selected="tasks.selected.value" :task="tasks.task.value" :busy="tasks.busy.value" :message="tasks.message.value" :storage-error="tasks.storageError.value" @query="tasks.refresh" @reconcile="upload(true)" @retry="tasks.retryFailed" />
     <div class="library-layout">
       <section class="work-panel import-panel">

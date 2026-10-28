@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "paper_id": "attention-2017-v7",
+  "title": "Attention Is All You Need",
+  "year": 2017,
+  "source_url": "https://arxiv.org/pdf/1706.03762v7",
+  "sha256": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697",
+  "pages": 15,
+  "provenance": "Public arXiv v7 PDF. PDF is supplied locally and is not redistributed. Queries and page labels were authored for PaperPilot by inspecting this exact PDF, before running the evaluator. Physical PDF page numbers, starting at 1. Small development set, not a held-out benchmark.",
+  "queries": [
+    {"id": "attention", "query": "scaled dot product query key compatibility", "relevant_pages": [4]},
+    {"id": "positions", "query": "sinusoidal positional encoding frequencies", "relevant_pages": [6]},
+    {"id": "optimization", "query": "optimizer warmup learning rate schedule", "relevant_pages": [7]},
+    {"id": "smoothing", "query": "label smoothing confidence perplexity", "relevant_pages": [8]},
+    {"id": "parsing", "query": "English constituency parsing WSJ", "relevant_pages": [10]},
+    {"id": "stacks", "query": "encoder decoder stacks residual layer normalization", "relevant_pages": [3]},
+    {"id": "heads", "query": "multiple attention heads representation subspaces", "relevant_pages": [4, 5]},
+    {"id": "complexity", "query": "computational complexity maximum path length sequential operations", "relevant_pages": [6, 7]},
+    {"id": "unrelated", "query": "myocardial infarction platelet therapy", "relevant_pages": []}
+  ]
+}

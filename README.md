@@ -2,7 +2,7 @@
 
 面向科研文献研究的 AI 数据库应用与安全平台。此仓库包含工程骨架、AB-1 数据契约、数据库中立接入及任务恢复；在 Phase 3 协作基线上增加 **Phase 4B：B 侧页面状态、错误处理和业务集成**。各成员从 [统一开发指南](docs/development-guide.md) 开始，实际验收与限制见 [验证记录](docs/verification.md)。
 
-**默认 Mock；正式数据库由 A/团队决定。持久化模式必须显式注册 A 的适配器，未注册就拒绝启动。没有真实密码认证、PDF 解析、向量检索、LLM 或 SQL 安全网关。已有 SQLite 文件保留为历史实验，不代表正式选型。**
+**默认 Mock；持久化模式必须显式注册 A 的适配器，未注册就拒绝启动。C 已提供可选真实 PDF 解析、三模式检索及交大模型接入，见 [C 实现与配置](docs/ai-adapter.md) 和 [实际评测](docs/ai-evaluation/README.md)。默认入口不自动启用。没有真实密码认证或生产部署；已有 SQLite 文件保留为历史实验。**
 
 ## 技术栈
 
@@ -54,7 +54,7 @@ $env:PAPERPILOT_D_MODE = 'mock'
 ```
 
 - A 设为 `persistent` 或 `real` 而未注册 DataBinding：启动明确失败。C/D 设为 `real` 需分别显式传入 ai_factory/security_factory；未注册或初始化失败即拒绝，无自动加载。
-- A/C/D 可独立注册、与其余 Mock 联调；当前仓库未提供正式真实实现。生产配置始终拒绝，开发身份尚未替换。
+- A/C/D 可独立注册、与其余 Mock 联调；C 的 opt-in 实现见上方配置，A/D 按各自分支交付进度注册。生产配置始终拒绝，开发身份尚未替换。
 - 数据库连接、初始化、迁移和资源释放由 A 在可信组合入口显式提供，不由 B 默认选定或执行。
 - 没有从真实模式静默回退到 Mock 的路径。
 - 密钥只能通过未来真实适配器的环境配置提供；不得提交本地配置、令牌或真实账户信息。
@@ -162,6 +162,7 @@ npm.cmd --prefix frontend run test:e2e
 - [成员开发及交接指南](docs/development-guide.md)
 - [A/B 数据层契约 AB-1](docs/ab-data-contract.md)、[成员 A 交接摘要](docs/member-a-handoff.md)
 - [成员 C：AI 接口与开工验收](docs/member-c-handoff.md)、[成员 D：安全接口与开工验收](docs/member-d-handoff.md)
+- [C 实现、交大 API 与本地嵌入配置](docs/ai-adapter.md)、[真实论文评测](docs/ai-evaluation/README.md)
 - [C/D 全方法可执行示例与异常](contracts/module-port-examples.json)
 - [数据库中立接入、测试与待确认事项](docs/persistence-integration.md)、[历史 SQLite 实验](docs/persistence.md)
 - [任务恢复、未知提交与重复提交边界](docs/task-recovery.md)

@@ -10,6 +10,7 @@ from app.config import Settings
 from app.main import create_app
 from app.schemas import SecureQueryResult
 from app.adapters.ports import DataPort
+from signature_contracts import assert_signature_matches
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -21,7 +22,7 @@ def test_data_port_examples_cover_current_signatures():
     assert set(document["methods"]) == methods
     for name, example in document["methods"].items():
         signature = inspect.signature(getattr(DataPort, name))
-        assert example["signature"] == str(signature)
+        assert_signature_matches(example["signature"], signature)
         assert "input" in example["success"] and "output" in example["success"]
         assert "missing_or_error" in example
         signature.bind(None, **example["success"]["input"])
