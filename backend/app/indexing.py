@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class EmbeddingModel(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
     provider: str = Field(min_length=1, max_length=1000)
     model_name: str = Field(min_length=1, max_length=200)
     revision: str = Field(min_length=1, max_length=200)
@@ -22,14 +22,14 @@ class EmbeddingModel(BaseModel):
 
 
 class IndexedChunk(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", strict=True)
     chunk_id: UUID
     content: str = Field(min_length=1, max_length=4000)
     vector: list[float] = Field(min_length=1, max_length=16384)
 
 
 class ProcessIndex(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", strict=True)
     model: EmbeddingModel
     chunks: list[IndexedChunk] = Field(min_length=1, max_length=10000)
 

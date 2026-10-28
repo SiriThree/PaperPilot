@@ -10,4 +10,12 @@
 
 没有指定版本索引的历史论文（包括早期真实解析和 Mock 索引）在语义/组合检索时返回 `INDEX_NOT_READY`，必须明确重新处理，不能悄悄回退到 Mock 或临时嵌入。关键词检索可继续使用既有来源。没有开放批量重建的 HTTP 接口。
 
+确认后台 worker 已配置真实 C 及目标模型版本、原 PDF 仍位于正确 storage root 后，可使用应用的受限业务连接环境执行单篇重建：
+
+```powershell
+python scripts/reindex_paper.py --actor <项目负责人UUID> --project <项目UUID> --paper <论文UUID> --request-id <本次操作固定UUID>
+```
+
+此工具只排队，不替代后台 worker，也不承诺读取到了 worker 的环境配置。实际模型身份以最终 process_indexes / embedding_models 为准。相同 request-id 幂等；同论文已有待处理/在执行 process 时拒绝新任务。仅负责人可操作，历史来源/索引不删除。重建失败可从原任务明确重试；未知提交重用原 request-id 核对，不另建任务掩盖状态。
+
 验证：`scripts/verify_integration.py backend/tests/test_persistent_index.py`。覆盖原子提交/回滚、过期尝试、提交重放、版本与维度冲突、重启只嵌入问题；模型端点为本地替身，不代表外部模型质量。

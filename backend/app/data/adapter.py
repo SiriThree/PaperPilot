@@ -547,6 +547,34 @@ class PostgresData:
         self._scope(ctx)
         return self._create_task(ctx, kind, payload, key)
 
+    @operation(write=True)
+    def reindex_paper(self, ctx, paper_id, key):
+        """Explicit owner-only operational entry; retain historical chunks and model versions."""
+        self._scope(ctx, owner=True)
+        self._paper(ctx, paper_id)
+        validate_key(key)
+        row = self._one(
+            "SELECT storage_key FROM project_papers WHERE project_id=%s AND paper_id=%s FOR UPDATE",
+            (ctx.project_id, paper_id),
+        )
+        from app.adapters.ports import FileReference
+
+        payload = {
+            "file": FileReference(row["storage_key"], paper_id, ctx.project_id),
+            "paper_ids": [paper_id],
+        }
+        previous = self._replay(ctx, "process", key, fingerprint(payload))
+        if previous is not None:
+            return Task.model_validate(previous)
+        if self._one(
+            "SELECT 1 FROM tasks t JOIN task_papers tp USING(project_id,task_id)"
+            " WHERE tp.project_id=%s AND tp.paper_id=%s AND t.kind='process'"
+            " AND t.status IN ('pending','processing')",
+            (ctx.project_id, paper_id),
+        ):
+            raise AppError(409, "PROCESS_IN_PROGRESS", "论文已有待处理或正在执行的任务，请先核对原任务")
+        return self._create_task(ctx, "process", payload, key)
+
     def _create_task(self, ctx, kind, payload, key):
         validate_key(key)
         payload = normalize_payload(ctx, kind, payload)
@@ -695,7 +723,7 @@ class PostgresData:
 
         try:
             index = ProcessIndex.model_validate(
-                index.model_dump() if isinstance(index, ProcessIndex) else index
+                index.model_dump(warnings=False) if isinstance(index, ProcessIndex) else index
             )
         except ValidationError:
             raise AppError(502, "ADAPTER_CONTRACT_ERROR", "索引维度或向量不符合契约") from None

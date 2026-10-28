@@ -68,6 +68,43 @@ def test_runtime_cannot_administer_or_mutate_history(pg, statement):
             runtime.execute(statement)
 
 
+def test_reindex_cli_is_idempotent_with_nonowner_database_login(pg, tmp_path):
+    from pathlib import Path
+    import subprocess
+    import sys
+
+    job, result, index, _ = prepare(pg, tmp_path)
+    pg.data.complete_indexed_job(job, result, index)
+    root = Path(__file__).resolve().parents[2]
+    request_id = uuid4()
+    environment = dict(
+        os.environ,
+        PAPERPILOT_DATA_HOST=pg.config.host,
+        PAPERPILOT_DATA_PORT=str(pg.config.port),
+        PAPERPILOT_DATA_DBNAME=pg.config.dbname,
+        PAPERPILOT_DATA_USER=pg.config.user,
+        PAPERPILOT_DATA_PASSWORD=pg.config.password,
+    )
+    command = [
+        sys.executable,
+        str(root / "scripts/reindex_paper.py"),
+        "--actor",
+        str(job.context.user_id),
+        "--project",
+        str(job.context.project_id),
+        "--paper",
+        str(result.paper_id),
+        "--request-id",
+        str(request_id),
+    ]
+    first = subprocess.run(command, cwd=root, env=environment, capture_output=True, text=True, check=True)
+    replay = subprocess.run(command, cwd=root, env=environment, capture_output=True, text=True, check=True)
+    assert first.stdout == replay.stdout and pg.config.password not in first.stdout + first.stderr
+    queued = pg.data.claim_job()
+    assert str(queued.task.task_id) in first.stdout
+    pg.data.fail_job(queued, "FIXTURE_END", "fixture cleanup")
+
+
 def test_runtime_rotation_and_revocation_terminate_sessions(pg):
     old = psycopg.connect(**pg.config.conninfo(), autocommit=True)
     try:

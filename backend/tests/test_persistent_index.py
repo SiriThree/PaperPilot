@@ -158,17 +158,60 @@ def test_model_dimensions_conflict_rolls_back(pg, tmp_path):
     pg.data.fail_job(job, "INDEX_MODEL_CONFLICT", "fixture dimension conflict")
 
 
-@pytest.mark.parametrize("mutation", ["nan", "zero", "dimension", "content"])
+@pytest.mark.parametrize("mutation", ["nan", "zero", "dimension", "content", "boolean", "string"])
 def test_invalid_index_never_publishes_partial_state(pg, tmp_path, mutation):
     job, result, index, _ = prepare(pg, tmp_path)
     if mutation == "content":
         index.chunks[0].content = "unattributed content"
     else:
-        index.chunks[0].vector = {"nan": [float("nan"), 0, 1], "zero": [0, 0, 0], "dimension": [1, 0]}[
-            mutation
-        ]
+        index.chunks[0].vector = {
+            "nan": [float("nan"), 0, 1],
+            "zero": [0, 0, 0],
+            "dimension": [1, 0],
+            "boolean": [True, 0, 0],
+            "string": ["1", 0, 0],
+        }[mutation]
     with pytest.raises(AppError) as invalid:
         pg.data.complete_indexed_job(job, result, index)
     assert invalid.value.code == "ADAPTER_CONTRACT_ERROR"
     assert not pg.data.sources(job.context, result.paper_id)
     pg.data.fail_job(job, "FIXTURE_END", "fixture cleanup")
+
+
+def test_explicit_reindex_switches_revision_without_mutating_history(pg, tmp_path):
+    job, result, index, ai = prepare(pg, tmp_path)
+    pg.data.complete_indexed_job(job, result, index)
+    from app.adapters.ports import Context
+
+    pg.data.add_member(job.context, "bob")
+    member = Context(pg.data.user_by_name("bob").user_id, job.context.project_id, uuid4())
+    with pytest.raises(AppError) as denied:
+        pg.data.reindex_paper(member, result.paper_id, uuid4().hex)
+    assert denied.value.status == 403
+    key = uuid4().hex
+    task = pg.data.reindex_paper(job.context, result.paper_id, key)
+    assert pg.data.reindex_paper(job.context, result.paper_id, key).task_id == task.task_id
+    with pytest.raises(AppError) as pending:
+        pg.data.reindex_paper(job.context, result.paper_id, uuid4().hex)
+    assert pending.value.code == "PROCESS_IN_PROGRESS"
+    newer = pg.data.claim_job()
+    new_ai = RealAI(
+        pg.data, replace(ai.settings, embedding_revision="fixture-v2"), reader=ai.reader, client=ai.client
+    )
+    new_result, new_index = asyncio.run(
+        new_ai.process_indexed(job.context, newer.task.task_id, newer.payload["file"])
+    )
+    assert {s.chunk_id for s in new_result.sources}.isdisjoint(s.chunk_id for s in result.sources)
+    pg.data.complete_indexed_job(newer, new_result, new_index)
+    assert pg.data.sources(job.context, result.paper_id) == new_result.sources
+    with pg.data.database.transaction() as conn:
+        assert (
+            conn.execute(
+                "SELECT count(*) AS n FROM process_indexes WHERE task_id=ANY(%s)",
+                ([job.task.task_id, newer.task.task_id],),
+            ).fetchone()["n"]
+            == 2
+        )
+    assert asyncio.run(
+        new_ai.search_scoped(job.context, SearchRequest(query="evidence", mode="semantic"), [result.paper_id])
+    ).items
