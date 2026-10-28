@@ -8,6 +8,7 @@
 |---|---|---|
 | [A / #1](https://github.com/SiriThree/PaperPilot/pull/1) | 执行前复核为 `member-a@0b2953c`，Open / Draft | 已提供 PostgreSQL 16、psycopg3、24 表迁移、26 方法 DataPort、DataBinding、隔离库 provider 和 outbox 投递器；最新另完成性能基线及备份恢复记录。移除“等待 A 实现数据层/provider/outbox”的旧前置条件；正式受限角色、统计视图、RLS/可信项目上下文和 outbox 保留/死信仍待 A/D 完成。 |
 | [B / #3](https://github.com/SiriThree/PaperPilot/pull/3) | 已合并到 `main@4770732`；本轮已同步 D 分支并回归 | 业务反馈、来源校验和查询/审计页面已更新，页面明确区分 allowed 与 executed；D 无需另做前端。 |
+| [B / #5](https://github.com/SiriThree/PaperPilot/pull/5) | 已合并到 `main@177dddc`；本轮已同步 D 分支并回归 | 新增研究流程衔接、Mock 安全证据展示与报告测试；不代表真实 SQL/数据库隔离已验收。 |
 | [C / #4](https://github.com/SiriThree/PaperPilot/pull/4) | `feat/member-c-ai@1f43093`，Open / 非 Draft，未合并 | 已提供五方法真实 AI、PDF reader、检索和受控生成；`app.ai.bootstrap.create_app` 接受 `data_binding` 与 `security_factory`。可用于最终组合，当前没有 NL2SQL 方法，D 的三条固定统计不以 C 的模型或向量索引为前置。 |
 | [D / #2](https://github.com/SiriThree/PaperPilot/pull/2) | `feature/member-d-security@2f781e0`，Open / Draft | 任务 1/2 与任务 3 校验阶段已交付。真实 SQL 始终未执行，受限执行器、关键审计、真实 D provider 及正式攻防尚未完成。 |
 
@@ -64,3 +65,9 @@ D 的 Python 3.12.10 基线验证仍为 **344 passed / 37 skipped / 0 failed**�
 - 本机 Docker 引擎当前不可达，且没有 `.runtime/day0.env`；尚未建立或修改真实数据库，也未启用 SQL 执行。
 
 下一步的具体协作前置已整理到 [A/D 接入草案](ad-security-contract-proposal.md)。本轮已完成第 1 步并提交，通过第 2 步源码核对和方案准备；尚未得到角色、项目绑定和视图的正式确认，不冒充完成后续执行器/真实库验证。
+
+## 2026-10-28：继续同步 B PR #5
+
+从 origin/main 合入已合并的 `177dddc`，无文本冲突，保留 D 的实现。Python 3.12.10 默认后端 **374 passed / 37 skipped / 0 failed**，前端 typecheck/build、Ruff 与 OpenAPI/C/D 示例检查通过；报告为 `.runtime/d-b5-sync-tests.xml`。保留既有 Starlette/httpx 与 Vite 大包提示，未运行浏览器 E2E。
+
+B 的安全证据报告范围仍为隔离 Mock 应用，D 的真实 SQL 继续 not_executed。用户已要求依据 A 的实现落实第二步，后续将落地双视图、PostgreSQL/psycopg 参数及隔离验证，不把 A 尚未给出的正式部署审批写成已获批准。

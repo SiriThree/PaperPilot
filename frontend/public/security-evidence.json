@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "scope": "mock_application",
+  "environment": "isolated Mock / pytest",
+  "generated_at": "2026-10-28T01:52:30.931095+00:00",
+  "commit": "12d5a6df578cd8ec42f9051b8c9124c55eff89e3",
+  "worktree_dirty": true,
+  "code_fingerprint": "e5f72976faf40d61efaa5bf14cebad632625bbd00442115c5334ddd5d0514935",
+  "groups": [
+    {
+      "id": "anonymous",
+      "label": "匿名资源访问",
+      "status": "passed",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "selectors": [
+        "backend/tests/test_api.py::test_unauthenticated_and_request_id"
+      ]
+    },
+    {
+      "id": "project_scope",
+      "label": "跨项目与成员授权",
+      "status": "passed",
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0,
+      "selectors": [
+        "backend/tests/test_api.py::test_project_id_substitution_denied",
+        "backend/tests/test_api.py::test_resource_id_substitution_denied",
+        "backend/tests/test_api.py::test_report_cross_project_id_denied",
+        "backend/tests/test_api.py::test_member_revocation_immediate",
+        "backend/tests/test_task_recovery.py::test_task_recovery_denies_anonymous_outsider_and_cross_project"
+      ]
+    },
+    {
+      "id": "gateway_boundary",
+      "label": "网关故障与审计边界",
+      "status": "passed",
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "selectors": [
+        "backend/tests/test_api.py::test_gateway_down_has_no_fallback",
+        "backend/tests/test_api.py::test_critical_audit_failure_prevents_gateway",
+        "backend/tests/test_business_integration.py::test_registered_gateway_failure_never_uses_fallback_or_returns_unconfirmed_rows"
+      ]
+    }
+  ],
+  "not_verified": [
+    "真实 SQL AST / 受限执行：待 D 验收",
+    "真实数据库隔离 / 持久化恢复：待 A 验收"
+  ]
+}

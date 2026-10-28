@@ -4,6 +4,7 @@ import 'element-plus/dist/index.css'
 import './style.css'
 import './home-shell.css'
 import './business-workspace.css'
+import './research-security.css'
 import App from './App.vue'
 import { router } from './router'
 
