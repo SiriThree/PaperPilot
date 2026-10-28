@@ -63,6 +63,10 @@ ATTACKS = [
     "SELECT paper_id, title FROM security_paper_statistics WHERE has_evidence = TRUE",
     "SELECT paper_id, title FROM security_paper_statistics WHERE has_evidence = FALSE AND project_id = 'x'",
 ]
+ATTACKS = [
+    candidate.replace("security_paper_statistics", "paperpilot_security.paper_statistics")
+    for candidate in ATTACKS
+]
 
 
 @pytest.fixture
@@ -91,12 +95,15 @@ def test_allowed_ast_variants_are_rebuilt_with_project_parameter(sql, variant):
     plan = prepare_query(candidate, project_id)
     assert plan.parameters == {"project_id": str(project_id)}
     assert str(project_id) not in plan.sql
-    tree = sqlglot.parse_one(plan.sql)
-    assert [table.name for table in tree.find_all(exp.Table)] == ["security_paper_statistics"]
+    assert "%(project_id)s" in plan.sql and ":project_id" not in plan.sql
+    tree = sqlglot.parse_one(plan.sql, read="postgres")
+    tables = list(tree.find_all(exp.Table))
+    expected = "paper_topics" if "COUNT(DISTINCT" in sql else "paper_statistics"
+    assert [(table.db, table.name) for table in tables] == [("paperpilot_security", expected)]
     assert len(list(tree.find_all(exp.Placeholder))) == 1
     assert tree.args["limit"].expression.this == "100"
     condition = next(eq for eq in tree.find_all(exp.EQ) if eq.this.name == "project_id")
-    assert isinstance(condition.expression, exp.Placeholder) and condition.expression.this == "project_id"
+    assert isinstance(condition.expression, exp.Placeholder) and condition.expression.name == "project_id"
     if "has_evidence" in sql:
         assert isinstance(tree.args["where"].this, exp.And)
 
@@ -125,6 +132,26 @@ def test_binding_requires_uuid_and_is_independent_per_request():
     assert first.sql == second.sql
     assert first.parameters == {"project_id": str(left)}
     assert second.parameters == {"project_id": str(right)}
+
+
+@pytest.mark.parametrize(
+    "candidate",
+    [
+        "SELECT year, COUNT(*) AS count FROM security_paper_statistics GROUP BY year",
+        SQL_BY_QUESTION["按研究主题统计论文数量"].replace("COUNT(DISTINCT paper_id)", "COUNT(*)"),
+        SQL_BY_QUESTION["按年份统计论文数量"].replace("paper_statistics", "paper_topics"),
+        SQL_BY_QUESTION["按年份统计论文数量"].replace("paperpilot_security", "public"),
+    ],
+)
+def test_postgres_contract_rejects_old_view_and_wrong_counting_grain(candidate):
+    with pytest.raises(SQLPolicyRejected):
+        prepare_query(candidate, uuid4())
+
+
+def test_statistics_migration_is_available_as_package_resource():
+    from importlib.resources import files
+
+    assert files("app.security").joinpath("migrations/001_statistics_views.sql").is_file()
 
 
 def test_unsupported_parser_commands_never_fall_back_or_log_sql(caplog):

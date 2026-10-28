@@ -1,6 +1,6 @@
 # 成员 D 任务 3：自然语言统计网关的 AST 校验
 
-2026-10-28 团队 PR 复核后的正式模型适配、审计和执行器待办见[成员 D 当前进度](member-d-progress.md)。A 已提交 PostgreSQL DataPort 与 outbox；下文视图仍为草案，尚未完成多主题计数及真实执行适配。
+2026-10-28 已依据 A 的正式模型完成第二步的双视图、PostgreSQL/psycopg 参数与独立项目登录适配，见[接入约定与复现](ad-security-contract-proposal.md)。审计和执行器仍待后续实现，应用真实 SQL 继续关闭；进度见[成员 D 当前进度](member-d-progress.md)。
 
 本阶段交付自然语言路由、D 私有候选生成入口、严格 SQL AST 允许清单、可信项目参数绑定和公开结果状态。复用任务 1/2 的 SecurityPort、授权与注册；不修改 AIPort、DataPort、HTTP Schema 或前端。受限数据库执行器属于下一项任务，本阶段不执行数据库查询。
 
@@ -14,21 +14,21 @@
 
 | 自然语言问题 | 唯一允许的内部查询形状 |
 |---|---|
-| 按年份统计论文数量 | SELECT year, COUNT(*) AS count FROM security_paper_statistics GROUP BY year |
-| 按研究主题统计论文数量 | SELECT topic, COUNT(*) AS count FROM security_paper_statistics GROUP BY topic |
-| 查询尚未完成证据提取的论文 | SELECT paper_id, title FROM security_paper_statistics WHERE has_evidence = FALSE |
+| 按年份统计论文数量 | SELECT year, COUNT(*) AS count FROM paperpilot_security.paper_statistics GROUP BY year ORDER BY year |
+| 按研究主题统计论文数量 | SELECT topic, COUNT(DISTINCT paper_id) AS count FROM paperpilot_security.paper_topics GROUP BY topic ORDER BY topic |
+| 查询尚未完成证据提取的论文 | SELECT paper_id, title FROM paperpilot_security.paper_statistics WHERE has_evidence = FALSE ORDER BY paper_id |
 
 `SecurityAdapter(data, candidate_generator=...)` 可由可信组合入口注入异步生成函数，签名为 `(Context, str) -> Awaitable[str | None]`。这只是 D 私有配置边界，没有新增 HTTP SQL API，也不假定 C 已实现 NL2SQL。所有生成器输出都重新经过相同策略；None 表示问题不支持，异常映射为固定脱敏错误。
 
 ## SQL 允许清单与绑定规则
 
-采用 SQLGlot 30.24.0 的词法与 AST 解析（[官方文档](https://sqlglot.com/sqlglot.html)），同时在 pyproject 和锁文件精确固定版本。默认使用 SQLGlot 的中立语法；正式 SQL 方言仍待 A/D 确定，当前生成的文本不能直接当作某种驱动已验证的可执行语句。
+采用 SQLGlot 30.24.0 的词法与 AST 解析（[官方文档](https://sqlglot.com/sqlglot.html)），同时在 pyproject 和锁文件精确固定版本。现使用 PostgreSQL 方言生成 psycopg 命名参数查询计划，已通过 A 固定版本真实迁移的对照测试；执行器不会随此变更自动启用。
 
 1. 候选必须是字符串，长度 1～4096，最多 128 token；解析最多 128 AST 节点。
 2. 必须为单条 SELECT；允许单个结尾分号。拒绝注释、多语句、命令回退、写入、CTE、JOIN、子查询、UNION、锁、任意函数等所有未批准结构。
-3. 仅允许上表三棵完整 AST。表、列、别名、聚合和条件都必须匹配；COUNT(*) 是唯一聚合，普通 SELECT * 不允许。不扩展匹配其它“看起来只读”的查询。
+3. 仅允许上表三棵完整 AST。视图、列、别名、聚合、条件和排序都必须匹配；允许按年份 COUNT(*) 与按主题 COUNT(DISTINCT paper_id)，普通 SELECT * 不允许。不扩展匹配其它“看起来只读”的查询。
 4. 比较 AST 序列化中的完整结构，只忽略源码位置元数据；不依赖 SQLGlot 基于哈希的表达式相等判断，也不通过 SQL 字符串黑名单判定安全。
-5. 通过后从可信模板重建查询，再以 AST 增加 `project_id = :project_id` 和 `LIMIT 100`。项目值只取自服务端 Context，以独立参数字典传递，不拼进 SQL。已有 `has_evidence = FALSE` 与项目条件用 AND 连接。
+5. 通过后从可信模板重建查询，再以 AST 增加项目条件和 LIMIT 100，按 PostgreSQL 方言输出 `project_id = %(project_id)s`。项目值只取自服务端 Context，以独立参数字典传递，不拼进 SQL。已有 has_evidence = FALSE 与项目条件用 AND 连接。
 6. 解析器拒绝不支持语法，不走默认的 Command 回退，也不记录候选文本。解析与生成器错误不会向 HTTP 响应输出 SQL、视图名、连接详情或内部异常。
 
 `QueryPlan` 只存在于 D 模块内；本阶段校验后不保存、不返回该计划，不提供外部执行入口。后续受限执行器应消费计划中的 SQL 与参数，不能重新执行原候选字符串。
@@ -44,14 +44,14 @@
 | 生成器/策略内部故障、权限查询不可用 | 无业务结果，HTTP 503 | GATEWAY_UNAVAILABLE，脱敏且无降级 |
 | 非成员或生成期间被撤权 | 无业务结果，HTTP 404 | RESOURCE_NOT_FOUND |
 
-策略标识为 `statistics-ast-v1`，结果沿用 request_id，明确 `mock=false`；这只说明由 D 适配器生成，A/C 与开发身份仍可能为 Mock。只有 executed 才能携带结果，此阶段所有响应均无 columns/rows 数据。B 原有 requested/finished 业务审计继续保留；D 的执行级关键审计尚待后续接入。
+当前策略标识为 `postgres-statistics-v2`（初版为 statistics-ast-v1），结果沿用 request_id，明确 `mock=false`；这只说明由 D 适配器生成，A/C 与开发身份仍可能为 Mock。只有 executed 才能携带结果，此阶段所有响应均无 columns/rows 数据。B 原有 requested/finished 业务审计继续保留；D 的执行级关键审计尚待后续接入。
 
 ## 与 A/D 的后续接入要求
 
-`security_paper_statistics` 是本阶段用于校验的逻辑只读视图契约草案，尚未创建，也不代表团队已同意数据库、表模型或 SQL 方言。需要 A/D 确认：
+初版单一 security_paper_statistics 草案已被双视图替代：D 的显式 DDL 位于 `backend/app/security/migrations/001_statistics_views.sql`，在 A 的 `0b2953c` 固定迁移上验证，但未安装到业务库。实施及权限边界见[现行约定](ad-security-contract-proposal.md)。
 
-- 视图按项目提供 project_id、paper_id、title、year、topic、has_evidence；只包含当前有效论文，has_evidence 表示是否已有证据记录，不代表提取质量。主题、多主题计数及空值语义需 A/C/D 对齐。
-- 实际表/视图名称、暴露字段、驱动参数风格和 SQL 方言确定后，更新三条模板并重新验证。没有兼容视图时不得自动转查业务表。
+- 论文视图每个有效导入身份一行，主题视图每个论文/主题关联一行；按主题 DISTINCT paper_id 防重复。排除已移出论文；保留年份空值组；证据按同项目同论文 evidence 结果存在性判断，不代表提取质量。
+- 已验证 PostgreSQL/psycopg 参数和双视图名称。正式部署时仍需核对视图所有者、角色生命周期与凭据分发；没有兼容视图时不得自动转查业务表。
 - 受限只读数据库身份、适用的 RLS、不可绕过的项目隔离、连接池上下文复位，以及数据库端 3 秒超时、100 行和响应体限制。AST 的 LIMIT 不是数据库权限或资源限制验收。
 - 执行前/后关键审计与失败关闭、事务/outbox 和资源清理；上述门槛落实之前，维持 not_executed。
 
@@ -103,3 +103,7 @@ AST 测试包含 44 条拒绝样例、21 条合法语法变体，以及跨请求
 - OpenAPI、C/D Mock 示例一致性、后端及脚本 Ruff 静态检查、64 个文件格式检查、依赖一致性和 git diff --check 全部通过。
 - 保留 1 条已有 Starlette/httpx TestClient 弃用提示，无测试失败；真实数据库、前端和正式 SQL 攻防本轮未运行。
 - JUnit 报告、运行时及虚拟环境均位于 Git 忽略的 `.runtime`，可使用上述解释器路径继续复验。本次未提交或推送。
+
+## 2026-10-28：正式模型与 PostgreSQL 第二步适配
+
+已同步 B PR #5（main@177dddc），新增双视图 DDL、PostgreSQL 参数绑定及 A/D 隔离验证；原 Mock 示例与公开契约不变。最新实测与复现方式见[接入约定](ad-security-contract-proposal.md)。上面的 2026-10-26/27 数字均保留为历史记录，不与本轮测试累加。

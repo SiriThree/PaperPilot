@@ -1,0 +1,4 @@
+# Optional PostgreSQL verification driver, aligned with A's requirements-day0.lock.
+psycopg==3.3.6
+psycopg-binary==3.3.6
+tzdata==2026.5

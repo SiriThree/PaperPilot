@@ -6,7 +6,7 @@
 
 | 成员 / PR | 本次查看的版本与状态 | 对 D 的实际影响 |
 |---|---|---|
-| [A / #1](https://github.com/SiriThree/PaperPilot/pull/1) | 执行前复核为 `member-a@0b2953c`，Open / Draft | 已提供 PostgreSQL 16、psycopg3、24 表迁移、26 方法 DataPort、DataBinding、隔离库 provider 和 outbox 投递器；最新另完成性能基线及备份恢复记录。移除“等待 A 实现数据层/provider/outbox”的旧前置条件；正式受限角色、统计视图、RLS/可信项目上下文和 outbox 保留/死信仍待 A/D 完成。 |
+| [A / #1](https://github.com/SiriThree/PaperPilot/pull/1) | 执行前复核为 `member-a@0b2953c`，Open / Draft | 已提供 PostgreSQL 16、psycopg3、24 表迁移、26 方法 DataPort、DataBinding、隔离库 provider 和 outbox 投递器；另有性能/备份恢复记录。D 已基于此验证双视图和项目登录边界；正式角色生命周期、业务库部署及 outbox 保留/死信仍待联合完成。 |
 | [B / #3](https://github.com/SiriThree/PaperPilot/pull/3) | 已合并到 `main@4770732`；本轮已同步 D 分支并回归 | 业务反馈、来源校验和查询/审计页面已更新，页面明确区分 allowed 与 executed；D 无需另做前端。 |
 | [B / #5](https://github.com/SiriThree/PaperPilot/pull/5) | 已合并到 `main@177dddc`；本轮已同步 D 分支并回归 | 新增研究流程衔接、Mock 安全证据展示与报告测试；不代表真实 SQL/数据库隔离已验收。 |
 | [C / #4](https://github.com/SiriThree/PaperPilot/pull/4) | `feat/member-c-ai@1f43093`，Open / 非 Draft，未合并 | 已提供五方法真实 AI、PDF reader、检索和受控生成；`app.ai.bootstrap.create_app` 接受 `data_binding` 与 `security_factory`。可用于最终组合，当前没有 NL2SQL 方法，D 的三条固定统计不以 C 的模型或向量索引为前置。 |
@@ -21,30 +21,30 @@ A 的 41 项真实库共享测试、9 项业务联调及 5 项 outbox 测试，C
 | 原任务 | 当前状态 | 调整后的剩余内容 |
 |---|---|---|
 | 1．SecurityPort 与构造入口 | 已完成 | 保留接口与显式工厂；联合入口另在任务 9 验证。 |
-| 2．应用层授权策略 | 已完成 | 接 A 的正式 DataPort 回归；数据库受限身份/RLS 列入任务 4/8，不以应用层通过代替数据库证明。 |
-| 3．自然语言统计网关 | 校验阶段已完成 | 新增正式 PostgreSQL/psycopg3 与统计视图适配待办，特别是多主题计数；现有中立 AST 规则保留，继续 not_executed。 |
-| 4．受限数据库执行器 | 未实现；可开始 A/D 对齐 | 使用独立最小权限身份和受控视图；落实项目隔离、参数绑定、连接池上下文复位、3 秒超时、100 行及响应体限制。A 已有业务连接池不表示 D 可直接用其默认 postgres 身份执行候选查询。 |
+| 2．应用层授权策略 | 已完成，已接 A 回归 | 已验证 A 的 owner/member、移除成员后的即时拒绝；数据库隔离另有独立验证，不以应用授权代替数据库权限。 |
+| 3．自然语言统计网关 | 校验及正式模板适配已完成 | 三棵 PostgreSQL AST、psycopg 命名参数和双视图已在 A 的真实迁移上对照验证；多主题不会放大年份计数，应用仍 not_executed。 |
+| 4．受限数据库执行器 | 视图及项目登录边界已验证；执行器未实现 | 已有独立登录绑定、双视图和直接绕过/撤销验证；仍需可信角色配置、只读事务、连接状态清理、3 秒超时、100 行及响应体限制。不能使用 A 的默认 postgres 身份执行候选查询。 |
 | 5．执行结果与异常映射 | 部分完成 | 现有拒绝、未执行与网关错误已覆盖；真实成功、数据库故障、超时/取消、结果类型及限量处理随任务 4 实现和验证。 |
 | 6．关键安全审计 | 未实现；优先于真实执行启用 | 复用 A 的 append_audit，建立 D 执行前/后的关键事件与失败关闭；A 的 outbox 已实现，不再重复建设投递器，但保留/死信、身份与防篡改权限仍需共同确认。 |
 | 7．隔离 SecurityHarness provider | 未实现；A 的基础设施已可参考 | 复用 A 的一次性数据库及正式迁移，构建 D 自己的正常/拒绝/失败/不可达 fixture；测试库管理员连接只做初始化，不能冒充受限执行身份。 |
-| 8．真实安全测试 | 待真实执行链路 | 保留现有 44 条拒绝与 21 条合法语法单元样例；在真实受限身份下另跑至少 40 攻击 + 20 正常用例及绕过、撤权、审计故障、资源限制。 |
+| 8．真实安全测试 | 已有视图/参数/权限验证；完整攻防待执行链路 | 新增 22 项一次性 PostgreSQL 契约测试；保留现有 AST 样例。仍需在真实执行器下另跑至少 40 攻击 + 20 正常用例及审计故障、资源限制，不能用本组数量代替。 |
 | 9．团队交付与联调 | 文档已交付，联合运行待完成 | 先 A+D、C=mock，再组合 C 的真实实现；B 已提供页面状态，无需 D 改前端；正式认证仍需 A/B/D。 |
 
 ## 下一步顺序与完成门槛
 
 1. **同步 B 的已合并基线并复验：已完成。** 本轮从 origin/main 合入 `4770732`，无文本冲突；Python 3.12 默认后端 371 passed / 37 skipped，前端类型及构建、公开契约和静态检查通过。A/C/D 最终合入时仍须同时保留 D 的 sqlglot、A 的数据层依赖及 C 的 pypdf/可选 AI 配置，不以覆盖整个 pyproject/锁文件处理差异。
-2. **冻结 A/D 接入约定和任务 3 的正式模板：已形成待确认草案。** 详见 [A/D 接入草案](ad-security-contract-proposal.md)，包含双视图行粒度、psycopg 参数、角色/项目隔离、审计和资源边界。最新 A PR 及其评论未提供双方确认记录；需要 A/团队确认，或用户授权先在一次性数据库验证草案，不能将该步骤标为已冻结。确认前不把当前 `:project_id` 模板原样送给驱动。
+2. **依据 A 实现接入约定和任务 3 的正式模板：D 侧已完成。** 用户已明确要求实施，详见 [A/D 接入约定](ad-security-contract-proposal.md)。双视图、PostgreSQL/psycopg 参数、独立项目登录及撤销边界已在 A 固定版本真实迁移上验证；没有 A 的人工评论不再阻塞独立实现。正式业务库安装与角色生命周期仍在后续联合部署范围，未启用应用执行。
 3. **先完成任务 6 的审计失败关闭。** 可先用隔离 DataPort/可控依赖验证；A 代码集成后再验证真实持久化。执行前必须确认关键事件已写入；执行后审计无法确认则不返回结果。异步 outbox 和 B 的 requested/finished 都不能替代这一门槛。
 4. **一起实现任务 4/5，并配套任务 7。** 先保持真实执行默认关闭，在隔离库用受限身份接通成功、失败、超时/取消、结果过滤及资源清理；每项都有对应测试再形成可评审提交。
 5. **完成任务 8，再进行任务 9 联调。** 数据库权限、直接绕过网关、跨项目、审计和资源限制实测通过后才考虑启用执行。C 的真实模型/本地权重和 A/C 持久化向量索引不作为前三种统计的必需条件。
 
-## 统计语义需要先解决的具体差异
+## 统计语义与本轮处理
 
 - A 的 `papers.metadata_id` 是文献元数据身份，公开 paper_id 来自 `project_papers.paper_id`；统计必须通过项目内关系连接，排除 `project_papers.removed_at IS NOT NULL`。
-- A 用 `topics + paper_topics` 表达多对多主题，现有按主题统计为每主题 `COUNT(DISTINCT pp.paper_id)`。D 当前草案把 year/topic/has_evidence 放在同一逻辑视图，若按主题展开会使按年份 COUNT(*) 和未提取列表重复。应先与 A 确定独立的论文/主题视图或等价防重复方案，再调整 AST 允许清单；本轮未擅自选定新视图或放宽 SQL 范围。
+- A 用 `topics + paper_topics` 表达多对多主题，按主题统计为每主题 `COUNT(DISTINCT pp.paper_id)`。D 已拆分独立论文/主题视图，并同步三棵固定 AST；多主题不再导致年份 COUNT(*) 或未提取列表重复。旧的单视图模板被拒绝，没有开放任意 SQL 范围。
 - A 当前 DataPort 没有主题写入方法，C 的 ProcessResult 也不提交主题标签。需明确主题数据来源；尚无主题时允许真实空结果，不能填入 Mock 主题来伪装真实统计。
 - A 的未提取统计用同项目、同论文 `task_results.kind='evidence'` 的存在性判断。D 的 has_evidence 应对齐此语义；C 返回不足且已保存证据记录，不等于“尚未提取”，也不代表研究结论得到验证。
-- 正式迁移已经有 `audit_events` 和 `outbox_events`，没有创建 D 草案视图、正式 RLS 策略或受限角色。表的不可变触发器及 day0 RLS 样例不构成正式最小权限/防篡改验收；SQL 读取身份和审计写入权限应分离。
+- A 正式迁移已有 `audit_events` 和 `outbox_events`，D 在独立 SQL 资源中新增双视图和受保护登录绑定，不修改 A 的原迁移。实际项目隔离由 security_barrier 视图及 SESSION_USER 绑定实施，不声称已改造 A 底表原生 RLS。SQL 读取身份和审计写入权限仍须分离。
 
 ## 进度复核时的范围与验证口径（历史）
 
@@ -70,4 +70,14 @@ D 的 Python 3.12.10 基线验证仍为 **344 passed / 37 skipped / 0 failed**�
 
 从 origin/main 合入已合并的 `177dddc`，无文本冲突，保留 D 的实现。Python 3.12.10 默认后端 **374 passed / 37 skipped / 0 failed**，前端 typecheck/build、Ruff 与 OpenAPI/C/D 示例检查通过；报告为 `.runtime/d-b5-sync-tests.xml`。保留既有 Starlette/httpx 与 Vite 大包提示，未运行浏览器 E2E。
 
-B 的安全证据报告范围仍为隔离 Mock 应用，D 的真实 SQL 继续 not_executed。用户已要求依据 A 的实现落实第二步，后续将落地双视图、PostgreSQL/psycopg 参数及隔离验证，不把 A 尚未给出的正式部署审批写成已获批准。
+B 的安全证据报告范围仍为隔离 Mock 应用，D 的应用 SQL 继续 not_executed。第二步已按用户要求完成，见下节；没有把 A 尚未给出的正式部署审批写成已获批准。
+
+## 2026-10-28：第二步已完成
+
+已依据 A 的 `0b2953c` 正式迁移实现独立双视图 SQL 资源，将三条模板切换为 PostgreSQL 和 psycopg 命名参数。多主题、年份空值、移出论文和证据存在性的结果均与 A 的 DataPort 对照一致。两个 security_barrier 视图按受保护的 SESSION_USER 项目绑定过滤；最小权限登录不能直读底表/审计/outbox、写入或切换身份，伪造项目参数/GUC 不越界，撤销绑定对已有连接也生效。A 的真实成员授权和移除回归通过。
+
+Docker Desktop 已启动；验证仅创建并自动删除独立临时 PostgreSQL 16 容器，未连接业务库。A 的固定参考位于 Git 忽略的 `.runtime/member-a-step2-reference`，未合并 A 分支；新增测试依赖单列在 `requirements-security-test.lock`。数据库登录凭据仅在测试内存中生成，不写入仓库或 env 文件。
+
+Python 3.12.10 全量后端 **401 passed / 37 skipped / 0 failed**，含 22 项真实 PostgreSQL 契约测试。37 项跳过仍为历史 SQLite 31 项及默认 Mock 数据层真实库门槛 6 项，未计作通过。报告 `.runtime/d-step2-combined-results.xml` 记录 PostgreSQL 版本、A 提交和镜像摘要。公开契约及 C/D 示例检查、Ruff 和依赖检查通过；前端沿用 B #5 同步时已通过的 typecheck/build，本步无前端改动。
+
+下一步为任务 6：执行前后关键审计及失败关闭，再完成执行器/结果映射和共享 SecurityHarness。本步真实 SQL 只在隔离测试里执行；应用仍返回 allowed/not_executed，没有启用执行器或宣称完成原生 RLS、40+20 攻防及正式部署验收。复现命令和权限边界见 [A/D 接入约定](ad-security-contract-proposal.md)。

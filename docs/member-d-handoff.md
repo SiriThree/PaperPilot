@@ -1,12 +1,12 @@
 # 成员 D 开工交接
 
-2026-10-28 已根据团队 PR 更新[当前进度与下一阶段顺序](member-d-progress.md)：A 已提交正式 PostgreSQL DataPort 与 outbox，B 的 PR #3 已合并，C 已提交真实 AI 与可组合入口。D 接下来重点是正式统计视图/权限约定、关键审计和受限执行器，不再等待 A 从头实现数据层；联合安全能力尚未验收。
+2026-10-28 已根据团队 PR 更新[当前进度与下一阶段顺序](member-d-progress.md)：A 已提交正式 PostgreSQL DataPort 与 outbox，B 的 PR #3/#5 已合入 D，C 已提交真实 AI 与可组合入口。D 已依据 A 实现并验证双视图和独立项目登录，接下来完成关键审计和受限执行器；联合安全能力尚未验收。
 
 任务 1 已提供非 Mock `SecurityAdapter`、`build_security` 和 `app.security.main:create_app` 开发入口，详见 [任务 1 接入说明](member-d-task1.md)。尚无真实 SQL 执行能力；下文真实执行、审计与数据库验收要求仍有效。
 
 任务 2 已补齐应用层项目授权：按可信 Context 重新查询当前角色、核对 B 的角色快照、未知动作默认拒绝、撤权与查询故障拒绝授权。权限矩阵、验证及数据库边界见 [授权策略说明](member-d-authorization.md)。
 
-任务 3 已接通三条自然语言统计的候选生成、完整 AST 允许清单与项目参数绑定，详见 [网关校验说明](member-d-gateway.md)。校验阶段已完成，策略通过返回 allowed/not_executed；与 A 的 PostgreSQL/psycopg3、多对多主题及正式受控视图适配仍列为后续待办，不能计为已完成真实执行。
+任务 3 已接通三条自然语言统计的候选生成、完整 AST 允许清单与项目参数绑定；2026-10-28 第二步已依据 A 的实现落地双视图和 PostgreSQL/psycopg3 适配，并在独立真实库对照验证，见[现行接入约定](ad-security-contract-proposal.md)和[网关校验说明](member-d-gateway.md)。策略通过仍返回 allowed/not_executed，关键审计和受限执行器尚未接入，不能计为应用真实执行完成。
 
 ## 1. 职责范围
 
@@ -28,7 +28,7 @@ async def execute(ctx: Context, question: str) -> SecureQueryResult: ...
 
 Context 为 UUID 类型的 user_id/project_id/request_id。B 从开发会话查询 A 的身份/角色，先拒绝非成员，再调用 authorize。现有 action 为 project.read、members.manage、paper.remove、audit.read，role 为 owner/member；后三种要求负责人。role 是可信服务端查询的值，不是前端声明。D 返回 None 表示放行，拒绝用安全 AppError；执行器仍必须把可信项目绑定到数据库访问，不能只依赖前端或角色字符串。
 
-execute 只接收自然语言问题，不接收客户端凭据、Context JSON 或任意 SQL。D 独立拥有 SQL 候选处理、AST/允许清单/项目条件、受限数据库身份、执行资源限制和关键审计；按 A 已提交的 PostgreSQL 16/psycopg3 实现对齐，正式受限身份和统计视图仍需 A/D 确认。DataPort.controlled_statistics 只为三个固定意图服务，不是任意 SQL 执行器。真实执行连接/视图在 D/A 模块内注入，不能扩成 B 的通用 SQL API。
+execute 只接收自然语言问题，不接收客户端凭据、Context JSON 或任意 SQL。D 独立拥有 SQL 候选处理、AST/允许清单/项目条件、受限数据库身份、执行资源限制和关键审计；已对齐 A 的 PostgreSQL 16/psycopg3，双视图及项目登录绑定已通过隔离库验证，正式角色生命周期与业务库部署仍需 A/D 联合落实。DataPort.controlled_statistics 只为三个固定意图服务，不是任意 SQL 执行器。真实执行连接/视图在 D/A 模块内注入，不能扩成 B 的通用 SQL API。
 
 ## 4. 正常请求/响应示例
 

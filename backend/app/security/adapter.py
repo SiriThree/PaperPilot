@@ -11,7 +11,7 @@ from app.security.sql_policy import CandidateGenerator, SQLPolicyRejected, gener
 
 
 class SecurityAdapter:
-    policy_id = "statistics-ast-v1"
+    policy_id = "postgres-statistics-v2"
 
     def __init__(self, data: DataPort, *, candidate_generator: CandidateGenerator = generate_candidate):
         if not callable(candidate_generator):
