@@ -41,20 +41,30 @@ def pg(record_testsuite_property):
 def c_reference():
     import app
 
-    source = Path(os.environ["PAPERPILOT_SECURITY_TEST_C_SOURCE"]).resolve()
+    current = os.getenv("PAPERPILOT_SECURITY_CURRENT_SOURCE") == "1"
+    source = (
+        Path(__file__).resolve().parents[2]
+        if current
+        else Path(os.environ["PAPERPILOT_SECURITY_TEST_C_SOURCE"]).resolve()
+    )
     head = subprocess.run(
         ["git", "-C", str(source), "rev-parse", "HEAD"], check=True, capture_output=True, text=True
     ).stdout.strip()
-    assert head == C_COMMIT, "C reference must match the documented commit"
-    subprocess.run(
-        ["git", "-C", str(source), "diff", "--exit-code", "HEAD", "--", "backend/app/ai"], check=True
-    )
+    if not current:
+        assert head == C_COMMIT, "C reference must match the documented commit"
+        subprocess.run(
+            ["git", "-C", str(source), "diff", "--exit-code", "HEAD", "--", "backend/app/ai"], check=True
+        )
     old_paths = list(app.__path__)
     old_modules = {
         key: value for key, value in sys.modules.items() if key == "app.ai" or key.startswith("app.ai.")
     }
     old_ai = getattr(app, "ai", None)
-    app.__path__ = old_paths + [str(source / "backend/app")]
+    app.__path__ = [str(source / "backend/app"), *old_paths]
+    for key in old_modules:
+        del sys.modules[key]
+    if hasattr(app, "ai"):
+        delattr(app, "ai")
     try:
         yield
     finally:
@@ -176,7 +186,12 @@ def test_a_d_then_a_c_d_http_workflow(pg, tmp_path, c_mode, record_testsuite_pro
     from app.data.binding import compose_data_binding
     from app.data.settings import DataSettings
 
-    record_testsuite_property("security_c_reference", C_COMMIT if c_mode == "real" else "Mock")
+    record_testsuite_property(
+        "security_c_reference",
+        ("current_checkout" if os.getenv("PAPERPILOT_SECURITY_CURRENT_SOURCE") == "1" else C_COMMIT)
+        if c_mode == "real"
+        else "Mock",
+    )
     record_testsuite_property("security_model_transport", "local deterministic HTTP double; no live model")
     settings = Settings(
         environment="test",

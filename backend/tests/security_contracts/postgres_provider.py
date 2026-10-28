@@ -33,21 +33,28 @@ def postgres_workspace(record_testsuite_property=lambda *args: None):
     from psycopg.rows import dict_row
 
     root = Path(__file__).resolve().parents[3]
-    source = Path(os.environ["PAPERPILOT_SECURITY_TEST_A_SOURCE"]).resolve()
+    current = os.getenv("PAPERPILOT_SECURITY_CURRENT_SOURCE") == "1"
+    source = root if current else Path(os.environ["PAPERPILOT_SECURITY_TEST_A_SOURCE"]).resolve()
     head = subprocess.run(
         ["git", "-C", str(source), "rev-parse", "HEAD"], check=True, capture_output=True, text=True
     ).stdout.strip()
-    if head != A_COMMIT:
+    if not current and head != A_COMMIT:
         pytest.fail("A reference must match the documented commit")
-    subprocess.run(
-        ["git", "-C", str(source), "diff", "--exit-code", "HEAD", "--", "backend/app/data"], check=True
-    )
+    if not current:
+        subprocess.run(
+            ["git", "-C", str(source), "diff", "--exit-code", "HEAD", "--", "backend/app/data"], check=True
+        )
     old_paths = list(app.__path__)
     old_modules = {
         key: value for key, value in sys.modules.items() if key == "app.data" or key.startswith("app.data.")
     }
     old_data_module = getattr(app, "data", None)
-    app.__path__ = old_paths + [str(source / "backend/app")]
+    app.__path__ = [str(source / "backend/app"), *old_paths]
+    # A may now be installed in the merged checkout: do not accidentally test a cached other version.
+    for key in old_modules:
+        del sys.modules[key]
+    if hasattr(app, "data"):
+        delattr(app, "data")
     database = None
     container = None
     try:
@@ -99,7 +106,10 @@ def postgres_workspace(record_testsuite_property=lambda *args: None):
                 with psycopg.connect(**config.conninfo(), autocommit=True) as ready:
                     assert 160000 <= ready.info.server_version < 170000
                     record_testsuite_property("security_postgres_server_version", ready.info.server_version)
-                    record_testsuite_property("security_postgres_a_commit", A_COMMIT)
+                    record_testsuite_property("security_postgres_a_commit", head)
+                    record_testsuite_property(
+                        "security_source", "current_checkout" if current else "pinned_reference"
+                    )
                     record_testsuite_property("security_postgres_image", IMAGE)
                     break
             except psycopg.OperationalError:
