@@ -164,15 +164,19 @@ class ResearchService:
         ctx, task = job.context, job.task
         committed = False
         completing = False
+        index = None
         try:
             if self.adapters.data.role(ctx.user_id, ctx.project_id) is None:
                 raise AppError(404, "RESOURCE_NOT_FOUND", "资源不存在或不可访问")
             for pid in job.payload.get("paper_ids", []):
                 self.adapters.data.paper(ctx, pid)
             if task.kind == "process":
-                result = ProcessResult.model_validate(
-                    await self.adapters.ai.process(ctx, task.task_id, job.payload["file"])
-                )
+                indexed = getattr(self.adapters.ai, "process_indexed", None)
+                if callable(indexed) and callable(getattr(self.adapters.data, "complete_indexed_job", None)):
+                    raw, index = await indexed(ctx, task.task_id, job.payload["file"])
+                else:
+                    raw = await self.adapters.ai.process(ctx, task.task_id, job.payload["file"])
+                result = ProcessResult.model_validate(raw)
                 if (
                     result.paper_id != job.payload["file"].paper_id
                     or any(s.paper_id != result.paper_id for s in result.sources)
@@ -214,7 +218,10 @@ class ResearchService:
                         if field.status == "pending_verification" and (not field.text or not field.sources):
                             raise ValueError("evidence requires support")
             completing = True
-            self.adapters.data.complete_job(job, result)
+            if index is None:
+                self.adapters.data.complete_job(job, result)
+            else:
+                self.adapters.data.complete_indexed_job(job, result, index)
             committed = True
             self.audit(ctx, f"{task.kind}.completed", task.kind)
         except AppError as exc:

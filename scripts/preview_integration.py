@@ -83,6 +83,9 @@ def main():
         }
         configuration = directory / "security.json"
         configuration.write_text(json.dumps(document), encoding="utf-8")
+        # The preview's research project uses only its parsed PDF, not the provider's Mock index fixtures.
+        for seeded in pg.data.papers(pg.contexts[0]):
+            pg.data.remove_paper(pg.contexts[0], seeded.paper_id)
         paper_id = uuid4()
         pdf = pdf_bytes("controlled fixture, not research evidence")
         (uploads / f"{paper_id}.pdf").write_bytes(pdf)
@@ -114,6 +117,7 @@ def main():
             PAPERPILOT_AI_API_KEY="local-test-key",
             PAPERPILOT_AI_CHAT_MODEL="test-chat",
             PAPERPILOT_AI_EMBEDDING_MODEL="test-embedding",
+            PAPERPILOT_AI_EMBEDDING_REVISION="test-v1",
             PAPERPILOT_AI_EMBEDDING_DIMENSIONS="3",
             PAPERPILOT_AI_EMBEDDING_BACKEND="remote",
             PAPERPILOT_PROXY_TARGET=f"http://127.0.0.1:{api_port}",

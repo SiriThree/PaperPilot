@@ -5,6 +5,8 @@ Each call owns one transaction; external AI calls never run inside it.
 """
 
 import re
+import json
+import math
 from contextvars import ContextVar
 from datetime import UTC, datetime, timedelta
 from functools import wraps
@@ -186,17 +188,14 @@ class PostgresData:
         if row["result_payload"] is None:
             return mapping.task(row)
         view = self._result_view(row)
-        result = (
-            self._assemble_evidence(view) if row["kind"] == "evidence" else mapping.result_model(view)
-        )
+        result = self._assemble_evidence(view) if row["kind"] == "evidence" else mapping.result_model(view)
         return mapping.task(row, result=result, result_ref_value=mapping.result_ref(row["kind"], view))
 
     def _assemble_evidence(self, result_row):
         fields = {
             row["field_name"]: row
             for row in self._rows(
-                "SELECT field_name, text, status FROM evidence_fields"
-                " WHERE project_id=%s AND task_id=%s",
+                "SELECT field_name, text, status FROM evidence_fields WHERE project_id=%s AND task_id=%s",
                 (result_row["project_id"], result_row["task_id"]),
             )
         }
@@ -277,6 +276,7 @@ class PostgresData:
                 raise AppError(502, "INVALID_CITATION", "来源与授权片段不一致")
 
     def _job_record(self, job):
+        self._db.execute("SELECT task_id FROM tasks WHERE task_id=%s FOR UPDATE", (job.task.task_id,))
         row = self._task_full_row(job.task.task_id)
         if row is None:
             raise AppError(404, "RESOURCE_NOT_FOUND", "资源不存在或不可访问")
@@ -406,8 +406,7 @@ class PostgresData:
     def papers(self, ctx, year_from=None, year_to=None):
         self._scope(ctx)
         if any(
-            v is not None and (not isinstance(v, int) or not 1000 <= v <= 3000)
-            for v in (year_from, year_to)
+            v is not None and (not isinstance(v, int) or not 1000 <= v <= 3000) for v in (year_from, year_to)
         ) or (year_from is not None and year_to is not None and year_from > year_to):
             raise invalid()
         return [
@@ -503,8 +502,7 @@ class PostgresData:
         metadata_id = uuid4()
         try:
             self._db.execute(
-                "INSERT INTO papers(metadata_id, project_id, title, year, created_at)"
-                " VALUES(%s,%s,%s,%s,%s)",
+                "INSERT INTO papers(metadata_id, project_id, title, year, created_at) VALUES(%s,%s,%s,%s,%s)",
                 (metadata_id, ctx.project_id, title, year, timestamp),
             )
             self._db.execute(
@@ -630,8 +628,7 @@ class PostgresData:
             (row["task_id"],),
         )
         self._db.execute(
-            "UPDATE tasks SET status='processing', attempts=attempts+1, updated_at=now()"
-            " WHERE task_id=%s",
+            "UPDATE tasks SET status='processing', attempts=attempts+1, updated_at=now() WHERE task_id=%s",
             (row["task_id"],),
         )
         task_row = self._one("SELECT * FROM tasks WHERE task_id=%s", (row["task_id"],))
@@ -660,12 +657,41 @@ class PostgresData:
 
     @operation(write=True)
     def complete_job(self, job, result):
+        self._complete_job(job, result)
+
+    @operation(write=True)
+    def complete_indexed_job(self, job, result, index):
+        from app.indexing import ProcessIndex
+        from pydantic import ValidationError
+
+        try:
+            index = ProcessIndex.model_validate(
+                index.model_dump() if isinstance(index, ProcessIndex) else index
+            )
+        except ValidationError:
+            raise AppError(502, "ADAPTER_CONTRACT_ERROR", "索引维度或向量不符合契约") from None
+        if (
+            job.task.kind != "process"
+            or {c.chunk_id: c.content for c in index.chunks}
+            != {s.chunk_id: s.excerpt for s in result.sources}
+            or result.mock
+            or any(s.synthetic for s in result.sources)
+        ):
+            raise AppError(502, "ADAPTER_CONTRACT_ERROR", "索引与处理来源不一致")
+        self._complete_job(job, result, index)
+
+    def _complete_job(self, job, result, index=None):
         stored = self._job_record(job)
         self._scope(job.context)
         for pid in job.payload["paper_ids"]:
             self._paper(job.context, pid)
         result = normalize_result(job.task.kind, result)
         if stored.task.status == "succeeded" and fingerprint(stored.task.result) == fingerprint(result):
+            saved = self._one("SELECT fingerprint FROM process_indexes WHERE task_id=%s", (job.task.task_id,))
+            if (saved is not None) != (index is not None) or (
+                saved and saved["fingerprint"] != fingerprint(index)
+            ):
+                self._state_conflict()
             return
         if stored.task.status != "processing":
             self._state_conflict()
@@ -681,16 +707,31 @@ class PostgresData:
             for source in result.sources:
                 self._db.execute(
                     "INSERT INTO chunks(chunk_id, project_id, paper_id, page_number, excerpt,"
-                    " content, synthetic, created_at) VALUES(%s,%s,%s,%s,%s,NULL,%s,now())",
+                    " content, synthetic, created_at) VALUES(%s,%s,%s,%s,%s,%s,%s,now())"
+                    " ON CONFLICT (chunk_id) DO NOTHING",
                     (
                         source.chunk_id,
                         job.context.project_id,
                         result.paper_id,
                         source.page_number,
                         source.excerpt,
+                        source.excerpt if index is not None else None,
                         source.synthetic,
                     ),
                 )
+                saved = self._one("SELECT * FROM chunks WHERE chunk_id=%s", (source.chunk_id,))
+                if any(
+                    saved[key] != value
+                    for key, value in {
+                        "project_id": job.context.project_id,
+                        "paper_id": result.paper_id,
+                        "page_number": source.page_number,
+                        "excerpt": source.excerpt,
+                        "content": source.excerpt if index is not None else None,
+                        "synthetic": source.synthetic,
+                    }.items()
+                ):
+                    raise AppError(502, "INVALID_CITATION", "片段标识已用于不同来源")
         elif job.task.kind == "evidence":
             if result.paper_id != job.payload["paper_ids"][0]:
                 raise AppError(502, "ADAPTER_CONTRACT_ERROR", "证据论文与任务不一致")
@@ -708,6 +749,8 @@ class PostgresData:
             ):
                 raise AppError(502, "INVALID_CITATION", "回答缺少有效引用")
         self._commit_result(job, result)
+        if index is not None:
+            self._commit_index(job, index)
         self._outbox(
             "complete_job",
             ctx=job.context,
@@ -715,6 +758,87 @@ class PostgresData:
             resource_id=job.task.task_id,
             execution_status="succeeded",
         )
+
+    def _commit_index(self, job, index):
+        model = index.model
+        row = self._one(
+            "INSERT INTO embedding_models(model_id, project_id, provider, model_name, revision, dimensions, distance_metric)"
+            " VALUES(%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (project_id,provider,model_name,revision) DO NOTHING RETURNING model_id",
+            (
+                uuid4(),
+                job.context.project_id,
+                model.provider,
+                model.model_name,
+                model.revision,
+                model.dimensions,
+                model.distance_metric,
+            ),
+        )
+        saved = self._one(
+            "SELECT * FROM embedding_models WHERE project_id=%s AND provider=%s AND model_name=%s AND revision=%s",
+            (job.context.project_id, model.provider, model.model_name, model.revision),
+        )
+        if saved["dimensions"] != model.dimensions or saved["distance_metric"] != model.distance_metric:
+            raise AppError(409, "INDEX_MODEL_CONFLICT", "相同模型版本不能变更维度或距离算法")
+        model_id = row["model_id"] if row else saved["model_id"]
+        for chunk in index.chunks:
+            self._db.execute(
+                "INSERT INTO chunk_embeddings(chunk_id,model_id,project_id,dimensions,embedding)"
+                " VALUES(%s,%s,%s,%s,%s::vector) ON CONFLICT (chunk_id,model_id) DO NOTHING",
+                (chunk.chunk_id, model_id, job.context.project_id, model.dimensions, canonical(chunk.vector)),
+            )
+            saved_vector = json.loads(
+                self._one(
+                    "SELECT embedding::text AS value FROM chunk_embeddings WHERE chunk_id=%s AND model_id=%s",
+                    (chunk.chunk_id, model_id),
+                )["value"]
+            )
+            if any(
+                not math.isclose(a, b, rel_tol=1e-5, abs_tol=1e-7)
+                for a, b in zip(saved_vector, chunk.vector, strict=True)
+            ):
+                raise AppError(409, "INDEX_MODEL_CONFLICT", "同一模型版本的已有片段向量不一致")
+        self._db.execute(
+            "INSERT INTO process_indexes VALUES(%s,%s,%s,%s,%s)",
+            (job.task.task_id, job.context.project_id, model_id, model.dimensions, fingerprint(index)),
+        )
+        self._db.execute(
+            "UPDATE project_papers SET index_state='ready' WHERE project_id=%s AND paper_id=%s",
+            (job.context.project_id, job.payload["file"].paper_id),
+        )
+
+    @operation()
+    def indexed_vectors(self, ctx, model, sources):
+        from app.indexing import EmbeddingModel
+
+        model = EmbeddingModel.model_validate(model)
+        self._scope(ctx)
+        self._validate_sources(ctx, sources, [s.paper_id for s in sources])
+        vectors = []
+        for source in sources:
+            row = self._one(
+                "SELECT ce.embedding::text AS vector FROM project_papers pp"
+                " JOIN process_indexes pi ON pi.task_id=pp.active_process_task_id AND pi.project_id=pp.project_id"
+                " JOIN embedding_models m ON m.model_id=pi.model_id AND m.project_id=pi.project_id"
+                " JOIN chunk_embeddings ce ON ce.model_id=m.model_id AND ce.project_id=m.project_id"
+                " WHERE pp.project_id=%s AND pp.paper_id=%s AND pp.removed_at IS NULL AND pp.index_state='ready'"
+                " AND ce.chunk_id=%s AND m.provider=%s AND m.model_name=%s AND m.revision=%s"
+                " AND m.dimensions=%s AND m.distance_metric=%s",
+                (
+                    ctx.project_id,
+                    source.paper_id,
+                    source.chunk_id,
+                    model.provider,
+                    model.model_name,
+                    model.revision,
+                    model.dimensions,
+                    model.distance_metric,
+                ),
+            )
+            if row is None:
+                raise AppError(409, "INDEX_NOT_READY", "指定模型索引未就绪，请重新处理论文或使用关键词检索")
+            vectors.append(json.loads(row["vector"]))
+        return vectors
 
     def _commit_result(self, job, result):
         payload = canonical(result)
@@ -873,10 +997,13 @@ class PostgresData:
         timestamp = now()
         if data.report_id:
             # Lock the report row: two concurrent saves race on the same base version.
-            if self._one(
-                "SELECT 1 FROM reports WHERE report_id=%s AND project_id=%s FOR UPDATE",
-                (data.report_id, ctx.project_id),
-            ) is None:
+            if (
+                self._one(
+                    "SELECT 1 FROM reports WHERE report_id=%s AND project_id=%s FOR UPDATE",
+                    (data.report_id, ctx.project_id),
+                )
+                is None
+            ):
                 raise AppError(404, "RESOURCE_NOT_FOUND", "资源不存在或不可访问")
             latest = self._one(
                 "SELECT version_id, number FROM report_versions WHERE report_id=%s"
@@ -1071,7 +1198,8 @@ class PostgresData:
         total = self._one("SELECT count(*) AS total" + where, values)["total"]
         rows = self._rows(
             "SELECT event_id, timestamp, request_id, actor_id, project_id, action, resource_type,"
-            " decision, execution_status, policy_id, duration_ms, mock" + where
+            " decision, execution_status, policy_id, duration_ms, mock"
+            + where
             + " ORDER BY timestamp DESC, event_id DESC LIMIT %s OFFSET %s",
             (*values, limit, offset),
         )

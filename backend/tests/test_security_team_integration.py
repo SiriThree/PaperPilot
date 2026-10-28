@@ -215,6 +215,7 @@ def test_a_d_then_a_c_d_http_workflow(pg, tmp_path, c_mode, record_testsuite_pro
                     chat_model="test-chat",
                     embedding_model="test-embedding",
                     embedding_dimensions=3,
+                    embedding_revision="test-v1",
                 ),
                 data_binding=binding,
                 security_factory=factory,
@@ -234,7 +235,7 @@ def test_a_d_then_a_c_d_http_workflow(pg, tmp_path, c_mode, record_testsuite_pro
             upload = client.post(
                 base + "/papers",
                 files={"file": ("integration.pdf", pdf_bytes(c_mode), "application/pdf")},
-                data={"title": f"RAG {c_mode} integration", "year": "2026"},
+                data={"title": f"RAG {c_mode} integration", "year": "2026" if c_mode == "real" else "2025"},
             )
             process = done(client, base, upload)
             paper_id = upload.json()["paper"]["paper_id"]
@@ -271,7 +272,7 @@ def test_a_d_then_a_c_d_http_workflow(pg, tmp_path, c_mode, record_testsuite_pro
             evidence = done(client, base, client.post(base + f"/papers/{paper_id}/evidence"))
             assert evidence["mock"] is (c_mode == "mock")
             assert not any(row["paper_id"] == paper_id for row in query("查询尚未完成证据提取的论文")["rows"])
-            assert any(row["year"] == 2026 for row in query("按年份统计论文数量")["rows"])
+            assert any(row["year"] == (2026 if c_mode == "real" else 2025) for row in query("按年份统计论文数量")["rows"])
             query("按研究主题统计论文数量")
             question = {"question": "RAG", "paper_ids": [paper_id]}
             answer = done(client, base, client.post(base + "/answers", json=question))
@@ -291,7 +292,9 @@ def test_a_d_then_a_c_d_http_workflow(pg, tmp_path, c_mode, record_testsuite_pro
             if c_mode == "real":
                 assert "/v1/embeddings" in model.calls and "/v1/chat/completions" in model.calls
                 model.unavailable = True
-                unavailable = client.post(base + "/search", json={"query": "RAG", "mode": "hybrid"})
+                unavailable = client.post(
+                    base + "/search", json={"query": "RAG", "mode": "hybrid", "year_from": 2026}
+                )
                 assert unavailable.status_code == 503 and unavailable.json()["code"] == "AI_UNAVAILABLE"
                 query("按年份统计论文数量")
             else:

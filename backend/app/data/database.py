@@ -18,7 +18,7 @@ from psycopg.rows import dict_row
 from app.errors import AppError
 
 MIGRATIONS = Path(__file__).parent / "migrations"
-EXPECTED_VERSION = 1
+EXPECTED_VERSION = 2
 
 
 @dataclass(frozen=True)

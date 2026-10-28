@@ -109,6 +109,7 @@ def test_explicit_bootstrap_runs_a_d_and_a_c_d_and_closes_resources(pg, tmp_path
                 "PAPERPILOT_AI_API_KEY": "local-test-key",
                 "PAPERPILOT_AI_CHAT_MODEL": "test-chat",
                 "PAPERPILOT_AI_EMBEDDING_MODEL": "test-embedding",
+                "PAPERPILOT_AI_EMBEDDING_REVISION": "test-v1",
                 "PAPERPILOT_AI_EMBEDDING_DIMENSIONS": "3",
                 "PAPERPILOT_AI_EMBEDDING_BACKEND": "remote",
             }.items():
