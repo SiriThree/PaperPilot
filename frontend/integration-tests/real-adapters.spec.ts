@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 test('disposable PostgreSQL + real C/D: PDF sources, generation, versions, SQL decisions and audit', async ({ page }) => {
+  const reportTitle = `真实适配器联调-${Date.now()}`
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
   await page.goto('/')
@@ -23,13 +24,17 @@ test('disposable PostgreSQL + real C/D: PDF sources, generation, versions, SQL d
   await page.getByRole('button', { name: 'Close this dialog' }).click()
   await page.getByRole('button', { name: '生成草稿', exact: true }).click()
   await expect(page.getByLabel('报告正文')).toHaveValue(/文献研究草稿/)
+  await page.getByLabel('报告标题').fill(reportTitle)
   await page.getByRole('button', { name: '保存新版本' }).click()
   await expect(page.getByRole('button', { name: '版本 1', exact: true })).toBeVisible()
   await page.screenshot({ path: '../.runtime/browser-research.png', fullPage: true })
   await page.reload()
-  await page.getByRole('button', { name: /研究综述草稿 · v1/ }).click()
+  await page.getByRole('button', { name: `${reportTitle} · v1` }).click()
   await expect(page.getByLabel('报告正文')).toHaveValue(/文献研究草稿/)
   await page.getByRole('link', { name: '查询与审计', exact: true }).click()
+  const evidence = page.getByRole('region', { name: '安全验证证据' })
+  await expect(evidence).toContainText('隔离 PostgreSQL 测试通过')
+  await expect(evidence).toContainText('生产认证与正式业务库部署未验收')
   await page.getByLabel('统计问题').fill('按年份统计论文数量')
   await page.getByRole('button', { name: '提交查询', exact: true }).click()
   await expect(page.getByText('allowed / executed', { exact: true })).toBeVisible()

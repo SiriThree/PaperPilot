@@ -1,8 +1,8 @@
 # 成员 D 开工交接
 
-2026-10-28 已完成 D 的本地开发任务与固定参考验证，见[当前进度](member-d-progress.md)。A 正式 PostgreSQL DataPort、B 已合并基线、C RealAI/bootstrap 与 D 实际受限执行器已通过组合测试；C 模型端为本地可控 HTTP 替身。正式库/角色部署与生产认证仍未验收，见[验证记录及剩余部署事项](member-d-security-validation.md)。
+2026-10-28：A/B/C 与远程 D 的已合并基线已同步到本地，后续 D 执行器、独立身份、持久化索引、恢复及真实报告的开发与隔离验证已完成；见[当前进度](member-d-progress.md)和[合并集成记录](member-d-merged-integration.md)。模型端点为本地可控替身，正式业务库部署与生产认证仍未验收。
 
-按用户限定的前三项，现已补齐[独立审计身份/防篡改与角色生命周期](member-d-identities.md)、[严格配置和可直接运行启动入口](member-d-startup.md)。全量后端 645 passed / 37 skipped，真实共享 provider 另行 8 项通过；均为隔离验证。本轮没有浏览器验收、正式库操作、推送或远程 PR 修改。
+独立审计及 reader 生命周期、严格启动配置继续有效；新增[业务连接降权](business-login.md)、[版本化持久索引与明确重建](persistent-index.md)、[任务/outbox 有界恢复](runtime-recovery.md)。真实 A/C/D 浏览器流程及报告失败边界已通过 6 项，既有 Mock 阅读/证据流程 11 项通过。所有角色操作均在一次性数据库完成；未推送或修改远程 PR。最终后端计数及报告来源以当前进度和静态报告为准，下文接口示例仍保留 Mock 标识。
 
 任务 1 已提供非 Mock `SecurityAdapter`、`build_security` 和 `app.security.main:create_app` 开发入口，见[任务 1 历史接入说明](member-d-task1.md)。该阶段未启用 SQL；当前真实执行能力与可信配置见[执行器说明](member-d-executor.md)。
 

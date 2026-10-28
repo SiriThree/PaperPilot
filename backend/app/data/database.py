@@ -121,6 +121,7 @@ class PostgresDatabase:
                     connection.close()
                 except psycopg.Error:
                     pass
+
     @contextmanager
     def transaction(self, write=False):
         connection = self._acquire()

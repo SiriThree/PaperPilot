@@ -34,3 +34,5 @@ npx playwright test --config playwright.integration.config.ts --reporter=line
 真实 A+C+D 页面流程 **1 passed**：实际解析 PDF 的来源展示、组合检索、证据提取、回答及引用、草稿生成、版本保存与刷新恢复、真实 SQL 执行/拒绝以及关联 `security.query.finished` 审计。无页面脚本错误，截图 `.runtime/browser-research.png` 和 `.runtime/browser-security.png` 已目视检查。模型端点仍为本地可控替身，登录仍为开发演示身份；此结果不代表生产认证或外部模型质量。内置 Browser 无可用连接，使用项目现有 Playwright/Chromium 完成。
 
 索引接入后全量 **725 passed / 31 skipped**，报告 `.runtime/d-index-full.xml`。
+
+最终已扩展到非管理员业务连接、明确索引重建和有界恢复：**759 passed / 31 skipped**；浏览器完整流程及真实报告边界合计 **6 passed**，既有 Mock 阅读/证据 **11 passed**。真实报告分组为 241 项，包含在后端总数中。最终来源、计数与 JUnit 路径见[真实报告](../frontend/public/security-evidence-postgres.json)；安装/交付边界见[followup](member-d-followup.md)。
