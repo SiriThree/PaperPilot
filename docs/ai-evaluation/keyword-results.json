@@ -1,0 +1,164 @@
+{
+  "dataset": "attention-2017-v7",
+  "source_url": "https://arxiv.org/pdf/1706.03762v7",
+  "pdf_sha256": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697",
+  "dataset_sha256": "2af8fba1653da6a15c5eabdf8cab0022d270baf75c4206fc44a79884c7bf0e00",
+  "python": "3.13.2",
+  "pypdf": "6.21.3",
+  "live_models": false,
+  "generation_cases_requested": 0,
+  "models": null,
+  "parsing": {
+    "chunk_count": 40,
+    "pages_with_text": 15,
+    "max_excerpt_chars": 1200,
+    "unique_chunk_ids": true
+  },
+  "k": 3,
+  "modes": {
+    "keyword": {
+      "hit_rate_at_k": 1.0,
+      "mean_reciprocal_rank_at_k": 1.0,
+      "mean_page_recall_at_k": 0.875,
+      "cases": [
+        {
+          "id": "attention",
+          "retrieved_pages": [
+            4,
+            9,
+            4
+          ],
+          "relevant_pages": [
+            4
+          ],
+          "reciprocal_rank": 1.0,
+          "page_recall": 1.0,
+          "hit": true,
+          "correct_abstention": null
+        },
+        {
+          "id": "positions",
+          "retrieved_pages": [
+            6,
+            6,
+            9
+          ],
+          "relevant_pages": [
+            6
+          ],
+          "reciprocal_rank": 1.0,
+          "page_recall": 1.0,
+          "hit": true,
+          "correct_abstention": null
+        },
+        {
+          "id": "optimization",
+          "retrieved_pages": [
+            7,
+            11,
+            8
+          ],
+          "relevant_pages": [
+            7
+          ],
+          "reciprocal_rank": 1.0,
+          "page_recall": 1.0,
+          "hit": true,
+          "correct_abstention": null
+        },
+        {
+          "id": "smoothing",
+          "retrieved_pages": [
+            8,
+            9,
+            8
+          ],
+          "relevant_pages": [
+            8
+          ],
+          "reciprocal_rank": 1.0,
+          "page_recall": 1.0,
+          "hit": true,
+          "correct_abstention": null
+        },
+        {
+          "id": "parsing",
+          "retrieved_pages": [
+            10,
+            9,
+            1
+          ],
+          "relevant_pages": [
+            10
+          ],
+          "reciprocal_rank": 1.0,
+          "page_recall": 1.0,
+          "hit": true,
+          "correct_abstention": null
+        },
+        {
+          "id": "stacks",
+          "retrieved_pages": [
+            3,
+            3,
+            8
+          ],
+          "relevant_pages": [
+            3
+          ],
+          "reciprocal_rank": 1.0,
+          "page_recall": 1.0,
+          "hit": true,
+          "correct_abstention": null
+        },
+        {
+          "id": "heads",
+          "retrieved_pages": [
+            5,
+            15,
+            13
+          ],
+          "relevant_pages": [
+            4,
+            5
+          ],
+          "reciprocal_rank": 1.0,
+          "page_recall": 0.5,
+          "hit": true,
+          "correct_abstention": null
+        },
+        {
+          "id": "complexity",
+          "retrieved_pages": [
+            6,
+            6,
+            6
+          ],
+          "relevant_pages": [
+            6,
+            7
+          ],
+          "reciprocal_rank": 1.0,
+          "page_recall": 0.5,
+          "hit": true,
+          "correct_abstention": null
+        },
+        {
+          "id": "unrelated",
+          "retrieved_pages": [],
+          "relevant_pages": [],
+          "reciprocal_rank": 0,
+          "page_recall": null,
+          "hit": false,
+          "correct_abstention": true
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "One public paper and eight manually labeled development queries; no generalization claim.",
+    "Page labels may omit other relevant pages; ranking is evaluated at chunk granularity.",
+    "Citation validity does not establish semantic entailment or factual correctness.",
+    "Semantic, hybrid and generation need explicit live configuration; not replaced by doubles."
+  ]
+}

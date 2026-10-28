@@ -1,0 +1,76 @@
+import asyncio
+import json
+import math
+import os
+import sys
+from pathlib import Path
+
+from app.ai.client import invalid_response
+from app.errors import AppError
+
+
+class LocalEmbeddings:
+    """Prepared ONNX model only. Inference runs in a cancellable CPU subprocess."""
+
+    def __init__(self, settings):
+        try:
+            from fastembed import TextEmbedding
+
+            model = next(
+                m for m in TextEmbedding.list_supported_models() if m["model"] == settings.embedding_model
+            )
+            root = settings.local_model_dir.resolve(strict=True)
+            if model["dim"] != settings.embedding_dimensions or not all(
+                (root / name).is_file() for name in [model["model_file"], "tokenizer.json", "config.json"]
+            ):
+                raise ValueError("Invalid local model")
+        except Exception:
+            raise RuntimeError("Local embedding model/dependencies not prepared; startup refused") from None
+        self.settings, self.root = settings, root
+
+    async def embed(self, texts):
+        try:
+            process = await asyncio.create_subprocess_exec(
+                sys.executable,
+                str(Path(__file__).with_name("embedding_worker.py")),
+                self.settings.embedding_model,
+                str(self.root),
+                stdin=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.DEVNULL,
+                env={
+                    **os.environ,
+                    "HF_HUB_OFFLINE": "1",
+                    "HF_HUB_DISABLE_TELEMETRY": "1",
+                    "OPENBLAS_NUM_THREADS": "1",
+                    "OMP_NUM_THREADS": "2",
+                    "TOKENIZERS_PARALLELISM": "false",
+                },
+            )
+        except OSError:
+            raise AppError(503, "AI_EMBEDDING_UNAVAILABLE", "本地嵌入服务暂不可用") from None
+        try:
+            output, _ = await process.communicate(json.dumps(texts).encode())
+            try:
+                vectors = json.loads(output)
+                if len(vectors) != len(texts):
+                    raise ValueError("invalid count")
+                for vector in vectors:
+                    if len(vector) != self.settings.embedding_dimensions or any(
+                        type(v) not in {int, float} or not math.isfinite(v) for v in vector
+                    ):
+                        raise ValueError("invalid vector")
+                    norm = math.hypot(*vector)
+                    if not norm or not math.isfinite(norm):
+                        raise ValueError("invalid norm")
+                    vector[:] = [v / norm for v in vector]
+                return vectors
+            except (ValueError, TypeError, UnicodeError):
+                raise invalid_response() from None
+        finally:
+            if process.returncode is None:
+                try:
+                    process.kill()
+                except ProcessLookupError:
+                    pass
+                await process.wait()
