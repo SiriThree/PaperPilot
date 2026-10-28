@@ -43,6 +43,7 @@ for (const width of [390, 1440]) {
     await page.locator('.evidence-fields').getByRole('button', { name: /实验结果/ }).click()
     await expect(page.getByRole('region', { name: '实验结果证据不足', exact: true }).getByText('未提及或证据不足')).toBeVisible()
     expect(evidenceCreates).toBe(0)
+    await page.getByRole('tab', { name: '报告', exact: true }).click()
     await page.getByRole('button', { name: '科研证据追溯综述（合成演示） · v2', exact: true }).click()
     await expect(page.getByLabel('报告正文')).toHaveValue(/第二版补充：证据缺口/)
     await page.getByRole('button', { name: '版本 1', exact: true }).click()

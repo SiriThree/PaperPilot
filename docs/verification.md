@@ -613,3 +613,45 @@ DataBinding、ai_factory、security_factory、后端服务/路由和三类Mock�
 桌面/手机各4张截图位于忽略目录`output/demo-data/`。本机预览使用后端8001、前端5174（原8000/5173保持运行），通过`http://localhost:5174`与旧127.0.0.1站点隔离开发Cookie；仅不同端口不能隔离Cookie。已实际使用演示启动脚本成功启动，并在应用浏览器用Alice打开新项目、读取六篇文献及综述两个版本。演示启动时允许Origins明确含localhost/127.0.0.1的5174，操作均经原授权及同源校验。
 
 本阶段仅完成默认合成数据与展示联调；真实认证、A持久化/事务恢复、C解析/检索算法、D真实SQL网关及干净环境/容器交付依然没有因此通过。
+
+## 安全可视化与关联阅读修订
+
+以用户确认的修订方向实施，起点为 `feat/b-integration` 的 `12d5a6df578cd8ec42f9051b8c9124c55eff89e3`，开始时工作区干净。本轮保留四页原有功能，重点为研究工作流及安全证据展示；没有提交或推送。
+
+实际行为：选择项目文献读取对应摘录和页码；回答引用、检索来源和证据来源同步定位文献/chunk并保留来源抽屉；迟到详情响应不能覆盖新选择。chunk不存在时提示对照历史快照，不自动用另一段代替。来源可去重加入报告正文及Source快照，仍标记待人工核验；切换项目/研究路由时保护未保存编辑，确认放弃后按新项目重新读取。助手改为问答、证据、报告三个可用键盘切换的页签。草稿失败、任务待处理/处理中、状态未知均有明确下一步，不伪造解析/索引百分比。失败草稿的测试使用受控任务响应夹具，Mock草稿服务本身没有新增失败算法。
+
+安全页的角色/访问范围来自服务端项目列表，提交查询前重新读取；这些前端检查不能替代后端授权。调用链标为示意，状态区继续区分策略和执行结果。审计新增操作者与项目，保留事件、时间、决策、执行状态及request_id。当前用户可显示姓名，其余操作者使用返回的标识，不补造姓名。没有直接SQL执行、真实认证或A/C/D算法改动。
+
+新增离线验证报告由隔离pytest实际执行生成，包含版本、时间、未提交标记、检查代码指纹及每组计数。当前报告为18通过：匿名访问1、跨项目/成员授权11、网关故障与关键审计6；与后端全套重叠，不能累加。面板明确其不是当前服务实时探测，不能证明运行部署等同所测版本。报告缺失/格式错误时不显示通过，失败或跳过保持实际状态。真实SQL AST/受限执行与数据库隔离/恢复分别待D、A验收。
+
+实际文件：
+
+- 修改：`frontend/src/pages/ResearchPage.vue`、`SecurityPage.vue`、`PapersPage.vue`，`frontend/src/components/TaskRecoveryPanel.vue`、`frontend/src/main.ts`；分别接入联动、安全范围和证据面板、上传/任务状态提示及统一样式入口。
+- 新增：`frontend/src/research-security.css`、`frontend/src/components/SecurityEvidencePanel.vue`、`frontend/public/security-evidence.json`、`scripts/export_security_evidence.py`、`backend/tests/test_security_evidence_report.py`、`frontend/tests/connected-workspace.spec.ts`。
+- 调整既有测试：`frontend/tests/sprint-quality.spec.ts`在原未保存长文本的跨页操作中明确点击放弃；`frontend/demo-tests/demo-data.spec.ts`读取报告前选择报告页签。原功能与安全断言保留，无删除或新增skip。
+- 文档：更新`docs/development-guide.md`及本文。其余源码、历史SQLite实验与共享契约保留。
+
+| 实际命令（根目录） | 最终结果 |
+|---|---|
+| `.\.venv\Scripts\python.exe -m pytest -q -rs` | 退出0，180通过、37既有跳过、0失败，11.18秒；含新增报告解析3项及A/C/D共享契约 |
+| `.\.venv\Scripts\python.exe -m ruff check backend scripts` | 退出0，通过 |
+| `.\.venv\Scripts\python.exe -m ruff format --check backend scripts` | 退出0，61个文件符合格式 |
+| `.\.venv\Scripts\python.exe scripts/export_contracts.py --check` | 退出0，OpenAPI与应用Schema一致 |
+| `.\.venv\Scripts\python.exe scripts/export_module_examples.py --check` | 退出0，C/D已执行Mock示例一致 |
+| `.\.venv\Scripts\python.exe scripts/export_security_evidence.py` | 退出0，18通过、0失败、0跳过，生成离线报告；与全套重叠 |
+| `npm.cmd --prefix frontend run typecheck` | 退出0，通过 |
+| `npm.cmd --prefix frontend run build` | 退出0，4.77秒、1646模块；JS1131.18kB/gzip372.31kB，既有大包提示仍存在 |
+| 设置`PAPERPILOT_E2E_API_PORT=8100`、`PAPERPILOT_E2E_WEB_PORT=5273`、`PAPERPILOT_E2E_DATA_MODE=mock`后运行`npm.cmd --prefix frontend run test:e2e` | 退出0，79通过、0失败、0跳过，2.7分钟；原68项+新增11项 |
+| 同上环境，`npm.cmd --prefix frontend run test:e2e -- tests/connected-workspace.spec.ts` | 退出0，11通过、0失败、0跳过，最终33.2秒；加强迟到响应的到达/渲染等待及引用高亮断言后复验，与全套重叠 |
+| `npm.cmd --prefix frontend run test:e2e -- --config=playwright.demo.config.ts` | 退出0，3通过、0失败、0跳过，13.4秒，独立8101/5274与临时存储 |
+| `git diff --check`及冻结路径相对HEAD检查 | 退出0，无删除；端口、Schema、contracts、生成类型、锁文件未改 |
+
+37个既有跳过仍为6个正式数据库provider门槛及31个默认不运行的历史SQLite实验。本轮没有真实数据库、真实AI或SQL安全验收；没有容器/干净环境部署验收。Starlette/httpx既有弃用提示保留。
+
+新增11项浏览器用例验证：选择文献与回答引用定位、快照去重并经API保存、迟到响应、项目切换的留在/放弃两条分支、失败草稿保留编辑及旧版本、最新范围不再含成员时阻止客户端提交、缺失引用不误高亮、失败报告显示失败计数、报告缺失/无效不伪造通过、390/1440px渲染及键盘页签。异常数据由隔离浏览器夹具构造；服务端实际越权拒绝仍由后端测试覆盖，不能将客户端禁用/提示作为安全证明。
+
+过程记录：首轮既有68项为61通过/7失败，4项为安全状态重复文本定位，3项因新增离开确认需要显式处理。新增9项首轮8通过/1失败来自连续上传尚未完成即读取列表；等待实际论文行的可检索状态后再断言，未降低任务断言。中间一次77项为71通过/6失败，5项来自新测试对包含PDF/元数据的单元格使用了错误的精确名称，另1项查询结果超时未在定向或最终全套中复现，未将其归为已确认根因。之后定向15项全部通过、最终全套79项全部通过。默认演示首轮1通过/2失败是报告隐藏于证据页签，补充显式选择报告后原版本/快照断言全部通过。没有通过删除、跳过或降低断言制造通过结果。
+
+实际渲染截图保存在忽略目录`output/connected-workspace/`及`output/demo-data/`；桌面/手机布局及既有304/768px回归均实际运行。已在现有localhost:5174演示站点登录Alice，生成Mock回答、点击引用、打开安全页并提交统计查询，看到一致的查询/审计request_id和18项离线验证计数；保存了应用浏览器预览截图。原8000/5173和演示8001/5174服务保留。
+
+边界仍然存在：片段/页码不是PDF具体坐标；来源加入报告不代表人工核验通过；未保存正文不跨刷新持久化，完整对话历史未持久化；预置失败论文的PaperDetail不含task_id/失败原因，已知任务的安全错误通过原任务恢复区读取，本轮不补造原因或扩展Schema。真实安全测试待D/A提供隔离环境与结果，发布前须重新生成并核对离线报告版本。

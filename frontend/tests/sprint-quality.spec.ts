@@ -130,6 +130,8 @@ for (const width of [390, 768, 1440]) {
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await page.screenshot({ path: `../output/sprint-20261026/after/${width}-research.png`, fullPage: true, animations: 'disabled' })
     await page.getByRole('link', { name: '查询与审计', exact: true }).click()
+    await expect(page.getByRole('dialog', { name: '离开前处理未保存编辑' })).toBeVisible()
+    await page.getByRole('button', { name: '放弃未保存编辑并继续' }).click()
     await page.getByRole('button', { name: '提交 Mock 查询' }).click()
     await expect(page.getByText('演示结果已返回，未执行真实 SQL', { exact: true })).toBeVisible()
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
