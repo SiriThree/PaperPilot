@@ -26,6 +26,7 @@ python-multipart==0.0.32
 referencing==0.37.0
 rpds-py==2026.9.1
 ruff==0.17.2
+sqlglot==30.24.0
 starlette==1.10.0
 typing-inspection==0.4.4
 typing_extensions==4.16.0

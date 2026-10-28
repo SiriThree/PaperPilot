@@ -1,5 +1,13 @@
 # 成员 D 开工交接
 
+2026-10-28 已根据团队 PR 更新[当前进度与下一阶段顺序](member-d-progress.md)：A 已提交正式 PostgreSQL DataPort 与 outbox，B 的 PR #3/#5 已合入 D，C 已提交真实 AI 与可组合入口。D 已依据 A 实现并验证双视图、独立项目登录及[关键审计门槛](member-d-audit.md)，下一步完成受限执行器/结果映射和 SecurityHarness；联合安全能力尚未验收。
+
+任务 1 已提供非 Mock `SecurityAdapter`、`build_security` 和 `app.security.main:create_app` 开发入口，详见 [任务 1 接入说明](member-d-task1.md)。尚无真实 SQL 执行能力；下文真实执行、审计与数据库验收要求仍有效。
+
+任务 2 已补齐应用层项目授权：按可信 Context 重新查询当前角色、核对 B 的角色快照、未知动作默认拒绝、撤权与查询故障拒绝授权。权限矩阵、验证及数据库边界见 [授权策略说明](member-d-authorization.md)。
+
+任务 3 已接通三条自然语言统计的候选生成、完整 AST 允许清单与项目参数绑定；2026-10-28 已依据 A 的实现落地双视图和 PostgreSQL/psycopg3 适配，并在独立真实库对照验证，见[现行接入约定](ad-security-contract-proposal.md)和[网关校验说明](member-d-gateway.md)。任务 6 审计门槛已接入；受限执行器尚未实现，默认策略通过仍返回 allowed/not_executed，不能计为应用真实执行完成。
+
 ## 1. 职责范围
 
 负责最终授权策略、数据库访问策略、自然语言统计的安全网关、SQL 解析/约束/受限执行、关键审计与安全实验。B 只调用 SecurityPort，不执行模型生成 SQL，也不在网关失败后降级查询。MockSecurity 只有固定意图演示，不具备真实 SQL 防护。
@@ -8,7 +16,7 @@
 
 - `backend/app/adapters/ports.py:SecurityPort`、`schemas.py:SecureQueryResult/AuditEvent`。
 - 参考：`adapters/mock_security.py`；身份和基础项目授权：`auth.py:project_context`；调用：`services.py:secure_query`、`routes/security.py`。
-- 建议新增 `backend/app/security/adapter.py` 和模块内策略/SQL/执行器实现（建议目录尚不存在）。共享测试：`backend/tests/security_contracts/`。
+- `backend/app/security/adapter.py` 已提供端口、授权、网关校验与关键审计门槛，`sql_policy.py` 提供封闭 AST 允许清单；受限执行器仍需后续交付。共享测试：`backend/tests/security_contracts/`。
 - 正常/拒绝/故障及审计的可执行合成样例：`contracts/module-port-examples.json`；HTTP 示例沿用 `contracts/examples/` 和 `scenarios/`。
 
 ## 3. 完整接口（2 个方法）
@@ -20,7 +28,7 @@ async def execute(ctx: Context, question: str) -> SecureQueryResult: ...
 
 Context 为 UUID 类型的 user_id/project_id/request_id。B 从开发会话查询 A 的身份/角色，先拒绝非成员，再调用 authorize。现有 action 为 project.read、members.manage、paper.remove、audit.read，role 为 owner/member；后三种要求负责人。role 是可信服务端查询的值，不是前端声明。D 返回 None 表示放行，拒绝用安全 AppError；执行器仍必须把可信项目绑定到数据库访问，不能只依赖前端或角色字符串。
 
-execute 只接收自然语言问题，不接收客户端凭据、Context JSON 或任意 SQL。D 独立拥有 SQL 候选处理、AST/允许清单/项目条件、受限数据库身份、执行资源限制和关键审计；数据库类型和受限身份机制与 A 商定。DataPort.controlled_statistics 只为三个固定意图服务，不是任意 SQL 执行器。真实执行连接/视图在 D/A 模块内注入，不能扩成 B 的通用 SQL API。
+execute 只接收自然语言问题，不接收客户端凭据、Context JSON 或任意 SQL。D 独立拥有 SQL 候选处理、AST/允许清单/项目条件、受限数据库身份、执行资源限制和关键审计；已对齐 A 的 PostgreSQL 16/psycopg3，双视图及项目登录绑定已通过隔离库验证，正式角色生命周期与业务库部署仍需 A/D 联合落实。DataPort.controlled_statistics 只为三个固定意图服务，不是任意 SQL 执行器。真实执行连接/视图在 D/A 模块内注入，不能扩成 B 的通用 SQL API。
 
 ## 4. 正常请求/响应示例
 
@@ -74,9 +82,10 @@ event_id 唯一、timestamp 带时区、duration_ms非负。业务请求共用�
 ```python
 from app.config import Settings
 from app.main import create_app as create_business_app
+from app.security import build_security
 
 def create_app():
-    # build_security 是 D 将交付的函数，不是已有真实安全实现。
+    # 当前 build_security 提供 AST 校验，受限执行器未接入时始终 not_executed。
     # 启动前设置 PAPERPILOT_D_MODE=real，保留统一环境配置。
     return create_business_app(Settings.from_env(), security_factory=build_security)
 ```
@@ -112,4 +121,6 @@ SecurityPort 实现和构造入口、策略及标识、SQL 允许/拒绝规则�
 
 ## 10. 待团队确认
 
-正式数据库与受限身份/视图/行级隔离、SQL 方言和解析库、允许函数/聚合范围、schema/view暴露、限时限量与连接池上下文复位、审计事务/outbox、生产身份、C/D NL2SQL协作与资源关闭方式。当前 AIPort 没有 SQL 生成方法，不能假定已有。D 可立即从固定 fixture、策略、AST 和假执行器开始，不需等待前端或数据库最终选型；真实数据库验证是后续联合依赖。
+已知基线：A 的 PR #1 已实现 PostgreSQL 16/psycopg3、正式 DataPort、一次性数据库 provider 与 outbox 投递器；B 的 PR #3 已合并；C 的 PR #4 已提供五方法真实 AI 和接受 security_factory 的组合入口。D 已固定 SQLGlot 校验实现。
+
+双视图、PostgreSQL 参数、多主题/空值语义与执行级审计门槛已有 D 侧实现和隔离验证；正式受限身份/视图所有者、适用的 RLS、审计写身份、限时限量与连接状态复位、outbox 保留/死信及资源关闭仍待联合落实。当前 AIPort 仍无 SQL 生成方法，C/D NL2SQL 私有协作是可选项。D 下一步实现受限执行器/结果映射及 SecurityHarness，按[最新进度](member-d-progress.md)推进。
