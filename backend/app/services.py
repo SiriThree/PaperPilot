@@ -254,7 +254,9 @@ class ResearchService:
                         chars += len(source.excerpt)
                 else:
                     search = await self.search(
-                        ctx, SearchRequest(query=question.question, mode="hybrid", limit=50)
+                        ctx,
+                        SearchRequest(query=question.question, mode="hybrid", limit=50),
+                        paper_ids=job.payload["paper_ids"],
                     )
                     sources = [h.source for h in search.items if h.paper.paper_id in job.payload["paper_ids"]]
                 sources = [s.model_copy(update={"citation_id": str(i + 1)}) for i, s in enumerate(sources)]
