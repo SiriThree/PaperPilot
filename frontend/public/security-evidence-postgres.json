@@ -2,10 +2,10 @@
   "schema_version": 2,
   "scope": "postgres_security",
   "environment": "隔离 PostgreSQL 16 · 真实 A/C/D · 本地模型替身",
-  "generated_at": "2026-10-29T04:46:55.827095+00:00",
-  "commit": "cd1aae442100320bde7ac026edcc99c2fadcf7a7",
-  "worktree_dirty": true,
-  "code_fingerprint": "0a686189bf9fb8a383f17a13a8f9d68d55a88b3ca2782236270c88fe07d83bf6",
+  "generated_at": "2026-10-29T08:12:57.793110+00:00",
+  "commit": "346f0e2c3511be3d62b2e28f807845b4175ff58d",
+  "worktree_dirty": false,
+  "code_fingerprint": "2256f0ef915683835f8963defe8ada695233ea075207543d08180947e25e7bf8",
   "source": {
     "verified": true,
     "checkout": "current_checkout",
@@ -67,11 +67,11 @@
     }
   ],
   "verification_totals": {
-    "passed": 790,
+    "passed": 1001,
     "failed": 0,
-    "skipped": 31
+    "skipped": 34
   },
-  "junit_report": ".runtime/real-security-evidence-f50717e2edff.xml",
+  "junit_report": ".runtime/real-security-evidence-deb537d5235e.xml",
   "not_verified": [
     "生产认证与正式业务库部署未验收",
     "外部模型质量、大规模性能及底表原生 RLS 未验收",
