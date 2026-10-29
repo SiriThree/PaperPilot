@@ -54,6 +54,7 @@ def main():
     )
     for port in [args.api_port, args.web_port]:
         with socket.socket() as probe:
+            probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             probe.bind(("127.0.0.1", port))
     api_url, web_url = f"http://127.0.0.1:{args.api_port}", f"http://127.0.0.1:{args.web_port}"
     environment = dict(

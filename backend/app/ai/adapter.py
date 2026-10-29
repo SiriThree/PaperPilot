@@ -36,9 +36,6 @@ Use citation_ids from the supplied sources. Every statement needs supporting cit
 Write plain text without square brackets; the application renders citations itself.
 The literal NLP tokens [MASK], [CLS], [SEP], [PAD], [UNK] are allowed as technical
 terms in text. They are never citations; supporting references still go in citation_ids.
-If evidence does not answer the question, set insufficient_evidence=true and statements=[].
-For extraction use pending_verification only with text and supporting citations;
-otherwise use not_mentioned or insufficient_evidence with text=null and citation_ids=[].
 Sources may describe explicitly fictional or simulated examples. You may accurately cite
 their stated methods and outcomes for testing, but every statement about such an example
 must explicitly say it is fictional or simulated, remain pending human verification, and
@@ -46,6 +43,35 @@ never portray it as a real-world research result. Synthetic sources are examples
 real research evidence. All output needs human review.
 Respond in the question's language when applicable, strictly using the requested JSON schema.
 """
+NARRATIVE_INSTRUCTION = (
+    INSTRUCTION
+    + """
+Return the narrative object with insufficient_evidence and statements.
+If the excerpts do not answer the question, set insufficient_evidence=true and statements=[].
+Otherwise set insufficient_evidence=false and supply supported statements with citation_ids.
+"""
+)
+EXTRACTION_INSTRUCTION = (
+    INSTRUCTION
+    + """
+This task extracts evidence, without answering a question. Return exactly one JSON object
+with five required keys: research_question, method, results, conclusion, limitations.
+Each field has exactly three keys: text, status, citation_ids. Use these rules independently:
+- Supported by the supplied excerpts: status="pending_verification", nonempty text,
+  and a nonempty list of citation ID strings copied from the sources.
+- Not discussed in the supplied excerpts: use exactly
+  {"text":null,"status":"not_mentioned","citation_ids":[]}.
+- The excerpts are incomplete or ambiguous: use exactly
+  {"text":null,"status":"insufficient_evidence","citation_ids":[]}.
+Never put an explanation in text, or cite sources, for either absent status. Never invent
+limitations or infer that an absent field is absent from the entire paper.
+Write concise text in output_language: at most three sentences and 300 characters per field,
+with at most five supporting source IDs. Keep technical names as needed. Do not place
+reference numbers inside text; references belong only in citation_ids, as strings.
+Return all five fields even if none are supported. Return no other top-level keys, wrapper,
+schema, Markdown fences or commentary. Do not return the narrative response format.
+"""
+)
 
 
 class RealAI:
@@ -275,7 +301,7 @@ class RealAI:
     async def _narrative(self, question, sources, purpose):
         result = await self.client.generate(
             Narrative,
-            instruction=INSTRUCTION,
+            instruction=NARRATIVE_INSTRUCTION,
             payload={
                 "purpose": purpose,
                 "question": question.question,
@@ -324,9 +350,10 @@ class RealAI:
             if selected:
                 result = await self.client.generate(
                     Extraction,
-                    instruction=INSTRUCTION,
+                    instruction=EXTRACTION_INSTRUCTION,
                     payload={
                         "purpose": "extract research_question, method, results, conclusion, limitations",
+                        "output_language": "zh-CN",
                         "sources": [s.model_dump(mode="json") for s in selected],
                     },
                 )

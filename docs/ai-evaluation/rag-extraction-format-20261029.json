@@ -1,0 +1,350 @@
+{
+  "date": "2026-10-29",
+  "base_commit": "2bd7d7c",
+  "branch": "feat/member-c-real-literature",
+  "scope": "Real RAG paper and actual SJTU calls. Structural validity and source identity checks do not establish semantic entailment or guarantee future model availability.",
+  "prior_failures": "Previously recorded AI_INVALID_RESPONSE errors; provider raw responses from those failures were not retained.",
+  "diagnosis": "The old shared instruction mixed the narrative boolean/statements format with the five-field extraction format. Two unchanged-protocol diagnostic calls succeeded, so the historical intermittent provider failures cannot be assigned a single exact cause.",
+  "changes": [
+    "Dedicated narrative and extraction instructions",
+    "Explicit per-field state/text/citation rules and concise Chinese extraction text",
+    "Private model validation enforces state consistency before constructing public evidence; citation provenance validation is retained",
+    "No implicit retry, field filling, response repair or discarded invalid text",
+    "Development launcher port probe reuses TIME_WAIT sockets during restart while still rejecting an active listener"
+  ],
+  "before_diagnostics": [
+    {
+      "label": "before",
+      "fields": {
+        "research_question": {
+          "status": "pending_verification",
+          "text_type": "str",
+          "text_chars": 233,
+          "citation_ids": [
+            "2",
+            "1"
+          ],
+          "extra_key_count": 0
+        },
+        "method": {
+          "status": "pending_verification",
+          "text_type": "str",
+          "text_chars": 544,
+          "citation_ids": [
+            "3",
+            "7",
+            "10",
+            "11",
+            "12"
+          ],
+          "extra_key_count": 0
+        },
+        "results": {
+          "status": "pending_verification",
+          "text_type": "str",
+          "text_chars": 714,
+          "citation_ids": [
+            "4",
+            "17",
+            "22",
+            "24",
+            "25",
+            "8"
+          ],
+          "extra_key_count": 0
+        },
+        "conclusion": {
+          "status": "pending_verification",
+          "text_type": "str",
+          "text_chars": 410,
+          "citation_ids": [
+            "33",
+            "34",
+            "36"
+          ],
+          "extra_key_count": 0
+        },
+        "limitations": {
+          "status": "pending_verification",
+          "text_type": "str",
+          "text_chars": 382,
+          "citation_ids": [
+            "1",
+            "24",
+            "12"
+          ],
+          "extra_key_count": 0
+        }
+      },
+      "model": "deepseek-chat",
+      "operation": "extract",
+      "source_count": 50,
+      "source_chars": 53419,
+      "pages": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "elapsed_seconds": 49.81,
+      "finish_reason": "stop",
+      "content_type": "str",
+      "usage": {
+        "completion_tokens": 669,
+        "prompt_tokens": 19068,
+        "total_tokens": 19737
+      },
+      "status": "succeeded"
+    },
+    {
+      "label": "before-2",
+      "fields": {
+        "research_question": {
+          "status": "pending_verification",
+          "text_type": "str",
+          "text_chars": 352,
+          "citation_ids": [
+            "2",
+            "3"
+          ],
+          "extra_key_count": 0
+        },
+        "method": {
+          "status": "pending_verification",
+          "text_type": "str",
+          "text_chars": 641,
+          "citation_ids": [
+            "3",
+            "7",
+            "9",
+            "10",
+            "11",
+            "14"
+          ],
+          "extra_key_count": 0
+        },
+        "results": {
+          "status": "pending_verification",
+          "text_type": "str",
+          "text_chars": 712,
+          "citation_ids": [
+            "4",
+            "8",
+            "16",
+            "22",
+            "24",
+            "25",
+            "27"
+          ],
+          "extra_key_count": 0
+        },
+        "conclusion": {
+          "status": "pending_verification",
+          "text_type": "str",
+          "text_chars": 357,
+          "citation_ids": [
+            "33"
+          ],
+          "extra_key_count": 0
+        },
+        "limitations": {
+          "status": "pending_verification",
+          "text_type": "str",
+          "text_chars": 399,
+          "citation_ids": [
+            "1",
+            "37"
+          ],
+          "extra_key_count": 0
+        }
+      },
+      "model": "deepseek-chat",
+      "operation": "extract",
+      "source_count": 50,
+      "source_chars": 53419,
+      "pages": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "elapsed_seconds": 86.25,
+      "finish_reason": "stop",
+      "content_type": "str",
+      "usage": {
+        "completion_tokens": 689,
+        "prompt_tokens": 19068,
+        "total_tokens": 19757
+      },
+      "status": "succeeded"
+    }
+  ],
+  "after_diagnostic": {
+    "label": "after-1",
+    "fields": {
+      "research_question": {
+        "status": "pending_verification",
+        "text_type": "str",
+        "text_chars": 67,
+        "citation_ids": [
+          "2",
+          "3",
+          "1"
+        ],
+        "extra_key_count": 0
+      },
+      "method": {
+        "status": "pending_verification",
+        "text_type": "str",
+        "text_chars": 112,
+        "citation_ids": [
+          "2",
+          "7",
+          "10",
+          "11"
+        ],
+        "extra_key_count": 0
+      },
+      "results": {
+        "status": "pending_verification",
+        "text_type": "str",
+        "text_chars": 121,
+        "citation_ids": [
+          "3",
+          "4",
+          "22",
+          "27",
+          "31"
+        ],
+        "extra_key_count": 0
+      },
+      "conclusion": {
+        "status": "pending_verification",
+        "text_type": "str",
+        "text_chars": 69,
+        "citation_ids": [
+          "31",
+          "35"
+        ],
+        "extra_key_count": 0
+      },
+      "limitations": {
+        "status": "not_mentioned",
+        "text_type": "NoneType",
+        "text_chars": null,
+        "citation_ids": [],
+        "extra_key_count": 0
+      }
+    },
+    "model": "deepseek-chat",
+    "operation": "extract",
+    "source_count": 50,
+    "source_chars": 53419,
+    "pages": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+    ],
+    "elapsed_seconds": 72.52,
+    "finish_reason": "stop",
+    "content_type": "str",
+    "usage": {
+      "completion_tokens": 395,
+      "prompt_tokens": 19355,
+      "total_tokens": 19750
+    },
+    "status": "succeeded"
+  },
+  "browser": {
+    "task_id": "30e6fd02-8d4c-4e1c-a60b-40bd1c052b3a",
+    "status": "succeeded",
+    "attempts": 1,
+    "mock": false,
+    "fields": {
+      "research_question": {
+        "status": "pending_verification",
+        "text_chars": 60,
+        "pages": [
+          1
+        ]
+      },
+      "method": {
+        "status": "pending_verification",
+        "text_chars": 104,
+        "pages": [
+          1,
+          2,
+          3
+        ]
+      },
+      "results": {
+        "status": "pending_verification",
+        "text_chars": 85,
+        "pages": [
+          5,
+          6
+        ]
+      },
+      "conclusion": {
+        "status": "pending_verification",
+        "text_chars": 68,
+        "pages": [
+          8,
+          9
+        ]
+      },
+      "limitations": {
+        "status": "not_mentioned",
+        "text_chars": null,
+        "pages": []
+      }
+    },
+    "canonical_sources": true,
+    "persisted": true,
+    "reloaded_existing_evidence": true,
+    "citation_located": true,
+    "page_errors": [],
+    "screenshot": ".runtime/real-demo/rag-format-fix/rag-evidence.png"
+  },
+  "tests": {
+    "ai_contracts": {
+      "passed": 91
+    },
+    "default_backend": {
+      "passed": 618,
+      "skipped": 428,
+      "failed": 0
+    },
+    "openapi_check": "passed",
+    "module_examples_check": "passed"
+  },
+  "private_artifacts": "Provider responses, evidence text and source excerpts remain in the ignored .runtime/real-demo/rag-format-fix directory."
+}
