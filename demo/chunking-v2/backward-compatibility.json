@@ -1,0 +1,7 @@
+{
+  "paper": "2005.11401v4",
+  "source_count": 70,
+  "all_legacy_chunk_ids_and_excerpts_identical": true,
+  "database_writes": false,
+  "note": "New character-v1 parser recreates the frozen real-paper sources including index/model UUID salt."
+}

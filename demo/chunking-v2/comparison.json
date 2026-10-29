@@ -1,0 +1,56 @@
+{
+  "checked_at": "2026-10-29T18:02:07.279502+00:00",
+  "paper_count": 300,
+  "code_sha256": "7ed54cd23165408dd2ca9608374769ceba6ae2c1ff0936f18812c11b48baf2af",
+  "baseline_catalog_sha256": "d79c005c2b39af0717fe3f0b4003f4a5efef1fe8ead41a694149bd5968fe0263",
+  "policy": {
+    "strategy": "sentence-token-v2",
+    "pysbd": "0.3.4",
+    "tokenizer_sha256": "7be03536eed91e4dcb928088e15f7286977603cc59b0be7d54a3c37fe645b86a",
+    "target_tokens": 384,
+    "overlap_tokens": 48,
+    "max_input_tokens": 512,
+    "max_excerpt_chars": 4000
+  },
+  "policy_id": "sentence-token-v2:41820d25b5179b7bf8ad67be8a8cb2996a1aaebd5b8fb2fd9882ade83af873d4",
+  "packages": {
+    "pypdf": "6.21.3",
+    "pysbd": "0.3.4",
+    "tokenizers": "0.23.3"
+  },
+  "methods": {
+    "character-v1": {
+      "chunks": 19659,
+      "characters_including_overlap": 20846720,
+      "over_limit": 551,
+      "word_cut_starts": 8942,
+      "word_cut_ends": 8833,
+      "forced_splits": 0,
+      "input_token_percentiles": {
+        "0": 13,
+        "50": 389,
+        "95": 471,
+        "99": 612,
+        "100": 1074
+      }
+    },
+    "sentence-token-v2": {
+      "chunks": 20986,
+      "characters_including_overlap": 20990663,
+      "over_limit": 0,
+      "word_cut_starts": 0,
+      "word_cut_ends": 0,
+      "forced_splits": 0,
+      "input_token_percentiles": {
+        "0": 13,
+        "50": 369,
+        "95": 399,
+        "99": 404,
+        "100": 422
+      }
+    }
+  },
+  "new_non_whitespace_characters_missing": 0,
+  "exact_original_excerpt_spans_verified": true,
+  "quality_metrics": "Not measured: no human relevance labels. This is boundary/coverage validation, not retrieval accuracy or search throughput."
+}

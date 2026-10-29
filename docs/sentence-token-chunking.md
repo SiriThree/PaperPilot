@@ -17,6 +17,18 @@ V2 修复了按固定字符切块时的英文词内边界，并将送入嵌入�
 
 首/尾指标按相邻 ASCII 字母检测，是边界位置数，不是不同单词数。V2 全部摘录与规范化原文偏移一致，非空白字符遗漏为 0。没有测量人工相关性或答案准确率。
 
+真实入库也已完成：300 篇、300 个成功处理索引、20986 个真实来源和等量 512 维向量；处理尝试为 300 个成功、0 个失败。只读检查逐条确认数据库 active 来源的顺序、页码和摘录与审计原文完全一致，实际最大输入为 422 token。独立数据库约 160.46 MiB；含原 PDF 和上传副本约 1.11 GiB。
+
+验收产物：[`summary.json`](../demo/chunking-v2/summary.json)、[`ingestion-check.json`](../demo/chunking-v2/ingestion-check.json)、[`idempotency-check.json`](../demo/chunking-v2/idempotency-check.json)。复跑导入没有增加项目、论文、任务、分片或向量。
+
+旧版基线仍为 300 篇 / 19659 分片 / 19659 向量 / 300 个处理索引，见 [`baseline-check.json`](../demo/chunking-v2/baseline-check.json)。旧库额外存在一个失败问答任务，原样保留；仅允许导入任务的旧快照脚本因此会拒绝其任务表，不代表原文或索引被改写。新代码的 V1 模式还复现了原始 RAG 论文全部 70 个原来源 ID 与摘录，见 [`backward-compatibility.json`](../demo/chunking-v2/backward-compatibility.json)。
+
+真实服务验证：三种模式在 2020–2022 年范围均返回 10 个真实来源，完整 300 篇范围仍返回 `AI_CORPUS_LIMIT`；800 字符超长中文问题在小范围语义检索中返回 HTTP 413 / `AI_EMBEDDING_INPUT_LIMIT`，见 [`search-smoke.json`](../demo/chunking-v2/search-smoke.json) 与 [`input-limit-check.json`](../demo/chunking-v2/input-limit-check.json)。浏览器确认 300 篇、每页 50 行、来源可实际展开且摘录可见，无页面脚本错误。
+
+常规回归 **654 passed / 446 skipped**。另已显式运行临时 PostgreSQL 的同模型重切块 / 历史保留 / 幂等提交测试；跳过项并不表示其他环境测试已执行。
+
+![句段切块 V2 的真实 300 篇文献库](images/sentence-token-library.png)
+
 ## 实现选择
 
 采用类似 [LlamaIndex SentenceSplitter](https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/node_parser/text/sentence.py) 的句段优先思想，使用 [PySBD](https://github.com/nipunsadvilkar/pySBD) 0.3.4 获取句子边界，使用已准备模型的 Hugging Face tokenizer 计数。没有引入整个 RAG 框架、调用生成模型切块，或在线下载句子模型。
@@ -42,7 +54,7 @@ export PAPERPILOT_AI_CHUNK_TOKENS=384
 export PAPERPILOT_AI_CHUNK_TOKEN_OVERLAP=48
 ```
 
-`auto` 对 fastembed 选择 V2，对 remote 选择旧字符策略。remote 的具体 tokenizer 未准备前不自动假定其输入预算。显式设置 `character-v1` 可复现旧 1200 字符 / 120 字符重叠行为，已有 V1 chunk ID 算法不变。
+`auto` 对已准备的 fastembed `BAAI/bge-small-zh-v1.5` 选择 V2，对其他模型及 remote 选择旧字符策略。部分模型会在 FastEmbed 内添加 query/passage 前缀；V2 当前只验证了本次 BGE 的输入形式，强制用于其他本地模型会拒绝启动，需先适配前缀与预算。显式设置 `character-v1` 可复现旧 1200 字符 / 120 字符重叠行为，已有 V1 chunk ID 算法不变。
 
 V2 本地嵌入会在启动推理前拒绝超过上限的输入（`AI_EMBEDDING_INPUT_LIMIT`），也覆盖超长检索问题。标题耗尽预算或原文单元无法合法分割时处理失败，不偷偷截标题。现有 PDF 20 MiB、300 页、200 万字符、2500 块限制、768 MiB 地址空间 / 30 CPU 秒限制及外层操作期限继续生效。
 
@@ -90,6 +102,24 @@ export PYTHONPATH="$PWD/backend"
 入库准备期间可临时设 `--api-workers 8`，结束后恢复默认单进程界面。导入器可用 `--serialize-above-chunks 180` 让较长论文等待其他任务完成后单独处理，避免并行 CPU 竞争挤占其操作期限；默认 0 不启用此调度，旧命令行为保持兼容。本机登录仍为 alice，密码沿用现有本机文件。服务地址是 `http://127.0.0.1:15176`。
 
 ## 检查范围
+
+完整入库后核对文件、分片、向量与原文位置：
+
+```bash
+.venv/bin/python scripts/snapshot_research_corpus.py \
+  --catalog demo/chunking-v2/catalog.json \
+  --import-state .runtime/chunking-v2/import-state.json \
+  --database-config .runtime/chunking-v2/database.json \
+  --pdf-dir /home/huyi/Codes/PaperPilot-corpus300/.runtime/corpus300/papers \
+  --upload-dir .runtime/chunking-v2/uploads --output-dir demo/chunking-v2
+
+.venv/bin/python scripts/verify_sentence_corpus.py \
+  --import-state .runtime/chunking-v2/import-state.json \
+  --database-config .runtime/chunking-v2/database.json \
+  --tokenizer-dir /home/huyi/Codes/PaperPilot/.runtime/ai-models/models--Qdrant--bge-small-zh-v1.5/snapshots/46fbe35fd4374a00fee7de77dfddaeb6dd6a2c59
+```
+
+后一个检查在只读事务中读取实际 active_process_task_id 对应的全部来源，逐篇核对其顺序、页码和摘录与审计缓存完全相同，并对数据库实际标题与摘录重新计数。它不通过只比较总数来推断内容一致。
 
 单元/子进程检查覆盖句子缩写与小数、PDF 换行、词边界、原文覆盖、重叠、CJK、超长 URL、最终标题预算、超过块数上限、重试稳定性与旧版 ID 隔离；临时 PostgreSQL 检查同模型重切块后的原子切换及历史保留。
 
