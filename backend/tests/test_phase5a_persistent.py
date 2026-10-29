@@ -70,6 +70,7 @@ def test_real_database_composes_explicit_modules(database, monkeypatch, c, d):
         "PAPERPILOT_AI_CHAT_MODEL": "fixture",
         "PAPERPILOT_AI_EMBEDDING_MODEL": "fixture",
         "PAPERPILOT_AI_EMBEDDING_DIMENSIONS": "3",
+        "PAPERPILOT_AI_EMBEDDING_REVISION": "fixture-v1",
     }.items():
         monkeypatch.setenv(key, value)
     settings = Settings(environment="test", a_mode="persistent", c_mode=c, d_mode=d, storage_dir=storage)

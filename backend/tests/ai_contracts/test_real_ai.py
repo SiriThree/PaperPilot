@@ -497,7 +497,14 @@ def test_factory_config_and_explicit_composition(real, monkeypatch, tmp_path):
     }.items():
         monkeypatch.setenv("PAPERPILOT_AI_" + name, value)
     assert isinstance(build_ai(real.data), RealAI)
+    monkeypatch.delenv("PAPERPILOT_AI_EMBEDDING_REVISION", raising=False)
     assert AISettings.from_env().embedding_dimensions == 3
+    assert AISettings.from_env().embedding_revision is None
+    monkeypatch.setenv("PAPERPILOT_AI_EMBEDDING_REVISION", "fixture-v1")
+    assert AISettings.from_env().embedding_revision == "fixture-v1"
+    monkeypatch.setenv("PAPERPILOT_AI_EMBEDDING_REVISION", " ")
+    with pytest.raises(RuntimeError, match="configuration"):
+        AISettings.from_env()
 
 
 def test_business_upload_search_answer_evidence_draft_and_save(tmp_path):

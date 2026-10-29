@@ -9,7 +9,6 @@ include = ["app*"]
 [tool.setuptools.package-data]
 "app.data" = ["migrations/*.sql"]
 "app.persistence" = ["migrations/*.sql"]
-"app.data" = ["migrations/*.sql"]
 "app.security" = ["migrations/*.sql"]
 
 [project]

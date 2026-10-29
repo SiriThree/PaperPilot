@@ -29,7 +29,7 @@ class OutboxDeliverer:
         batch_size: int = 50,
         base_backoff: float = 1.0,
         max_backoff: float = 60.0,
-        lease_seconds: float = 30.0,
+        lease_seconds: int = 30,
         max_attempts: int = 5,
     ):
         if (
@@ -197,16 +197,16 @@ class OutboxDeliverer:
         if attempts is None:
             return False
         try:
-            self.data.append_audit(self._event(claimed))
+            self.data.append_audit(self._event(row))
         except AppError:
-            self._record_failure(row["event_id"], token, attempts, "AUDIT_UNAVAILABLE")
+            self._record_failure(row["event_id"], attempts, "AUDIT_UNAVAILABLE")
             return False
         except (ValidationError, KeyError, TypeError):
             # A malformed payload can never become a valid audit event; not a transient fault.
-            self._record_failure(row["event_id"], token, attempts, "ADAPTER_CONTRACT_ERROR")
+            self._record_failure(row["event_id"], attempts, "ADAPTER_CONTRACT_ERROR")
             return False
         except Exception:
-            self._record_failure(row["event_id"], token, attempts, "DATA_UNAVAILABLE")
+            self._record_failure(row["event_id"], attempts, "DATA_UNAVAILABLE")
             return False
         return self._confirm(row["event_id"], attempts)
 
@@ -249,6 +249,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description="Deliver outbox_events into the audit trail")
     parser.add_argument("--once", action="store_true", help="Deliver due events once and exit")
     parser.add_argument("--interval", type=float, default=0.5, help="Polling interval in loop mode")
+    parser.add_argument("--max-attempts", type=int, default=5, help="Maximum delivery attempts")
     parser.add_argument("--requeue-event", type=UUID, help="Explicitly requeue one reconciled dead letter")
     parser.add_argument(
         "--confirm-unknown-reconciled", action="store_true", help="Confirm unknown delivery was reconciled"

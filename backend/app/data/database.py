@@ -18,7 +18,12 @@ from psycopg.rows import dict_row
 from app.errors import AppError
 
 MIGRATIONS = Path(__file__).parent / "migrations"
-EXPECTED_VERSION = 6
+EXPECTED_VERSION = 7
+
+# Both files were released on a parallel branch under versions also used by
+# the authentication/outbox branch. Keep their original bytes as trusted
+# historical checksums; 007 reconciles their effects without rewriting history.
+LEGACY_COLLISIONS = {2: "002_process_indexes.sql", 3: "003_recovery.sql"}
 
 
 @dataclass(frozen=True)
@@ -187,9 +192,15 @@ class PostgresDatabase:
                 self._release(connection)
 
     def migrate(self):
-        files = sorted(MIGRATIONS.glob("[0-9]*.sql"))
-        if not files:
-            raise RuntimeError("Migration sources unavailable")
+        candidates = sorted(MIGRATIONS.glob("[0-9]*.sql"))
+        legacy = {version: MIGRATIONS / name for version, name in LEGACY_COLLISIONS.items()}
+        files = [path for path in candidates if path.name not in LEGACY_COLLISIONS.values()]
+        try:
+            versions = [int(path.name.split("_")[0]) for path in files]
+        except ValueError:
+            raise RuntimeError("Invalid migration source name") from None
+        if versions != list(range(1, EXPECTED_VERSION + 1)) or not all(p.is_file() for p in legacy.values()):
+            raise RuntimeError("Migration sources unavailable or ambiguous")
         connection = self._connect_admin()
         try:
             connection.execute("BEGIN")
@@ -218,7 +229,12 @@ class PostgresDatabase:
                 source = path.read_text(encoding="utf-8")
                 checksum = hashlib.sha256(source.encode()).hexdigest()
                 if version in applied:
-                    if applied[version] != checksum:
+                    allowed = {checksum}
+                    if version in legacy:
+                        allowed.add(
+                            hashlib.sha256(legacy[version].read_text(encoding="utf-8").encode()).hexdigest()
+                        )
+                    if applied[version] not in allowed:
                         raise RuntimeError("Applied migration checksum mismatch")
                     continue
                 connection.execute(source)

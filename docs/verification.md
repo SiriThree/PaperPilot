@@ -1170,3 +1170,13 @@ Windows / Python 3.12.6 / 新建隔离 PostgreSQL 16.15：
 - Ruff、154 个 Python 文件格式检查和 OpenAPI 一致性检查通过；测试客户端发出依赖弃用警告。
 
 限制：候选迁移尚未加入正式迁移链；角色与随机口令由测试夹具在临时容器中创建，不是生产密钥供应或轮换。`CandidateAuthAuditGuard` 是附加预检，尚未与 `AuthenticationBoundary` 完整组合，不能证明正式认证角色全部最小权限。系统审计白名单不能防止该专用身份伪造其允许范围内的事件，系统事件读取与权限、所有者完整权限、投递恢复及独立安全审查仍未完成。实际浏览器尚未同时使用 015、受限业务身份、真实 SQL 执行和审计；真实 SQL 默认关闭。Phase 6.7 不满足完整验收条件。
+
+## main 合并缺陷修复验证（2026-10-29）
+
+基于远端 main `5477655` 的独立工作区；原工作区未提交文件保留。Windows、Python 3.12、临时 PostgreSQL 16.15 容器，管理员仅用于隔离库准备和本次功能测试，不是最小权限验收。数据库只由测试夹具创建并清理自身资源，未连接现有业务库。
+
+- `python -m pytest backend/tests/test_parallel_migrations_postgres.py backend/tests/test_phase5a_persistent.py backend/tests/test_outbox_delivery.py backend/tests/data_contracts --data-contract-provider app.data.provider:build_harness -q -rs --tb=short`：71 通过、0 失败、0 跳过；包括空库、四类历史迁移账本、项目/论文/任务/outbox 保留、重启及共享契约。事先显式配置隔离测试库变量并启动独立容器。
+- `python -m pytest backend/tests/test_persistent_index.py -q -rs --tb=short`，设置 `PAPERPILOT_SECURITY_CURRENT_SOURCE=1`：10 通过；真实临时 PostgreSQL、受控 AI 模型响应，不是远程模型质量测试。
+- `python -m pytest backend/tests/test_real_ai_startup_isolated.py -q -rs --tb=short`：1 通过；显式注入本地模型配置并在临时进程生成测试专用模型版本标识，真实 RealAI 与本地嵌入推理、真实临时 PostgreSQL、Mock D；未调用远程聊天服务。
+- `python -m pytest backend/tests/ai_contracts backend/tests/test_dev_composition.py -q -rs --tb=short -k 'not test_symlink_and_cross_project_files_are_not_opened'`：71 通过、1 排除。完整组首次运行中该符号链接测试因 Windows 权限不足失败，未改测试或声称通过。
+- 本次修改的 9 个 Python 文件 Ruff 与格式检查通过；`python scripts/export_contracts.py --check` 通过。不同测试组存在重叠，不加总。真实 SQL 执行默认关闭，远程模型服务、正式部署及生产角色权限不属于本轮验收。

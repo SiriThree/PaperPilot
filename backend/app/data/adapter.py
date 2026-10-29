@@ -664,7 +664,7 @@ class PostgresData:
     def claim_job(self):
         scope_filter = " AND t.project_id=%s AND t.actor_id=%s" if self._claim_scope else ""
         row = self._one(
-            "SELECT t.task_id FROM tasks t WHERE (t.status='pending'"
+            "SELECT t.task_id, t.status, t.recovery_failures FROM tasks t WHERE (t.status='pending'"
             " OR (t.status='processing' AND EXISTS (SELECT 1 FROM task_attempts a"
             "     WHERE a.task_id=t.task_id AND a.status='processing'"
             "     AND a.lease_expires_at <= now())))"
