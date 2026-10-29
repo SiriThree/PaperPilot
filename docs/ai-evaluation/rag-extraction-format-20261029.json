@@ -346,5 +346,77 @@
     "openapi_check": "passed",
     "module_examples_check": "passed"
   },
-  "private_artifacts": "Provider responses, evidence text and source excerpts remain in the ignored .runtime/real-demo/rag-format-fix directory."
+  "private_artifacts": "Provider responses, evidence text and source excerpts remain in the ignored .runtime/real-demo/rag-format-fix directory.",
+  "synchronization": {
+    "main_commit": "a47679246a6c968c0bc4e32fc225717ebbfd30b8",
+    "merge_commit": "dce2375",
+    "reason": "Leader merged member D PR #12 during this fix; synchronized before final delivery.",
+    "tests": {
+      "default_backend": {
+        "passed": 620,
+        "skipped": 443,
+        "failed": 0
+      },
+      "postgres_data_contracts": {
+        "passed": 41
+      },
+      "frontend_build": "passed",
+      "lint": "passed",
+      "openapi_check": "passed",
+      "module_examples_check": "passed"
+    },
+    "browser": {
+      "task_id": "5a5a18ea-e651-4571-a8b1-5565d41ff170",
+      "status": "succeeded",
+      "attempts": 1,
+      "mock": false,
+      "fields": {
+        "research_question": {
+          "status": "pending_verification",
+          "text_chars": 75,
+          "pages": [
+            1
+          ]
+        },
+        "method": {
+          "status": "pending_verification",
+          "text_chars": 170,
+          "pages": [
+            1,
+            2,
+            3
+          ]
+        },
+        "results": {
+          "status": "pending_verification",
+          "text_chars": 120,
+          "pages": [
+            2,
+            5,
+            6
+          ]
+        },
+        "conclusion": {
+          "status": "pending_verification",
+          "text_chars": 76,
+          "pages": [
+            2,
+            8,
+            9
+          ]
+        },
+        "limitations": {
+          "status": "not_mentioned",
+          "text_chars": null,
+          "pages": []
+        }
+      },
+      "canonical_sources": true,
+      "persisted": true,
+      "reloaded_existing_evidence": true,
+      "citation_located": true,
+      "page_errors": [],
+      "screenshot": ".runtime/real-demo/rag-format-fix/rag-evidence.png"
+    }
+  }
 }

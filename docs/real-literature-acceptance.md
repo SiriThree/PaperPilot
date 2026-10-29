@@ -77,3 +77,5 @@
 - AI 契约 91 passed；默认后端 618 passed / 428 skipped / 0 failed；OpenAPI 和模块样例校验通过。
 
 实际页面截图在本机 `.runtime/real-demo/rag-format-fix/rag-evidence.png`。以上是实际模型与页面的开发验证，不能保证后续调用没有服务波动或每项陈述都被充分支持，内容仍待人工核验。
+
+交付前 leader 又合并了成员 D 的 PR #12，已同步 main `a476792`，合并提交为 `dce2375`。仅一处超时测试冲突，保留了两种检索入口的阻塞注入。合并后后端 **620 passed / 443 skipped / 0 failed**，真实 PostgreSQL DataPort **41 passed**，前端构建、全目录 lint、OpenAPI 和模块样例校验通过。重新启动合并后的服务，再次从网页提取 RAG，任务 `5a5a18ea-e651-4571-a8b1-5565d41ff170` 首次成功；原文引用、持久化、刷新后读取均通过，浏览器异常为 0。验证口径与同步前记录分别保留在机器记录中。
