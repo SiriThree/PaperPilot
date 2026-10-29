@@ -51,6 +51,8 @@ class LocalEmbeddings:
             raise AppError(503, "AI_EMBEDDING_UNAVAILABLE", "本地嵌入服务暂不可用") from None
         try:
             output, _ = await process.communicate(json.dumps(texts).encode())
+            if process.returncode != 0:
+                raise AppError(503, "AI_EMBEDDING_UNAVAILABLE", "本地嵌入进程未完成，请稍后重试")
             try:
                 vectors = json.loads(output)
                 if len(vectors) != len(texts):
