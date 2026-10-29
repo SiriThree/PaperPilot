@@ -32,6 +32,15 @@ BASELINES = {
     ],
     "index_recovery": ["001_initial.sql", "002_process_indexes.sql", "003_recovery.sql"],
     "index_only": ["001_initial.sql", "002_process_indexes.sql"],
+    "unified_7": [
+        "001_initial.sql",
+        "002_outbox_dead_letter.sql",
+        "003_authentication.sql",
+        "004_outbox_requeue.sql",
+        "005_auth_rate_limit.sql",
+        "006_audit_read_boundary.sql",
+        "007_reconcile_parallel_migrations.sql",
+    ],
 }
 
 
@@ -54,7 +63,7 @@ def assert_reconciled(db):
         assert [
             r["version"]
             for r in conn.execute("SELECT version FROM schema_migrations ORDER BY version").fetchall()
-        ] == list(range(1, 8))
+        ] == list(range(1, 9))
         assert conn.execute("SELECT to_regclass('public.auth_sessions') IS NOT NULL AS present").fetchone()[
             "present"
         ]

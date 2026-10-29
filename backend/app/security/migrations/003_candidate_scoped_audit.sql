@@ -15,7 +15,7 @@ REVOKE ALL ON paperpilot_audit.candidate_readers FROM PUBLIC;
 
 CREATE VIEW paperpilot_audit.candidate_project_events WITH (security_barrier = true) AS
 SELECT e.event_id, e.timestamp, e.request_id, e.actor_id, e.project_id, e.action,
-       e.resource_type, e.decision, e.execution_status, e.policy_id, e.duration_ms, e.mock
+       e.resource_type, e.decision, e.execution_status, e.policy_id, e.duration_ms, e.mock, e.details
 FROM public.audit_events e
 WHERE EXISTS (
     SELECT 1

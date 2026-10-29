@@ -29,6 +29,7 @@ from app.data.database import PostgresDatabase
 from app.data.settings import DataSettings
 from app.errors import AppError
 from app.schemas import (
+    AuditDetails,
     AuditEvent,
     AuditList,
     EvidenceField,
@@ -156,7 +157,7 @@ class PostgresData:
             ),
         )
 
-    def _outbox(self, action, *, ctx, resource_type, resource_id, execution_status="succeeded"):
+    def _outbox(self, action, *, ctx, resource_type, resource_id, execution_status="succeeded", details=None):
         self._db.execute(
             "INSERT INTO outbox_events(event_id, project_id, actor_id, request_id, payload)"
             " VALUES(%s,%s,%s,%s,%s::jsonb)",
@@ -174,6 +175,9 @@ class PostgresData:
                         "execution_status": execution_status,
                         "duration_ms": 0,
                         "mock": False,
+                        "details": (details or AuditDetails(resource_ids=[resource_id])).model_dump(
+                            mode="json"
+                        ),
                     }
                 ),
             ),
@@ -848,6 +852,15 @@ class PostgresData:
             resource_type="task",
             resource_id=job.task.task_id,
             execution_status="succeeded",
+            details=AuditDetails(
+                resource_ids=job.payload["paper_ids"][:50],
+                resource_name={
+                    "process": "PDF 解析与索引",
+                    "evidence": "论文证据提取",
+                    "answer": "文献问答",
+                    "draft": "报告草稿生成",
+                }[job.task.kind],
+            ),
         )
 
     def _commit_index(self, job, index):
@@ -1054,6 +1067,15 @@ class PostgresData:
             resource_type="task",
             resource_id=job.task.task_id,
             execution_status="failed",
+            details=AuditDetails(
+                resource_ids=job.payload["paper_ids"][:50],
+                resource_name={
+                    "process": "PDF 解析与索引",
+                    "evidence": "论文证据提取",
+                    "answer": "文献问答",
+                    "draft": "报告草稿生成",
+                }[job.task.kind],
+            ),
         )
 
     # ---- reports -----------------------------------------------------------
@@ -1253,7 +1275,7 @@ class PostgresData:
         self._db.execute(
             "INSERT INTO audit_events(event_id, timestamp, request_id, actor_id, project_id,"
             " action, resource_type, decision, execution_status, policy_id, duration_ms, mock,"
-            " event_fingerprint) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            " event_fingerprint, details) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)",
             (
                 event.event_id,
                 event.timestamp,
@@ -1268,6 +1290,7 @@ class PostgresData:
                 event.duration_ms,
                 event.mock,
                 digest,
+                event.details.model_dump_json() if event.details is not None else None,
             ),
         )
 
@@ -1306,7 +1329,7 @@ class PostgresData:
         total = self._one("SELECT count(*) AS total" + where, values)["total"]
         rows = self._rows(
             "SELECT event_id, timestamp, request_id, actor_id, project_id, action, resource_type,"
-            " decision, execution_status, policy_id, duration_ms, mock"
+            " decision, execution_status, policy_id, duration_ms, mock, details"
             + where
             + " ORDER BY timestamp DESC, event_id DESC LIMIT %s OFFSET %s",
             (*values, limit, offset),
@@ -1326,6 +1349,7 @@ class PostgresData:
                     execution_status=row["execution_status"],
                     duration_ms=row["duration_ms"],
                     mock=row["mock"],
+                    details=row["details"],
                 )
                 for row in rows
             ],

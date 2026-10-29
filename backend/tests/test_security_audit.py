@@ -175,13 +175,14 @@ def test_revocation_during_audit_or_execution_blocks_results(data, ctx, monkeypa
 
 
 @pytest.mark.parametrize("question,status", [(QUESTION, "allowed"), ("PRIVATE_QUESTION", "rejected")])
-def test_disabled_and_rejected_paths_are_audited_without_content(data, ctx, question, status):
+def test_disabled_and_rejected_paths_record_request_without_candidate_sql(data, ctx, question, status):
     result = asyncio.run(build_security(data).execute(ctx, question))
     recorded = events(data, ctx)
     assert (result.decision, result.execution_status) == (status, "not_executed")
     assert len(recorded) == 1 and recorded[0].execution_status == "not_executed"
     assert recorded[0].decision == status
-    assert question not in recorded[0].model_dump_json()
+    assert recorded[0].details.question == question
+    assert (recorded[0].details.sql is not None) == (status == "allowed")
 
 
 def test_policy_rejection_never_passes_sql_to_audit_or_executor(data, ctx):
