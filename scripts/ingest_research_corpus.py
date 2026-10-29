@@ -126,11 +126,20 @@ def import_corpus(args):
                     save_state(args.state, state)
                     raise RuntimeError(f"Task still pending for {key}; original task retained")
             pending = sum(e.get("status") != "succeeded" for e in entries.values())
+            threshold = getattr(args, "serialize_above_chunks", 0)
+            large_pending = threshold and any(
+                e.get("status") != "succeeded" and papers[k]["chunk_count"] >= threshold
+                for k, e in entries.items()
+            )
             for key, paper in papers.items():
                 if key in entries and "task_id" in entries[key]:
                     continue
                 # A saved ambiguous upload already occupies one queue slot.
                 if pending >= args.max_pending and key not in entries:
+                    break
+                if key not in entries and (
+                    large_pending or (threshold and paper["chunk_count"] >= threshold and pending)
+                ):
                     break
                 upload_key = f"real-literature-{catalog['version']}-{project['key']}-{key}"
                 path = args.pdf_dir / paper["filename"]
@@ -146,6 +155,8 @@ def import_corpus(args):
                     pending += 1
                 # Persist before POST: replay uses this same identity if the acknowledgement is lost.
                 save_state(args.state, state)
+                if threshold and paper["chunk_count"] >= threshold:
+                    large_pending = True
                 with path.open("rb") as stream:
                     upload = checked(
                         client.post(
@@ -184,9 +195,20 @@ def main():
     parser.add_argument("--watch", action="store_true")
     parser.add_argument("--expected-count", type=int, default=300)
     parser.add_argument("--max-pending", type=int, default=3)
+    parser.add_argument(
+        "--serialize-above-chunks",
+        type=int,
+        default=0,
+        help="Process a paper at/above this chunk count alone; zero disables",
+    )
     parser.add_argument("--wait-seconds", type=int, default=600)
     args = parser.parse_args()
-    if not 1 <= args.max_pending <= 8 or args.expected_count < 1 or args.wait_seconds < 1:
+    if (
+        not 1 <= args.max_pending <= 8
+        or args.expected_count < 1
+        or args.wait_seconds < 1
+        or args.serialize_above_chunks < 0
+    ):
         parser.error("Invalid queue size, count or timeout")
     args.state.parent.mkdir(parents=True, exist_ok=True)
     with args.state.with_suffix(".lock").open("w") as lock:

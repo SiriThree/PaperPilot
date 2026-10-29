@@ -191,6 +191,50 @@ def test_queue_bounds_pending_uploads(tmp_path, monkeypatch, scripts):
     assert len(uploads) == 3 and len(set(uploads)) == 3
 
 
+def test_large_paper_drains_queue_then_runs_alone(tmp_path, monkeypatch, scripts):
+    _, ingest = scripts
+    args = import_fixture(tmp_path, count=6)
+    args.max_pending = 8
+    args.serialize_above_chunks = 2
+    catalog = json.loads(args.catalog.read_text())
+    catalog["papers"][1]["chunk_count"] = 2
+    args.catalog.write_text(json.dumps(catalog))
+    outstanding, uploads = {}, []
+
+    def handler(request):
+        if request.url.path == "/api/v1/projects":
+            return project_response()
+        if request.method == "POST":
+            key = request.headers["Idempotency-Key"].rsplit("-", 1)[-1]
+            if key == "p1":
+                assert not outstanding
+            else:
+                assert "p1" not in outstanding
+            outstanding[key] = True
+            uploads.append(key)
+            return httpx.Response(
+                202, json={"paper": {"paper_id": key}, "task": {"task_id": key, "status": "pending"}}
+            )
+        key = request.url.path.rsplit("/", 1)[-1]
+        if "/tasks/" in request.url.path:
+            outstanding.pop(key)
+            return httpx.Response(200, json={"status": "succeeded", "error": None})
+        return httpx.Response(
+            200,
+            json={
+                "paper": {"status": "searchable"},
+                "sources": [
+                    {"paper_id": key, "chunk_id": f"{key}-{i}", "page_number": 1, "synthetic": False}
+                    for i in range(2 if key == "p1" else 1)
+                ],
+            },
+        )
+
+    mock_client(monkeypatch, ingest, handler)
+    result = ingest.import_corpus(args)
+    assert result["status"] == "complete" and uploads == ["p0", "p1", "p2", "p3", "p4", "p5"]
+
+
 @pytest.mark.parametrize("mutation", ["synthetic", "wrong_paper", "missing_chunk", "duplicate_chunk"])
 def test_import_requires_real_complete_sources(scripts, mutation):
     _, ingest = scripts

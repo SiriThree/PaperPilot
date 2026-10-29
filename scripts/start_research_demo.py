@@ -42,6 +42,11 @@ def main():
     parser.add_argument("--api-port", type=int, default=18801)
     parser.add_argument("--web-port", type=int, default=15174)
     parser.add_argument(
+        "--chunk-strategy", choices=["auto", "character-v1", "sentence-token-v2"], default="auto"
+    )
+    parser.add_argument("--chunk-tokens", type=int, default=384)
+    parser.add_argument("--chunk-token-overlap", type=int, default=48)
+    parser.add_argument(
         "--api-workers", type=int, default=1, help="Temporary import workers; use one for UI demos"
     )
     args = parser.parse_args()
@@ -91,6 +96,9 @@ def main():
         PAPERPILOT_AI_LOCAL_MODEL_DIR=model["model_dir"],
         PAPERPILOT_AI_EMBEDDING_REVISION=Path(model["model_dir"]).name,
         PAPERPILOT_AI_TIMEOUT_SECONDS="90",
+        PAPERPILOT_AI_CHUNK_STRATEGY=args.chunk_strategy,
+        PAPERPILOT_AI_CHUNK_TOKENS=str(args.chunk_tokens),
+        PAPERPILOT_AI_CHUNK_TOKEN_OVERLAP=str(args.chunk_token_overlap),
         PAPERPILOT_PROXY_TARGET=api_url,
     )
     commands = [
@@ -155,6 +163,9 @@ def main():
             "frontend_pid": children[2].pid,
             "stop_file": str(stop),
             "api_workers": args.api_workers,
+            "chunk_strategy": args.chunk_strategy,
+            "chunk_tokens": args.chunk_tokens,
+            "chunk_token_overlap": args.chunk_token_overlap,
         }
         (state / "preview.json").write_text(json.dumps(preview, indent=2) + "\n")
         print(json.dumps(preview), flush=True)

@@ -1,0 +1,8 @@
+{
+  "paper_count": 300,
+  "chunks": 19659,
+  "embeddings": 19659,
+  "process_indexes": 300,
+  "frozen_source_counts_unchanged": true,
+  "note": "Full original-PDF/hash/source-count checks passed in the baseline snapshot rerun; its strict import-only task check rejects additional interactive tasks. Existing interactive tasks are retained."
+}

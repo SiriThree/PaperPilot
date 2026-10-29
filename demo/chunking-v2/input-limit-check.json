@@ -1,0 +1,7 @@
+{
+  "http_status": 413,
+  "code": "AI_EMBEDDING_INPUT_LIMIT",
+  "query_characters": 800,
+  "scope": "2020-2022",
+  "note": "Real service rejects oversized embedding inputs before inference instead of silently truncating."
+}
