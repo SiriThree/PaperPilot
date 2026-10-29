@@ -281,7 +281,7 @@ def test_audit_preflight_rejects_view_exposing_system_events(audit_role):
         admin.execute(
             "CREATE OR REPLACE VIEW paperpilot_audit.project_events WITH (security_barrier=true) AS "
             "SELECT event_id,timestamp,request_id,actor_id,project_id,action,resource_type,decision,"
-            "execution_status,policy_id,duration_ms,mock FROM public.audit_events"
+            "execution_status,policy_id,duration_ms,mock,details FROM public.audit_events"
         )
     with psycopg.connect(**params) as conn:
         with pytest.raises(PermissionError, match="view verification"):

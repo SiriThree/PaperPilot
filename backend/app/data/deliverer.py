@@ -190,6 +190,7 @@ class OutboxDeliverer:
             execution_status=payload["execution_status"],
             duration_ms=payload["duration_ms"],
             mock=payload["mock"],
+            details=payload.get("details"),
         )
 
     def deliver_one(self, row):

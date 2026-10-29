@@ -61,7 +61,7 @@ def test_candidate_audit_isolation_and_binding_revocation(isolated_database):  #
         admin.execute(
             sql.SQL(
                 "GRANT SELECT (event_id,timestamp,request_id,actor_id,project_id,action,resource_type,"
-                "decision,execution_status,policy_id,duration_ms,mock) ON public.audit_events TO {}"
+                "decision,execution_status,policy_id,duration_ms,mock,details) ON public.audit_events TO {}"
             ).format(sql.Identifier(owner))
         )
         admin.execute(
