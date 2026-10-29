@@ -8,6 +8,7 @@ async function project(page: Page, papers = false) {
   await expect(page.getByRole('heading', { name: '文献工作台' })).toBeVisible()
   const id = new URL(page.url()).pathname.split('/')[2]!
   if (papers) for (const number of [1, 2]) {
+    await page.getByRole('button', { name: '导入文献', exact: true }).click()
     await page.getByLabel('选择 PDF 文件').setInputFiles({ name: `source-${number}.pdf`, mimeType: 'application/pdf', buffer: Buffer.from(`%PDF-1.4\nLinked fixture ${number}`) })
     await page.getByLabel('论文标题').fill(`联动文献 ${number}`)
     await page.getByRole('button', { name: '上传并模拟处理' }).click()
@@ -30,19 +31,19 @@ test('paper selection, answer citation and report snapshots share the same sourc
   await page.getByRole('button', { name: '添加来源到报告' }).click()
   await expect(page.getByText('该来源已在引用清单 [1] 中，未重复添加。')).toBeVisible()
   await page.getByRole('button', { name: '保存新版本' }).click()
+  await expect(page.getByRole('button', { name: '版本 1', exact: true })).toBeVisible()
   const saved = (await (await page.request.get(`/api/v1/projects/${id}/reports`)).json()).items[0]
   expect(saved.sources).toHaveLength(1)
   expect(saved.sources[0].chunk_id).toBe(second.chunk_id)
   expect(saved.sources[0].synthetic).toBe(true)
+  await page.getByRole('tab', { name: '问答', exact: true }).click()
   await page.getByRole('button', { name: '生成 Mock 回答' }).click()
   await page.getByRole('button', { name: '查看引用 [1]' }).click()
-  await expect(page.getByRole('dialog', { name: '引用来源 · 合成数据' })).toBeVisible()
-  await page.getByRole('button', { name: 'Close this dialog' }).click()
+  await expect(page.getByRole('dialog', { name: '引用来源 · 合成数据' })).not.toBeVisible()
   const first = (await (await page.request.get(`/api/v1/projects/${id}/papers/${papers[0].paper_id}`)).json()).sources[0]
   await expect(page.getByTestId('active-source')).toHaveAttribute('data-active-chunk', first.chunk_id)
   await expect(page.getByRole('button', { name: '选择文献 联动文献 1', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await expect(page.getByRole('button', { name: '查看引用 [1]' })).toHaveAttribute('aria-pressed', 'true')
-  await page.evaluate(() => window.scrollTo(0, document.querySelector('.research-flow')!.getBoundingClientRect().top + window.scrollY - 24))
   await page.screenshot({ path: '../output/connected-workspace/desktop-linked-reading.png', animations: 'disabled' })
 })
 
@@ -67,6 +68,7 @@ test('late source response cannot replace a later selected document', async ({ p
 test('project switch protects unsaved edits, then clears old project data after explicit discard', async ({ page }) => {
   const id = await project(page, true)
   await page.getByRole('link', { name: '研究', exact: true }).click()
+  await page.getByRole('tab', { name: '报告', exact: true }).click()
   await page.getByLabel('报告正文').fill('不能静默丢失的编辑')
   const switcher = page.getByRole('combobox', { name: '切换项目' })
   await switcher.press('ArrowDown')
@@ -80,16 +82,19 @@ test('project switch protects unsaved edits, then clears old project data after 
   await page.getByRole('option', { name: '文献研究演示项目', exact: true }).click()
   await page.getByRole('button', { name: '放弃未保存编辑并继续' }).click()
   await expect(page).not.toHaveURL(new RegExp(id))
+  await page.getByRole('tab', { name: '报告', exact: true }).click()
   await expect(page.getByLabel('报告正文')).toHaveValue('')
   await expect(page.getByRole('region', { name: '当前来源阅读区' })).not.toContainText('联动文献')
 })
 
 test('failed draft retains manual edits and the acknowledged saved version', async ({ page }) => {
-  const id = await project(page)
+  const id = await project(page, true)
   await page.getByRole('link', { name: '研究', exact: true }).click()
+  await page.getByRole('tab', { name: '报告', exact: true }).click()
   await page.getByLabel('报告正文').fill('原有正文')
   await page.getByRole('button', { name: '保存新版本' }).click()
   await expect(page.getByRole('button', { name: '版本 1', exact: true })).toBeVisible()
+  await page.getByRole('tab', { name: '报告', exact: true }).click()
   await page.getByLabel('报告正文').fill('生成失败也不能覆盖的手工编辑')
   // Inject a conforming failed-task response: Mock draft generation itself has no failure trigger.
   await page.route('**/tasks/*', async route => {
@@ -133,9 +138,9 @@ test('a missing cited chunk never highlights a different paragraph as its source
     if (task.result?.kind === 'answer') task.result.sources[0].chunk_id = '00000000-0000-4000-8000-000000000099'
     await route.fulfill({ response, json: task })
   })
+  await page.getByRole('tab', { name: '问答', exact: true }).click()
   await page.getByRole('button', { name: '生成 Mock 回答' }).click()
   await page.getByRole('button', { name: '查看引用 [1]' }).click()
-  await page.getByRole('button', { name: 'Close this dialog' }).click()
   await expect(page.getByRole('region', { name: '当前来源阅读区' })).toContainText('引用片段已不在当前文献中')
   await expect(page.getByTestId('active-source')).toHaveCount(0)
   await expect(page.getByRole('button', { name: '添加来源到报告' })).toHaveCount(0)
@@ -178,9 +183,14 @@ for (const width of [390, 1440]) {
     await expect(page.getByTestId('active-source')).toBeVisible()
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await page.screenshot({ path: `../output/connected-workspace/${width}-research.png`, fullPage: true })
-    await page.getByRole('tab', { name: '报告', exact: true }).focus()
-    await page.keyboard.press('Home')
-    await expect(page.getByRole('tab', { name: '问答', exact: true })).toHaveAttribute('aria-selected', 'true')
+    if (width > 900) {
+      await page.getByRole('tab', { name: '报告', exact: true }).focus()
+      await page.keyboard.press('Home')
+      await expect(page.getByRole('tab', { name: '问答', exact: true })).toHaveAttribute('aria-selected', 'true')
+    } else {
+      await page.getByRole('navigation', { name: '研究视图' }).getByRole('button', { name: '问答' }).click()
+      await expect(page.getByLabel('研究问题', { exact: true })).toBeVisible()
+    }
     await page.getByRole('link', { name: '查询与审计', exact: true }).click()
     await expect(page.getByRole('region', { name: '安全验证证据' })).toContainText('应用层测试通过（Mock）')
     await expect(page.getByRole('region', { name: '安全验证证据' })).toContainText('待 D 接入验收')

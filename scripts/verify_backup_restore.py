@@ -47,6 +47,8 @@ def docker():
         if shutil.which(candidate) or Path(candidate).exists():
             return candidate
     raise RuntimeError("docker executable not found; start Docker Desktop or adjust PATH")
+
+
 DUMP_PATH = ROOT / ".runtime" / "backup-acceptance.dump"
 
 
@@ -88,30 +90,58 @@ def main():
         )
         job = data.claim_job()
         result_sources = [
-            Source(citation_id="1", paper_id=paper.paper_id, chunk_id=uuid4(), page_number=3,
-                   excerpt="备份验收片段", synthetic=False)
+            Source(
+                citation_id="1",
+                paper_id=paper.paper_id,
+                chunk_id=uuid4(),
+                page_number=3,
+                excerpt="备份验收片段",
+                synthetic=False,
+            )
         ]
         from app.schemas import ProcessResult
 
         data.complete_job(job, ProcessResult(paper_id=paper.paper_id, sources=result_sources))
         data.save_report(
-            ctx, ReportSave(title="备份报告", research_question="备份问题", body="备份正文 [1]", sources=result_sources),
+            ctx,
+            ReportSave(
+                title="备份报告", research_question="备份问题", body="备份正文 [1]", sources=result_sources
+            ),
             "backup-report",
         )
         data.append_audit(
-            AuditEvent(event_id=uuid4(), timestamp=datetime.now(UTC), request_id=ctx.request_id,
-                       actor_id=owner.user_id, project_id=project.project_id, action="backup.probe",
-                       resource_type="probe", decision="allowed", execution_status="completed",
-                       duration_ms=1, mock=False)
+            AuditEvent(
+                event_id=uuid4(),
+                timestamp=datetime.now(UTC),
+                request_id=ctx.request_id,
+                actor_id=owner.user_id,
+                project_id=project.project_id,
+                action="backup.probe",
+                resource_type="probe",
+                decision="allowed",
+                execution_status="completed",
+                duration_ms=1,
+                mock=False,
+            )
         )
         before = business_snapshot(data, ctx)
-        tracked = ("project_papers", "chunks", "task_results", "report_versions",
-                   "audit_events", "outbox_events", "idempotency_records")
+        tracked = (
+            "project_papers",
+            "chunks",
+            "task_results",
+            "report_versions",
+            "audit_events",
+            "outbox_events",
+            "idempotency_records",
+        )
         counts_before = {table: count_of(database, table) for table in tracked}
-        record["checks"].append({
-            "name": "business_state_before_backup", "passed": True,
-            "detail": {**before, "row_counts": counts_before},
-        })
+        record["checks"].append(
+            {
+                "name": "business_state_before_backup",
+                "passed": True,
+                "detail": {**before, "row_counts": counts_before},
+            }
+        )
 
         # ---- dump inside the container, stream to the host ----
         DUMP_PATH.parent.mkdir(exist_ok=True)
@@ -119,18 +149,22 @@ def main():
         with DUMP_PATH.open("wb") as dump_file:
             result = subprocess.run(
                 [docker_path, "exec", CONTAINER, "pg_dump", "-U", "postgres", "-Fc", dbname],
-                stdout=dump_file, stderr=subprocess.PIPE,
+                stdout=dump_file,
+                stderr=subprocess.PIPE,
             )
         if result.returncode != 0:
             raise RuntimeError(
-                "pg_dump failed: " + result.stderr.decode(errors="replace")[:400]
+                "pg_dump failed: "
+                + result.stderr.decode(errors="replace")[:400]
                 + " (is the day0 container name correct?)"
             )
-        record["checks"].append({
-            "name": "pg_dump_custom_format",
-            "passed": DUMP_PATH.stat().st_size > 0,
-            "detail": {"bytes": DUMP_PATH.stat().st_size},
-        })
+        record["checks"].append(
+            {
+                "name": "pg_dump_custom_format",
+                "passed": DUMP_PATH.stat().st_size > 0,
+                "detail": {"bytes": DUMP_PATH.stat().st_size},
+            }
+        )
 
         # ---- destroy and restore into a fresh database ----
         with psycopg.connect(**admin.conninfo(), autocommit=True) as connection:
@@ -140,8 +174,18 @@ def main():
             connection.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(restore_db)))
         with DUMP_PATH.open("rb") as dump_file:
             result = subprocess.run(
-                [docker_path, "exec", "-i", CONTAINER, "pg_restore", "-U", "postgres",
-                 "--no-owner", "--dbname", restore_db],
+                [
+                    docker_path,
+                    "exec",
+                    "-i",
+                    CONTAINER,
+                    "pg_restore",
+                    "-U",
+                    "postgres",
+                    "--no-owner",
+                    "--dbname",
+                    restore_db,
+                ],
                 stdin=dump_file,
             )
         if result.returncode != 0:
@@ -150,8 +194,11 @@ def main():
 
         # ---- verify the restored database through the DataPort ----
         restored_config = ConnectionConfig(
-            host=config.host, port=config.port, user=config.user,
-            password=config.password, dbname=restore_db,
+            host=config.host,
+            port=config.port,
+            user=config.user,
+            password=config.password,
+            dbname=restore_db,
         )
         restored_database = PostgresDatabase(restored_config)
         try:
@@ -159,26 +206,39 @@ def main():
             restored = PostgresData(restored_database, DataSettings.from_env())
             after = business_snapshot(restored, ctx)
             match = after == before
-            record["checks"].append({"name": "business_state_identical_after_restore", "passed": match,
-                                     "detail": None if match else {"before": before, "after": after}})
+            record["checks"].append(
+                {
+                    "name": "business_state_identical_after_restore",
+                    "passed": match,
+                    "detail": None if match else {"before": before, "after": after},
+                }
+            )
 
             after_counts = {table: count_of(restored_database, table) for table in tracked}
-            record["checks"].append({
-                "name": "row_counts_identical_after_restore",
-                "passed": after_counts == counts_before,
-                "detail": {"before": counts_before, "after": after_counts},
-            })
+            record["checks"].append(
+                {
+                    "name": "row_counts_identical_after_restore",
+                    "passed": after_counts == counts_before,
+                    "detail": {"before": counts_before, "after": after_counts},
+                }
+            )
 
             # Idempotent replay after recovery returns the adopted paper/task.
             replay_paper, replay_task = restored.import_paper(
-                ctx, "备份验收论文", 2024, sha256(b"backup-acceptance").hexdigest(),
-                FileReference(f"{uuid4()}.pdf", uuid4(), project.project_id), "backup-import",
+                ctx,
+                "备份验收论文",
+                2024,
+                sha256(b"backup-acceptance").hexdigest(),
+                FileReference(f"{uuid4()}.pdf", uuid4(), project.project_id),
+                "backup-import",
             )
-            record["checks"].append({
-                "name": "idempotent_replay_after_restore",
-                "passed": str(replay_paper.paper_id) == before["paper_id"]
-                and replay_task.task_id == task.task_id,
-            })
+            record["checks"].append(
+                {
+                    "name": "idempotent_replay_after_restore",
+                    "passed": str(replay_paper.paper_id) == before["paper_id"]
+                    and replay_task.task_id == task.task_id,
+                }
+            )
 
             # Outbox rows survived and the deliverer still works on restored data.
             deliverer = build_deliverer(restored_config)
@@ -187,11 +247,13 @@ def main():
                 delivered = deliverer.run_once()
             finally:
                 deliverer.database.close()
-            record["checks"].append({
-                "name": "outbox_deliverable_after_restore",
-                "passed": delivered >= 1 and pending >= 1,
-                "detail": {"pending_before": pending, "delivered": delivered},
-            })
+            record["checks"].append(
+                {
+                    "name": "outbox_deliverable_after_restore",
+                    "passed": delivered >= 1 and pending >= 1,
+                    "detail": {"pending_before": pending, "delivered": delivered},
+                }
+            )
         finally:
             restored_database.close()
     finally:

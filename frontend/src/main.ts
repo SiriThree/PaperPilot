@@ -5,6 +5,7 @@ import './style.css'
 import './home-shell.css'
 import './business-workspace.css'
 import './research-security.css'
+import './affine-workspace.css'
 import App from './App.vue'
 import { router } from './router'
 

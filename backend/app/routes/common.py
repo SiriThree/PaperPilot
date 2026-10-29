@@ -29,3 +29,21 @@ def key(request: Request):
     if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", value):
         raise AppError(400, "INVALID_IDEMPOTENCY_KEY", "幂等键格式不正确")
     return value
+
+
+def project_reader(request: Request):
+    """Use explicitly registered isolated read pilot; never fall back after a failure."""
+    reader = request.app.state.scoped_business_reader
+    return reader if reader is not None else request.app.state.adapters.data
+
+
+def project_writer(request: Request, ctx):
+    """Select the bound pilot writer before performing any upload side effects."""
+    router = request.app.state.scoped_business_reader
+    return router.writer_for(ctx) if router is not None else request.app.state.adapters.data
+
+
+def project_report_writer(request: Request, ctx):
+    """Require a bound report writer whenever the isolated pilot is active."""
+    router = request.app.state.scoped_business_reader
+    return router.report_writer_for(ctx) if router is not None else request.app.state.adapters.data

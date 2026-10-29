@@ -5,6 +5,7 @@ import { formatError } from './api/errors'
 export const user = ref<Models['User'] | null>(null)
 export const projects = ref<Models['Project'][]>([])
 export const booting = ref(true)
+export const intendedRoute = ref('')
 export const health = ref<Models['Health'] | null>(null)
 export const persistentData = computed(() => !!health.value && health.value.modes.a !== 'mock')
 export const aiMock = computed(() => health.value?.modes.c === 'mock')

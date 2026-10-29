@@ -2,6 +2,8 @@
 
 本文件是冲突消解后的 PostgreSQL 16 逻辑模式，不是已执行的 DDL。共 24 张表，来源与决策见 [最终模型](03-resolved-model.md)。字段类型是迁移输入；C/D 待确认项仍按该文档列出的边界处理。
 
+2026-10-28 集成补充：本字典对应 `001_initial.sql` 基线，原迁移未修改。新增第 25 张表 `process_indexes`（process 结果与模型/维度/索引指纹的不可变提交关系），以及 tasks 的恢复计数和 outbox 的领取 token/租约/死信/重放字段；实际定义见 `002_process_indexes.sql` / `003_recovery.sql`，语义见[持久化索引](../persistent-index.md)及[有界恢复](../runtime-recovery.md)。
+
 ## 通用约定
 
 - `PK` 主键、`UQ` 完整唯一键、`FK` 外键。表内“可空”仅指 SQL NULL，空字符串与空列表另按现有 Schema/AB-1 判断。所有 PK 字段 NOT NULL。

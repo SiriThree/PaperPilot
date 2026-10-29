@@ -24,6 +24,8 @@ from app.schemas import (
     SearchResult,
     Source,
 )
+from app.adapters.data_rules import fingerprint
+from app.indexing import EmbeddingModel, IndexedChunk, ProcessIndex
 
 FIELDS = ("research_question", "method", "results", "conclusion", "limitations")
 INSTRUCTION = """You help researchers using ONLY the supplied source excerpts.
@@ -35,7 +37,11 @@ Write plain text without square brackets; the application renders citations itse
 If evidence does not answer the question, set insufficient_evidence=true and statements=[].
 For extraction use pending_verification only with text and supporting citations;
 otherwise use not_mentioned or insufficient_evidence with text=null and citation_ids=[].
-Synthetic sources are examples, never real research evidence. All output needs human review.
+Sources may describe explicitly fictional or simulated examples. You may accurately cite
+their stated methods and outcomes for testing, but every statement about such an example
+must explicitly say it is fictional or simulated, remain pending human verification, and
+never portray it as a real-world research result. Synthetic sources are examples, never
+real research evidence. All output needs human review.
 Respond in the question's language when applicable, strictly using the requested JSON schema.
 """
 
@@ -47,6 +53,8 @@ class RealAI:
         self.data, self.settings, self.reader = data, settings, reader
         self.client = client or ModelClient(settings)
         self.embedder = embedder
+        if callable(getattr(data, "indexed_vectors", None)) and settings.embedding_revision is None:
+            raise RuntimeError("Persistent embeddings require an explicit model revision; startup refused")
         if self.embedder is None and settings.embedding_backend == "fastembed":
             from app.ai.local_embeddings import LocalEmbeddings
 
@@ -103,10 +111,52 @@ class RealAI:
             ]
             return ProcessResult(paper_id=file.paper_id, sources=sources, mock=False)
 
-    def _corpus(self, ctx, query):
+    def _index_model(self):
+        if self.settings.embedding_revision is None:
+            raise AppError(503, "AI_INDEX_CONFIG", "持久化索引需要显式模型版本")
+        return EmbeddingModel(
+            provider=(
+                "fastembed"
+                if self.settings.embedding_backend == "fastembed"
+                else self.settings.embedding_base_url or self.settings.base_url
+            ),
+            model_name=self.settings.embedding_model,
+            revision=self.settings.embedding_revision,
+            dimensions=self.settings.embedding_dimensions,
+        )
+
+    async def process_indexed(self, ctx, task_id, file):
+        async with self._operation():
+            result = await self.process(ctx, task_id, file)
+            paper = await asyncio.to_thread(self.data.paper, ctx, file.paper_id)
+            model = self._index_model()
+            # Index versions have their own chunk IDs, preserving immutable historical citations.
+            version = fingerprint(model) + ":" + paper.title
+            result.sources = [
+                s.model_copy(update={"chunk_id": uuid5(s.chunk_id, version)}) for s in result.sources
+            ]
+            vectors = await (self.embedder or self.client).embed(
+                [f"{paper.title}\n{s.excerpt}" for s in result.sources]
+            )
+            index = ProcessIndex(
+                model=model,
+                chunks=[
+                    IndexedChunk(chunk_id=s.chunk_id, content=s.excerpt, vector=v)
+                    for s, v in zip(result.sources, vectors, strict=True)
+                ],
+            )
+            await asyncio.to_thread(self._authorize, ctx)
+            return result, index
+
+    def _corpus(self, ctx, query, paper_ids=None):
         self._authorize(ctx)
+        if paper_ids is not None:
+            for paper_id in paper_ids:
+                self.data.paper(ctx, paper_id)
         items = []
         for paper in self.data.papers(ctx, query.year_from, query.year_to):
+            if paper_ids is not None and paper.paper_id not in paper_ids:
+                continue
             if paper.project_id != ctx.project_id or paper.status != "searchable":
                 continue
             if query.year_from is not None and (paper.year is None or paper.year < query.year_from):
@@ -124,16 +174,31 @@ class RealAI:
         )
 
     async def search(self, ctx: Context, query: SearchRequest) -> SearchResult:
+        return await self._search(ctx, query)
+
+    async def search_scoped(self, ctx, query, paper_ids):
+        return await self._search(ctx, query, frozenset(paper_ids))
+
+    async def _search(self, ctx, query, paper_ids=None):
         async with self._operation():
-            corpus = await asyncio.to_thread(self._corpus, ctx, query)
+            corpus = await asyncio.to_thread(self._corpus, ctx, query, paper_ids)
             scores = []
             if corpus and query.query.strip():
                 documents = [f"{paper.title}\n{source.excerpt}" for paper, source in corpus]
                 lexical = bm25(query.query, documents) if query.mode != "semantic" else []
                 semantic = []
                 if query.mode != "keyword":
-                    vectors = await (self.embedder or self.client).embed([query.query, *documents])
-                    semantic = [sum(a * b for a, b in zip(vectors[0], v, strict=True)) for v in vectors[1:]]
+                    stored = getattr(self.data, "indexed_vectors", None)
+                    if callable(stored):
+                        sources = [
+                            s.model_copy(update={"citation_id": str(i)}) for i, (_, s) in enumerate(corpus)
+                        ]
+                        vectors = await asyncio.to_thread(stored, ctx, self._index_model(), sources)
+                        query_vector = (await (self.embedder or self.client).embed([query.query]))[0]
+                    else:
+                        embedded = await (self.embedder or self.client).embed([query.query, *documents])
+                        query_vector, vectors = embedded[0], embedded[1:]
+                    semantic = [sum(a * b for a, b in zip(query_vector, v, strict=True)) for v in vectors]
                 if query.mode == "keyword":
                     scores = [(i, lexical[i]) for i in rank(lexical)]
                 elif query.mode == "semantic":

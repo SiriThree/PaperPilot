@@ -5,7 +5,7 @@ from fastapi.responses import PlainTextResponse
 
 from app.auth import project_context
 from app.errors import AppError
-from app.routes.common import ERRORS, key
+from app.routes.common import ERRORS, key, project_reader, project_report_writer
 from app.schemas import (
     EvidenceList,
     QuestionRequest,
@@ -56,22 +56,23 @@ def draft(project_id: UUID, data: QuestionRequest, request: Request):
 @router.post("/reports", response_model=ReportVersion, status_code=201)
 def save_report(project_id: UUID, data: ReportSave, request: Request):
     ctx = project_context(request, project_id)
-    request.app.state.service.validate_sources(ctx, data.sources)
+    writer = project_report_writer(request, ctx)
+    request.app.state.service.validate_sources(ctx, data.sources, source_data=writer)
     request.app.state.service.audit(ctx, "report.save_requested", "report", execution_status="pending")
-    version = request.app.state.adapters.data.save_report(ctx, data, key(request))
+    version = writer.save_report(ctx, data, key(request))
     request.app.state.service.audit(ctx, "report.saved", "report")
     return version
 
 
 @router.get("/reports", response_model=VersionList)
 def reports(project_id: UUID, request: Request):
-    return VersionList(items=request.app.state.adapters.data.reports(project_context(request, project_id)))
+    return VersionList(items=project_reader(request).reports(project_context(request, project_id)))
 
 
 @router.get("/reports/{report_id}/versions", response_model=VersionList)
 def versions(project_id: UUID, report_id: UUID, request: Request):
     return VersionList(
-        items=request.app.state.adapters.data.versions(project_context(request, project_id), report_id)
+        items=project_reader(request).versions(project_context(request, project_id), report_id)
     )
 
 
@@ -81,7 +82,7 @@ def versions(project_id: UUID, report_id: UUID, request: Request):
     responses={200: {"content": {"text/plain": {"schema": {"type": "string"}}}}},
 )
 def export_report(project_id: UUID, report_id: UUID, version_id: UUID, request: Request):
-    versions = request.app.state.adapters.data.versions(project_context(request, project_id), report_id)
+    versions = project_reader(request).versions(project_context(request, project_id), report_id)
     version = next((v for v in versions if v.version_id == version_id), None)
     if not version:
         raise AppError(404, "RESOURCE_NOT_FOUND", "资源不存在或不可访问")

@@ -1,5 +1,43 @@
 # A/D 统计与受限执行接入约定（D 侧实现）
 
+## Phase 5D-3：B 侧受限执行器候选（待 A/D 审查）
+
+`backend/app/security/restricted_executor.py` 提供独立的单项目候选实现，**未注册到默认组合入口，也未获生产批准**。可信代码须显式传入专用 `RestrictedConnection`，异步执行 `ready()` 后才能调用 `candidate_security_factory(executor)` 并传给 `main.create_app(..., security_factory=...)`。数据库角色、项目绑定、视图内容和所有者必须由 A/D 提前审核；候选自己的权限预检不能证明这些配置整体可信。开发入口仍使用 D 默认策略工厂，维持 `allowed/not_executed`。
+
+候选接收 D 重建的三类参数化 QueryPlan 与可信 Context，检查完整计划及项目匹配；每次使用新连接、只读事务、PostgreSQL 本地 statement_timeout=3 秒和 5 秒总期限，完成或失败后关闭连接。角色预检拒绝超级用户、BYPASSRLS、建库建角色、角色成员关系、公共 schema 创建、数据库临时表或业务表读取等权限，并检查两个 security_barrier 视图权限；每次执行重新检查。此检查不验证视图定义的完整性、所有者可信性或登录与项目绑定的正确性，这些仍需 A/D 验证，不得将预检等同于生产安全认证。
+
+现有 D 计划限制 100 行，但不能知道恰好 100 行是否为截断；候选在返回 100 行时保守失败，最多返回 99 行。列与行的序列化预算 256 KiB，超出失败且不返回部分数据；该预算不含 HTTP 外层字段及编码开销，不能宣称整个响应严格小于 256 KiB。错误由现有 D 适配器归一化为 `QUERY_TIMEOUT` 或 `QUERY_EXECUTION_FAILED`，不新增公开字段。每次查询用独立连接而非连接池；`close()` 禁止后续使用，当前默认健康接口不会自动报告该候选独立 readiness，也不会自动接管候选关闭。接入生产前需由 A/D/B 确认注册、运行时健康和关闭管理。
+
+Windows 上 psycopg 异步连接不能使用默认 Proactor 循环；隔离测试显式选择 Selector 事件循环，默认应用组合尚未配置该循环，不能宣称 Windows 默认启动已可启用。候选执行器及视图部署、身份生命周期、额外 schema/授权、结果字节限制的真实库边界、与现有安全网关的生产集成均待联合审核。
+
+## Phase 5D-2 联合交付与验收检查表（2026-10-28）
+
+本节是接入准备，不授权启用 SQL，也不替 A/D 确认正式角色。代码入口：`backend/app/adapters/ports.py:SecurityPort`、`backend/app/security/adapter.py:SecurityAdapter/build_security`、`backend/app/security/sql_policy.py:QueryPlan`、`backend/app/adapters/factory.py:security_factory`、`backend/app/dev_composition.py:create_app`。B 从会话建立可信 `Context(user_id, project_id, request_id)`，只调用 `SecurityPort.execute(ctx, question)`；D 负责候选、AST、项目绑定、受限执行及关键审计。当前 `build_security(data)` 未注入执行器；不改变它的默认关闭行为。
+
+### 现有响应和审计边界
+
+| 阶段 | 当前代码语义 |
+|---|---|
+| 通过策略但未注册执行器 | `allowed/not_executed`、`QUERY_EXECUTION_DISABLED`，没有行 |
+| 不支持或被策略拒绝 | `rejected/not_executed`，脱敏原因，没有行 |
+| 执行依赖完成且关键审计确认 | `allowed/executed`、列与行；返回前重新检查成员关系 |
+| 依赖超时或其他异常 | `undetermined/failed`；当前仅分别映射 `QUERY_TIMEOUT` 或 `QUERY_EXECUTION_FAILED`，不返回行 |
+| 网关或关键审计异常 | `GATEWAY_UNAVAILABLE` 或 `AUDIT_UNAVAILABLE`；绝不回退到直接 SQL 或 Mock |
+
+D 的执行前 `security.query.prepared` 与执行后 `security.query.finished` 用可信 request_id 关联，event_id 各自独立。前审计未确认时不调用执行器；后审计未确认时不返回结果，但 SQL 可能已经执行，不得盲目重试。B 自己的请求审计和业务 outbox 不取代这两个门槛。取消后的清理及审计语义仍由 D/A 的实际执行器和持久化实现验证。
+
+`SecureQueryResult` 可表达决策、执行状态、结果和 reason，但没有截断、行数/字节预算命中等专门字段；`QueryExecutor` 当前只返回 `(columns, rows)`，D 适配器将非超时异常统一映射为 `QUERY_EXECUTION_FAILED`。若决定超限直接失败，可讨论通过现有 `reason.code` 表达，但需要 D 提供具体映射及测试，不是现成能力。若业务必须显示“成功但部分截断”或精确资源限制状态，先提出最小兼容的 Schema/OpenAPI/生成类型变更，获团队批准前不实施。现有计划中的 LIMIT 100 不证明能检测或表达截断。
+
+### 分层验收
+
+- **策略：** 允许的固定查询进入计划；非法结构、多语句及不支持的候选拒绝；检查 B 无绕过或 SQL 备用路径。单元测试不能证明数据库权限。
+- **执行器：** 在专用隔离库中使用真实受限连接验证正确结果、参数绑定、只读事务、超时、取消、连接复用清理、行数与响应字节限制；记录错误码、失败和未运行项。3 秒/100 行是现有目标，256 KiB 是待确认建议，均非已验收配置。
+- **数据库权限：** 用非管理员、非拥有者、无 BYPASSRLS 的统计登录验证仅可读取自身项目授权字段；验证跨项目、撤权、直接底表/审计访问及角色切换均不能越界。安全视图不是原生 RLS，实际采用方案由 A/D 决定。
+- **审计：** 前审计失败禁止执行；后审计失败不返回行；允许、拒绝、失败和取消对应事件关联 request_id，检查提交确认、失败、重启恢复与访问保护。不能用 B 业务审计或异步 outbox 代替 D 门槛。
+- **端到端：** 只有 A/D 明确受限执行器及隔离环境就绪后，B 才验证业务 API 与浏览器的执行、拒绝、失败和审计；注明 A/C/D 真实或 Mock 模式，记录实际命令与结果。
+
+**当前复现入口：** `./scripts/test-phase5a-isolated.ps1` 使用其专用临时容器验证 A PostgreSQL + D 策略关闭模式和浏览器状态；`python -m pytest backend/tests/test_security_audit.py backend/tests/test_security_gateway.py backend/tests/security_contracts backend/tests/test_dev_composition.py -q` 使用 Mock 数据及可控依赖验证策略/审计接缝；D 的 `test_security_postgres_contract.py` 须按下文显式隔离前置条件执行。前两者不能替代真实受限 SQL 验收。禁止指向未知数据库，禁止输出凭据或原始敏感 SQL。
+
 日期：2026-10-28。用户要求依据 A 的实现完成第二步后，D 侧已落地以下双视图、PostgreSQL/psycopg 参数和独立项目登录绑定，并在一次性 PostgreSQL 16 中与 A 的真实实现对照验证。文件名保留以兼容已有链接。本记录不冒充 A 的人工签字，不自动修改业务库或正式角色，也不启用应用 SQL 执行。
 
 ## 依据与边界
@@ -43,12 +81,16 @@ A 的业务 outbox 为独立异步投递，B 的 requested/finished 为业务日
 
 2026-10-28 已在 SecurityAdapter 落地上述门槛，事件为 security.query.prepared 与 security.query.finished；拒绝、默认关闭、故障和取消也有对应完成状态。审计确认失败返回脱敏 AUDIT_UNAVAILABLE，不执行或不返回结果，不自动重跑 SQL。A 的真实 append_audit 提交、回滚和 event_id 幂等已有独立 PostgreSQL 验证；正式最小权限审计写身份仍待部署。内部可控执行依赖仅用于验证，默认工厂没有 SQL 执行器。事件语义、复现和限制见 [任务 6 说明](member-d-audit.md)。
 
-## 4．后续结果与资源限制建议（尚未实现）
+## 4．结果与资源限制（已实现并在隔离库验证）
 
-- 已约定目标：数据库端 SQL 超时不超过 3 秒、最多 100 行。应用端同时处理超时/取消并清理数据库操作，不能仅超时返回而留下后台查询。
-- 建议响应序列化大小上限为 256 KiB，作为待确认的执行器配置；超过上限返回安全失败，不返回部分结果，不擅改公开 Schema。
+- 已实现数据库端 statement_timeout=3 秒、SQL LIMIT 100 与应用 3 秒等待预算；超时/取消发送数据库取消请求并等待工作线程关闭连接，不遗留供后续请求复用的会话。清理和审计耗时不等于 3 秒内响应保证。
+- 已实施完整响应序列化 UTF-8 大小硬上限 256 KiB，包含元数据；超过上限安全失败，不返回部分结果，不擅改公开 Schema。
 - columns/rows 只含批准字段与公开 Schema 的基础类型；UUID 等驱动对象在 D 边界转换，内部 SQL、异常正文与连接对象不得返回。
 - 只有执行完成且关键审计已确认才返回 allowed/executed；拒绝为 rejected/not_executed，真实执行故障为 undetermined/failed，网关不可用为脱敏 AppError。未接入时继续 not_executed，不降级 Mock。
+
+可信组合使用 build_security(data, readers=...) 启用 PostgresQueryExecutor，未配置时保持校验模式。身份/权限运行时检查、只读事务、驱动类型及错误代码见[执行器说明](member-d-executor.md)；共享 Provider、44+21 攻防与 A+D/A+C+D HTTP 组合见[验证记录](member-d-security-validation.md)。正式业务库安装、角色与审计写身份仍未部署。
+
+后续已补充可部署的身份/角色管理实现：独立审计绑定通过 A append_audit 追加并在提交前检查 ACL，管理工具负责登记身份开通/轮换/撤销；严格可信配置由 app.security.bootstrap 组合 A+D/A+C+D。见[身份说明](member-d-identities.md)和[启动说明](member-d-startup.md)。这些实现已在独立库验证，但仍未操作正式库。
 
 ## 5．隔离验证与复现
 
@@ -74,4 +116,4 @@ $env:PAPERPILOT_SECURITY_TEST_A_SOURCE=(Resolve-Path '.runtime/member-a-step2-re
 
 第二步的 D 侧统计/驱动/隔离约定已有代码与真实 PostgreSQL 对照证据，不再因没有 A 的人工评论而阻塞独立实现。正式部署时仍需 A/D 共同核对角色生命周期、视图所有者、审计写入身份和业务库安装窗口；未改 A 的原始迁移，未替团队批准生产部署。
 
-关键审计门槛已按顺序完成，见 [任务 6 说明](member-d-audit.md)。后续进入受限执行器和结果映射（配套 SecurityHarness）→ 真实受限身份 40+20 攻防 → A+D 再 A+C+D 联调。默认网关仍返回 allowed/not_executed；隔离测试中的执行依赖不代表应用受限执行器或资源限制验收完成。
+关键审计、受限执行器/结果映射、真实 SecurityHarness、44+21 攻防以及 A+D 再 A+C+D 本地 HTTP 组合已按顺序完成。默认不配置读取身份仍为 allowed/not_executed；显式可信配置后可以执行。实际验证边界和剩余联合部署事项见[验证记录](member-d-security-validation.md)，不将本地通过当成生产验收。

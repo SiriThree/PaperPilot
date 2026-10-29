@@ -1,0 +1,79 @@
+{
+  "schema_version": 2,
+  "scope": "postgres_security",
+  "environment": "隔离 PostgreSQL 16 · 真实 A/C/D · 本地模型替身",
+  "generated_at": "2026-10-28T15:38:46.865692+00:00",
+  "commit": "749c4f2dcab7eea0a117da4e8cd03ea9b2f696e3",
+  "worktree_dirty": true,
+  "code_fingerprint": "7307051e55743e5d74e647a7aefc7359aaa34c9efbee7746ed693468d80b5496",
+  "source": {
+    "verified": true,
+    "checkout": "current_checkout",
+    "postgres_versions": [
+      "160015"
+    ],
+    "image": "pgvector/pgvector@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a"
+  },
+  "python": "3.12.10",
+  "groups": [
+    {
+      "id": "sql_execution",
+      "label": "SQL 允许清单、受限执行及资源清理",
+      "status": "passed",
+      "passed": 146,
+      "failed": 0,
+      "skipped": 0,
+      "selectors": [
+        "backend/tests/test_security_executor_postgres.py"
+      ]
+    },
+    {
+      "id": "database_scope",
+      "label": "PostgreSQL 项目隔离与统计契约",
+      "status": "passed",
+      "passed": 27,
+      "failed": 0,
+      "skipped": 0,
+      "selectors": [
+        "backend/tests/test_security_postgres_contract.py"
+      ]
+    },
+    {
+      "id": "audit_identity",
+      "label": "关键审计、身份生命周期及业务降权",
+      "status": "passed",
+      "passed": 40,
+      "failed": 0,
+      "skipped": 0,
+      "selectors": [
+        "backend/tests/test_security_identities_postgres.py",
+        "backend/tests/test_business_login.py"
+      ]
+    },
+    {
+      "id": "recovery_integration",
+      "label": "持久化索引、任务恢复及 A/C/D 联调",
+      "status": "passed",
+      "passed": 28,
+      "failed": 0,
+      "skipped": 0,
+      "selectors": [
+        "backend/tests/test_persistent_index.py",
+        "backend/tests/test_runtime_recovery.py",
+        "backend/tests/test_security_team_integration.py",
+        "backend/tests/test_security_bootstrap_postgres.py"
+      ]
+    }
+  ],
+  "verification_totals": {
+    "passed": 759,
+    "failed": 0,
+    "skipped": 31
+  },
+  "junit_report": ".runtime/real-security-evidence-19078b433444.xml",
+  "not_verified": [
+    "生产认证与正式业务库部署未验收",
+    "外部模型质量、大规模性能及底表原生 RLS 未验收",
+    "这是离线代码快照记录，不证明当前运行服务具备相同配置"
+  ]
+}

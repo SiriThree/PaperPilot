@@ -7,7 +7,7 @@ or an explicit ConnectionConfig. Readiness and migrations stay outside the DataP
 import hashlib
 import threading
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from uuid import NAMESPACE_URL, uuid5
@@ -18,7 +18,12 @@ from psycopg.rows import dict_row
 from app.errors import AppError
 
 MIGRATIONS = Path(__file__).parent / "migrations"
-EXPECTED_VERSION = 1
+EXPECTED_VERSION = 7
+
+# Both files were released on a parallel branch under versions also used by
+# the authentication/outbox branch. Keep their original bytes as trusted
+# historical checksums; 007 reconciles their effects without rewriting history.
+LEGACY_COLLISIONS = {2: "002_process_indexes.sql", 3: "003_recovery.sql"}
 
 
 @dataclass(frozen=True)
@@ -26,7 +31,7 @@ class ConnectionConfig:
     host: str
     port: int
     user: str
-    password: str
+    password: str = field(repr=False)
     dbname: str
     connect_timeout: int = 10
 
@@ -45,7 +50,9 @@ class ConnectionConfig:
         import os
 
         environ = os.environ if env is None else env
-        password = environ.get("PAPERPILOT_DATA_PASSWORD", "")
+        from app.secret_config import secret_value
+
+        password = secret_value(environ, "PAPERPILOT_DATA_PASSWORD")
         dbname = environ.get("PAPERPILOT_DATA_DBNAME", "")
         if not password or not dbname:
             raise RuntimeError(
@@ -72,17 +79,36 @@ class PostgresDatabase:
         self._issued = 0
         self._pool_size = pool_size
         self._closed = False
+        self._transaction_guard = None
+
+    def set_transaction_guard(self, guard):
+        if not callable(guard) or self._transaction_guard is not None:
+            raise RuntimeError("Invalid or duplicate database transaction guard")
+        self._transaction_guard = guard
 
     def _acquire(self):
         with self._condition:
+            if self._closed:
+                raise AppError(503, "DATA_UNAVAILABLE", "数据存储已关闭")
             while not self._pool and self._issued >= self._pool_size:
+                self._condition.wait(timeout=5)
                 if self._closed:
                     raise AppError(503, "DATA_UNAVAILABLE", "数据存储已关闭")
-                self._condition.wait(timeout=5)
             if self._pool:
                 return self._pool.pop()
             self._issued += 1
-        return self._connect()
+        connection = self._connect()
+        with self._condition:
+            if self._closed:
+                self._issued -= 1
+                try:
+                    connection.close()
+                except psycopg.Error:
+                    pass
+                finally:
+                    self._condition.notify_all()
+                raise AppError(503, "DATA_UNAVAILABLE", "数据存储已关闭")
+        return connection
 
     def _connect(self):
         try:
@@ -107,6 +133,7 @@ class PostgresDatabase:
         """Drop a broken connection from the pool instead of reusing it."""
         with self._condition:
             self._issued -= 1
+            self._condition.notify_all()
         try:
             connection.close()
         except psycopg.Error:
@@ -116,19 +143,26 @@ class PostgresDatabase:
         with self._condition:
             self._closed = True
             idle, self._pool = self._pool, []
+            self._issued -= len(idle)
+            self._condition.notify_all()
             for connection in idle:
                 try:
                     connection.close()
                 except psycopg.Error:
                     pass
+
     @contextmanager
     def transaction(self, write=False):
         connection = self._acquire()
         broken = False
+        committing = False
         try:
             try:
                 connection.execute("BEGIN")
+                if self._transaction_guard is not None:
+                    self._transaction_guard(connection)
                 yield connection
+                committing = True
                 connection.commit()
             except psycopg.errors.IntegrityError as error:
                 # Constraint violations are definite rollbacks, including deferred ones at COMMIT.
@@ -137,11 +171,19 @@ class PostgresDatabase:
             except psycopg.Error as error:
                 known = _safe_rollback(connection)
                 broken = not known
+                if write and committing:
+                    # A successful rollback after a lost COMMIT acknowledgement does
+                    # not prove the preceding transaction failed to commit.
+                    broken = True
+                    raise AppError(503, "DATA_COMMIT_UNKNOWN", "提交结果待确认") from error
                 if known:
                     raise AppError(503, "DATA_UNAVAILABLE", "数据存储暂不可用") from error
                 raise AppError(503, "DATA_COMMIT_UNKNOWN", "提交结果待确认") from error
-            except Exception:
+            except Exception as error:
                 broken = not _safe_rollback(connection)
+                if write and committing:
+                    broken = True
+                    raise AppError(503, "DATA_COMMIT_UNKNOWN", "提交结果待确认") from error
                 raise
         finally:
             if broken:
@@ -150,9 +192,15 @@ class PostgresDatabase:
                 self._release(connection)
 
     def migrate(self):
-        files = sorted(MIGRATIONS.glob("[0-9]*.sql"))
-        if not files:
-            raise RuntimeError("Migration sources unavailable")
+        candidates = sorted(MIGRATIONS.glob("[0-9]*.sql"))
+        legacy = {version: MIGRATIONS / name for version, name in LEGACY_COLLISIONS.items()}
+        files = [path for path in candidates if path.name not in LEGACY_COLLISIONS.values()]
+        try:
+            versions = [int(path.name.split("_")[0]) for path in files]
+        except ValueError:
+            raise RuntimeError("Invalid migration source name") from None
+        if versions != list(range(1, EXPECTED_VERSION + 1)) or not all(p.is_file() for p in legacy.values()):
+            raise RuntimeError("Migration sources unavailable or ambiguous")
         connection = self._connect_admin()
         try:
             connection.execute("BEGIN")
@@ -181,7 +229,12 @@ class PostgresDatabase:
                 source = path.read_text(encoding="utf-8")
                 checksum = hashlib.sha256(source.encode()).hexdigest()
                 if version in applied:
-                    if applied[version] != checksum:
+                    allowed = {checksum}
+                    if version in legacy:
+                        allowed.add(
+                            hashlib.sha256(legacy[version].read_text(encoding="utf-8").encode()).hexdigest()
+                        )
+                    if applied[version] not in allowed:
                         raise RuntimeError("Applied migration checksum mismatch")
                     continue
                 connection.execute(source)

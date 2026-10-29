@@ -219,6 +219,26 @@ def test_same_request_id_does_not_deduplicate_distinct_attempts(data, ctx):
     assert len(events(data, ctx)) == 2
 
 
+def test_revocation_during_completion_audit_still_prevents_returning_rows(data, ctx, monkeypatch):
+    member = Context(seed_id("bob"), ctx.project_id, ctx.request_id)
+    append = data.append_audit
+
+    async def execute(*args):
+        return ["year", "count"], [{"year": 2024, "count": 1}]
+
+    def audit(event):
+        append(event)
+        if event.action == "security.query.finished":
+            data.remove_member(ctx, member.user_id)
+
+    monkeypatch.setattr(data, "append_audit", audit)
+    with pytest.raises(AppError) as error:
+        asyncio.run(SecurityAdapter(data, query_executor=execute).execute(member, QUESTION))
+    assert error.value.code == "RESOURCE_NOT_FOUND"
+    # The event describes actual SQL completion, not acknowledgment or result delivery.
+    assert [event.execution_status for event in events(data, ctx)] == ["pending", "executed"]
+
+
 @pytest.mark.parametrize("stage", ["prepared", "finished"])
 def test_http_business_audit_cannot_replace_d_gate(tmp_path, monkeypatch, stage):
     calls = 0
