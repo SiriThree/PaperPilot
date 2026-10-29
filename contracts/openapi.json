@@ -4907,6 +4907,58 @@
         ],
         "title": "AnswerResult"
       },
+      "AuditDetails": {
+        "properties": {
+          "question": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question"
+          },
+          "sql": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4096
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sql"
+          },
+          "resource_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Resource Ids"
+          },
+          "resource_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Name"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AuditDetails"
+      },
       "AuditEvent": {
         "properties": {
           "event_id": {
@@ -4984,6 +5036,16 @@
             "type": "boolean",
             "title": "Mock",
             "default": true
+          },
+          "details": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AuditDetails"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,

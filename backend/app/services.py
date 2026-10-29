@@ -10,6 +10,7 @@ from app.adapters.ports import Adapters
 from app.errors import AppError
 from app.schemas import (
     AnswerResult,
+    AuditDetails,
     AuditEvent,
     DraftResult,
     EvidenceResult,
@@ -40,6 +41,7 @@ class ResearchService:
         execution_status="completed",
         duration_ms=0,
         policy_id=None,
+        details=None,
     ):
         try:
             self.adapters.data.append_audit(
@@ -55,6 +57,7 @@ class ResearchService:
                     policy_id=policy_id,
                     execution_status=execution_status,
                     duration_ms=duration_ms,
+                    details=details,
                 )
             )
         except Exception:
@@ -201,9 +204,18 @@ class ResearchService:
         ids = question.paper_ids or [
             p.paper_id for p in self.adapters.data.papers(ctx) if p.status == "searchable"
         ]
-        for paper_id in ids:
-            self.adapters.data.paper(ctx, paper_id)
-        self.audit(ctx, f"{kind}.requested", kind, execution_status="pending")
+        papers = [self.adapters.data.paper(ctx, paper_id) for paper_id in ids]
+        self.audit(
+            ctx,
+            f"{kind}.requested",
+            kind,
+            execution_status="pending",
+            details=AuditDetails(
+                question=question.question,
+                resource_ids=ids[:50],
+                resource_name=papers[0].title if len(papers) == 1 else None,
+            ),
+        )
         try:
             return self.adapters.data.create_task(ctx, kind, {"question": question, "paper_ids": ids}, key)
         except AppError:
@@ -305,7 +317,12 @@ class ResearchService:
             else:
                 self.adapters.data.complete_indexed_job(job, result, index)
             committed = True
-            self.audit(ctx, f"{task.kind}.completed", task.kind)
+            self.audit(
+                ctx,
+                f"{task.kind}.completed",
+                task.kind,
+                details=AuditDetails(resource_ids=job.payload["paper_ids"][:50]),
+            )
         except AppError as exc:
             if committed:
                 # A's real transactional outbox must retain domain audit even when B's follow-up fails.
@@ -397,7 +414,8 @@ class ResearchService:
                     raise RuntimeError("audit boundary unavailable")
             except Exception:
                 raise AppError(503, "AUDIT_UNAVAILABLE", "审计安全配置不可用，未执行查询") from None
-        self.audit(ctx, "secure_query.requested", "secure_query", execution_status="pending")
+        details = AuditDetails(question=question)
+        self.audit(ctx, "secure_query.requested", "secure_query", execution_status="pending", details=details)
         start = perf_counter()
         try:
             result = SecureQueryResult.model_validate(await self.adapters.security.execute(ctx, question))
@@ -417,6 +435,7 @@ class ResearchService:
                 decision="undetermined",
                 execution_status="failed",
                 duration_ms=(perf_counter() - start) * 1000,
+                details=details,
             )
             raise
         except Exception:
@@ -427,6 +446,7 @@ class ResearchService:
                 decision="undetermined",
                 execution_status="failed",
                 duration_ms=(perf_counter() - start) * 1000,
+                details=details,
             )
             raise AppError(503, "GATEWAY_UNAVAILABLE", "安全网关不可用，未返回查询结果") from None
         self.audit(
@@ -437,5 +457,6 @@ class ResearchService:
             execution_status=result.execution_status,
             policy_id=result.policy_id,
             duration_ms=(perf_counter() - start) * 1000,
+            details=details,
         )
         return result

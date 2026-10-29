@@ -9,7 +9,7 @@ import hashlib
 
 from psycopg.rows import tuple_row
 
-_VIEW_SHA256 = "3a1797e77f4e98840dc44db5e6c3d983c9df65173ee3b202ba0a4d8ab230e309"
+_VIEW_SHA256 = "24fe693b5ae09a11fb4f157f28eb87dc648bd700b0fd173015efaa3fabedb287"
 _FUNCTION_BODY = "\n    SELECT event_fingerprint FROM public.audit_events WHERE event_id = requested_event\n"
 
 

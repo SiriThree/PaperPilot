@@ -7,6 +7,7 @@ from app.auth import project_context
 from app.errors import AppError
 from app.routes.common import ERRORS, key, project_reader, project_report_writer
 from app.schemas import (
+    AuditDetails,
     EvidenceList,
     QuestionRequest,
     ReportSave,
@@ -58,9 +59,24 @@ def save_report(project_id: UUID, data: ReportSave, request: Request):
     ctx = project_context(request, project_id)
     writer = project_report_writer(request, ctx)
     request.app.state.service.validate_sources(ctx, data.sources, source_data=writer)
-    request.app.state.service.audit(ctx, "report.save_requested", "report", execution_status="pending")
+    request.app.state.service.audit(
+        ctx,
+        "report.save_requested",
+        "report",
+        execution_status="pending",
+        details=AuditDetails(
+            resource_name=data.title, resource_ids=[data.report_id] if data.report_id else []
+        ),
+    )
     version = writer.save_report(ctx, data, key(request))
-    request.app.state.service.audit(ctx, "report.saved", "report")
+    request.app.state.service.audit(
+        ctx,
+        "report.saved",
+        "report",
+        details=AuditDetails(
+            resource_ids=[version.report_id, version.version_id], resource_name=version.title
+        ),
+    )
     return version
 
 
@@ -86,6 +102,12 @@ def export_report(project_id: UUID, report_id: UUID, version_id: UUID, request: 
     version = next((v for v in versions if v.version_id == version_id), None)
     if not version:
         raise AppError(404, "RESOURCE_NOT_FOUND", "资源不存在或不可访问")
+    request.app.state.service.audit(
+        project_context(request, project_id),
+        "report.exported",
+        "report",
+        details=AuditDetails(resource_ids=[report_id, version_id], resource_name=version.title),
+    )
     return PlainTextResponse(
         version.body, headers={"Content-Disposition": 'attachment; filename="report.txt"'}
     )

@@ -10,7 +10,7 @@ from pydantic import ValidationError
 
 from app.adapters.ports import Context, DataPort, ProjectRole, SecurityPort
 from app.errors import AppError
-from app.schemas import AuditEvent, QueryReason, SecureQueryRequest, SecureQueryResult
+from app.schemas import AuditDetails, AuditEvent, QueryReason, SecureQueryRequest, SecureQueryResult
 from app.security.executor import MAX_RESPONSE_BYTES, QueryResultLimit, QueryUnavailable, ReaderConfig
 from app.security.sql_policy import (
     CandidateGenerator,
@@ -48,7 +48,9 @@ class SecurityAdapter:
         self._query_executor = query_executor
         self._audit_append = audit_append
 
-    def _audit(self, ctx: Context, action: str, decision: str, status: str, start: float) -> None:
+    def _audit(
+        self, ctx: Context, action: str, decision: str, status: str, start: float, details=None
+    ) -> None:
         try:
             (self._audit_append if self._audit_append is not None else self.data.append_audit)(
                 AuditEvent(
@@ -64,6 +66,7 @@ class SecurityAdapter:
                     execution_status=status,
                     duration_ms=(perf_counter() - start) * 1000,
                     mock=False,
+                    details=details,
                 )
             )
         except Exception:
@@ -102,24 +105,27 @@ class SecurityAdapter:
         except ValidationError:
             raise AppError(422, "VALIDATION_ERROR", "请求格式或字段值不符合契约") from None
         start = perf_counter()
+        details = AuditDetails(question=question)
         try:
-            result = await self._query(ctx, question, start)
+            result = await self._query(ctx, question, start, details)
         except asyncio.CancelledError:
             try:
-                self._audit(ctx, "security.query.finished", "undetermined", "cancelled", start)
+                self._audit(ctx, "security.query.finished", "undetermined", "cancelled", start, details)
             except AppError:
                 pass  # Preserve cancellation even when its audit cannot be confirmed.
             raise
         except AppError as error:
             if error.code != "AUDIT_UNAVAILABLE":
-                self._audit(ctx, "security.query.finished", "undetermined", "failed", start)
+                self._audit(ctx, "security.query.finished", "undetermined", "failed", start, details)
             raise
-        self._audit(ctx, "security.query.finished", result.decision, result.execution_status, start)
+        self._audit(ctx, "security.query.finished", result.decision, result.execution_status, start, details)
         if result.execution_status == "executed":
             self._project_role(ctx)
         return result
 
-    async def _query(self, ctx: Context, question: str, start: float) -> SecureQueryResult:
+    async def _query(
+        self, ctx: Context, question: str, start: float, details: AuditDetails
+    ) -> SecureQueryResult:
         try:
             candidate = await self._candidate_generator(ctx, question)
         except Exception:
@@ -136,9 +142,11 @@ class SecurityAdapter:
             except Exception:
                 raise AppError(503, "GATEWAY_UNAVAILABLE", "安全网关不可用，未执行查询") from None
             else:
+                # Only the trusted, rebuilt parameterized plan reaches audit; never raw candidates.
+                details.sql = plan.sql
                 decision = "allowed"
                 if self._query_executor is not None:
-                    self._audit(ctx, "security.query.prepared", "allowed", "pending", start)
+                    self._audit(ctx, "security.query.prepared", "allowed", "pending", start, details)
                     self._project_role(ctx)
                     try:
                         columns, rows = await self._query_executor(ctx, plan)

@@ -8,7 +8,7 @@ from app.adapters.ports import FileReference
 from app.auth import project_context
 from app.errors import AppError
 from app.routes.common import ERRORS, key, project_reader, project_writer
-from app.schemas import Acknowledgement, PaperDetail, PaperList, Task, UploadResult
+from app.schemas import Acknowledgement, AuditDetails, PaperDetail, PaperList, Task, UploadResult
 
 router = APIRouter(prefix="/api/v1/projects/{project_id}", tags=["literature"], responses=ERRORS)
 
@@ -70,7 +70,13 @@ async def upload_paper(
     if not payload.startswith(b"%PDF-"):
         raise AppError(415, "UNSUPPORTED_FILE", "仅接受 PDF 文件；Mock 不执行真实正文解析")
     ident = key(request)
-    request.app.state.service.audit(ctx, "paper.import_requested", "paper", execution_status="pending")
+    request.app.state.service.audit(
+        ctx,
+        "paper.import_requested",
+        "paper",
+        execution_status="pending",
+        details=AuditDetails(resource_name=title),
+    )
     paper_id = uuid4()
     root = request.app.state.settings.storage_dir
     storage_key = f"{paper_id}.pdf"
@@ -105,20 +111,29 @@ async def upload_paper(
         raise AppError(503, "DATA_COMMIT_UNKNOWN", "数据提交状态待确认，请使用原幂等键重试") from None
     if paper.paper_id != paper_id:
         cleanup_unadopted(path, request)
+    request.app.state.service.audit(
+        ctx,
+        "paper.imported",
+        "paper",
+        details=AuditDetails(resource_ids=[paper.paper_id], resource_name=paper.title),
+    )
     return UploadResult(paper=paper, task=task)
 
 
 @router.delete("/papers/{paper_id}", response_model=Acknowledgement)
 def remove_paper(project_id: UUID, paper_id: UUID, request: Request, confirm_source_impact: bool = False):
     ctx = project_context(request, project_id, "paper.remove")
-    request.app.state.adapters.data.paper(ctx, paper_id)
+    paper = request.app.state.adapters.data.paper(ctx, paper_id)
     if not confirm_source_impact:
         raise AppError(
             409, "SOURCE_IMPACT_CONFIRMATION_REQUIRED", "移出后不再参与检索；历史报告保留来源快照，请确认影响"
         )
-    request.app.state.service.audit(ctx, "paper.remove_requested", "paper", execution_status="pending")
+    details = AuditDetails(resource_ids=[paper_id], resource_name=paper.title)
+    request.app.state.service.audit(
+        ctx, "paper.remove_requested", "paper", execution_status="pending", details=details
+    )
     request.app.state.adapters.data.remove_paper(ctx, paper_id)
-    request.app.state.service.audit(ctx, "paper.removed", "paper")
+    request.app.state.service.audit(ctx, "paper.removed", "paper", details=details)
     return Acknowledgement(message="已移出项目；历史报告快照仍受项目权限控制")
 
 
@@ -137,5 +152,11 @@ def task_status(project_id: UUID, task_id: UUID, request: Request):
 @router.post("/tasks/{task_id}/retry", response_model=Task, status_code=202)
 def retry_task(project_id: UUID, task_id: UUID, request: Request):
     ctx = project_context(request, project_id)
-    request.app.state.service.audit(ctx, "task.retry_requested", "task", execution_status="pending")
+    request.app.state.service.audit(
+        ctx,
+        "task.retry_requested",
+        "task",
+        execution_status="pending",
+        details=AuditDetails(resource_ids=[task_id]),
+    )
     return request.app.state.adapters.data.retry_task(ctx, task_id)
