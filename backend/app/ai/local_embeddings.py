@@ -27,8 +27,19 @@ class LocalEmbeddings:
         except Exception:
             raise RuntimeError("Local embedding model/dependencies not prepared; startup refused") from None
         self.settings, self.root = settings, root
+        self.token_budget = None
+        if settings.active_chunk_strategy == "sentence-token-v2":
+            from app.ai.token_budget import TokenBudget
+
+            self.token_budget = TokenBudget(root)
 
     async def embed(self, texts):
+        if self.token_budget is not None:
+            for text in texts:
+                if self.token_budget.count(text) > self.token_budget.max_tokens:
+                    raise AppError(
+                        413, "AI_EMBEDDING_INPUT_LIMIT", "嵌入输入超过模型 token 上限，请缩小输入范围"
+                    )
         try:
             process = await asyncio.create_subprocess_exec(
                 sys.executable,

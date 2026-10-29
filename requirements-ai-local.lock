@@ -14,6 +14,7 @@ onnxruntime==1.31.1
 pillow==13.0.0
 protobuf==7.36.2
 py-rust-stemmers==0.1.8
+pysbd==0.3.4
 pyyaml==6.0.3
 requests==2.34.2
 tokenizers==0.23.3

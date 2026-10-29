@@ -21,6 +21,7 @@ def test_killed_local_process_is_unavailable_instead_of_malformed_model_json(mon
     monkeypatch.setattr(asyncio, "create_subprocess_exec", spawn)
     embedder = LocalEmbeddings.__new__(LocalEmbeddings)
     embedder.root = Path("/isolated-fixture")
+    embedder.token_budget = None
     embedder.settings = SimpleNamespace(embedding_model="fixture", embedding_dimensions=3)
     with pytest.raises(AppError) as exc:
         asyncio.run(embedder.embed(["fixture input"]))

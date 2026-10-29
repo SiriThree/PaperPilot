@@ -25,6 +25,15 @@ class AISettings:
     token_limit_parameter: str = "max_tokens"
     response_format: str = "json_schema"
     embedding_revision: str | None = None
+    chunk_strategy: str = "auto"
+    chunk_tokens: int = 384
+    chunk_token_overlap: int = 48
+
+    @property
+    def active_chunk_strategy(self):
+        if self.chunk_strategy == "auto":
+            return "sentence-token-v2" if self.embedding_backend == "fastembed" else "character-v1"
+        return self.chunk_strategy
 
     def __post_init__(self):
         if self.embedding_revision is not None and (
@@ -56,6 +65,16 @@ class AISettings:
             raise ValueError("AI operation timeout must be between 0 and 90 seconds")
         if not 200 <= self.chunk_chars <= 4000 or not 0 <= self.chunk_overlap < self.chunk_chars:
             raise ValueError("Invalid AI chunk size/overlap")
+        if self.chunk_strategy not in {"auto", "character-v1", "sentence-token-v2"}:
+            raise ValueError("Unsupported AI chunk strategy")
+        if (
+            type(self.chunk_tokens) is not int
+            or type(self.chunk_token_overlap) is not int
+            or not (32 <= self.chunk_tokens <= 16384 and 0 <= self.chunk_token_overlap < self.chunk_tokens)
+        ):
+            raise ValueError("Invalid AI chunk token budget/overlap")
+        if self.active_chunk_strategy == "sentence-token-v2" and self.embedding_backend != "fastembed":
+            raise ValueError("Sentence token chunking requires the prepared local embedding tokenizer")
         if not 1 <= self.max_candidates <= 10000 or not 4000 <= self.max_context_chars <= 200000:
             raise ValueError("Invalid AI corpus/context budget")
         if not math.isfinite(self.min_similarity) or not -1 <= self.min_similarity <= 1:
@@ -85,6 +104,9 @@ class AISettings:
                 embedding_model=os.environ["PAPERPILOT_AI_EMBEDDING_MODEL"],
                 embedding_dimensions=int(os.environ["PAPERPILOT_AI_EMBEDDING_DIMENSIONS"]),
                 embedding_revision=os.getenv("PAPERPILOT_AI_EMBEDDING_REVISION") or None,
+                chunk_strategy=os.getenv("PAPERPILOT_AI_CHUNK_STRATEGY", "auto"),
+                chunk_tokens=int(os.getenv("PAPERPILOT_AI_CHUNK_TOKENS", "384")),
+                chunk_token_overlap=int(os.getenv("PAPERPILOT_AI_CHUNK_TOKEN_OVERLAP", "48")),
                 timeout_seconds=float(os.getenv("PAPERPILOT_AI_TIMEOUT_SECONDS", "45")),
                 min_similarity=float(os.getenv("PAPERPILOT_AI_MIN_SIMILARITY", "0.2")),
                 embedding_backend=os.getenv("PAPERPILOT_AI_EMBEDDING_BACKEND", "remote"),

@@ -79,6 +79,17 @@ class RealAI:
         self, data: DataPort, settings: AISettings, *, reader: LocalPDFReader, client=None, embedder=None
     ):
         self.data, self.settings, self.reader = data, settings, reader
+        if settings.active_chunk_strategy == "sentence-token-v2":
+            try:
+                from app.ai.chunking import SentenceTokenChunker
+
+                SentenceTokenChunker(
+                    settings.local_model_dir, settings.chunk_tokens, settings.chunk_token_overlap
+                )
+            except Exception:
+                raise RuntimeError(
+                    "Prepared sentence tokenizer/chunk budget unavailable; startup refused"
+                ) from None
         self.client = client or ModelClient(settings)
         self.embedder = embedder
         if callable(getattr(data, "indexed_vectors", None)) and settings.embedding_revision is None:
@@ -118,7 +129,11 @@ class RealAI:
             paper = await asyncio.to_thread(self.data.paper, ctx, file.paper_id)
             if paper.project_id != ctx.project_id:
                 raise AppError(404, "RESOURCE_NOT_FOUND", "资源不存在或不可访问")
-            chunks = await self.reader.chunks(file, self.settings)
+            chunks = (
+                await self.reader.chunks(file, self.settings, title=paper.title)
+                if self.settings.active_chunk_strategy == "sentence-token-v2"
+                else await self.reader.chunks(file, self.settings)
+            )
             sources = [
                 Source(
                     citation_id=str(i + 1),
@@ -126,7 +141,7 @@ class RealAI:
                     chunk_id=uuid5(
                         file.paper_id,
                         (
-                            f"pdf-v1:{self.settings.chunk_chars}:{self.settings.chunk_overlap}:"
+                            f"{chunk.get('policy_id', f'pdf-v1:{self.settings.chunk_chars}:{self.settings.chunk_overlap}')}:"
                             f"{chunk['page_number']}:{chunk['offset']}:"
                             f"{sha256(chunk['excerpt'].encode()).hexdigest()}"
                         ),
