@@ -64,7 +64,7 @@ const writeHeaders = (key: string = crypto.randomUUID()) => ({ 'Idempotency-Key'
 export const api = {
   health: () => client.GET('/api/v1/health').then(healthResult).catch(normalizeError),
   me: () => client.GET('/api/v1/auth/me').then(unwrap).catch(normalizeError),
-  login: (username: string) => client.POST('/api/v1/auth/login', { params: { header: clientHeader }, body: { username } }).then(unwrap).catch(normalizeError),
+  login: (username: string, password?: string) => client.POST('/api/v1/auth/login', { params: { header: clientHeader }, body: { username, ...(password === undefined ? {} : { password }) } }).then(unwrap).catch(normalizeError),
   logout: () => client.POST('/api/v1/auth/logout', { params: { header: clientHeader } }).then(unwrap).catch(normalizeError),
   projects: () => client.GET('/api/v1/projects').then(unwrap).catch(normalizeError),
   createProject: (name: string) => client.POST('/api/v1/projects', { params: { header: clientHeader }, body: { name, description: '' } }).then(unwrap).catch(normalizeError),

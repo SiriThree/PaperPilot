@@ -1185,6 +1185,9 @@ class PostgresData:
 
     @operation(write=True)
     def append_audit(self, event):
+        self._append_audit(event)
+
+    def _append_audit(self, event):
         if event.timestamp.tzinfo is None:
             raise invalid()
         digest = fingerprint(event)

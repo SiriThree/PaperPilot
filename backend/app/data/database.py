@@ -45,7 +45,12 @@ class ConnectionConfig:
         import os
 
         environ = os.environ if env is None else env
-        password = environ.get("PAPERPILOT_DATA_PASSWORD", "")
+        from app.secrets import read_secret
+
+        try:
+            password = read_secret("PAPERPILOT_DATA_PASSWORD", environ)
+        except ValueError:
+            password = ""
         dbname = environ.get("PAPERPILOT_DATA_DBNAME", "")
         if not password or not dbname:
             raise RuntimeError(

@@ -8,6 +8,11 @@ export class ApiError extends Error {
 const messages: Record<string, string> = {
   UNAUTHENTICATED: '请重新登录后继续操作',
   INVALID_IDENTITY: '开发演示账户不存在',
+  INVALID_CREDENTIALS: '账户名或密码不正确',
+  LOGIN_RATE_LIMIT: '登录尝试过多，请稍后重试',
+  AUTH_BUSY: '登录繁忙，请稍后重试',
+  HTTPS_REQUIRED: '密码登录需要使用 HTTPS 地址',
+  PASSWORD_AUTH_DISABLED: '当前为演示登录，请勿提交真实密码',
   OWNER_REQUIRED: '此操作需要项目负责人权限',
   RESOURCE_NOT_FOUND: '资源不存在或不可访问',
   VALIDATION_ERROR: '请求字段或筛选条件不正确，请检查后重试',

@@ -12,9 +12,11 @@ from app.security.settings import SecuritySettings
 
 
 def create_app():
-    data_binding = audit_binding = None
+    data_binding = audit_binding = auth_sessions = None
 
     def close_resources():
+        if auth_sessions is not None:
+            auth_sessions.close()
         try:
             if audit_binding is not None:
                 audit_binding.close()
@@ -35,6 +37,27 @@ def create_app():
 
         data_config = ConnectionConfig.from_env()
         audit_config, readers = configuration.resolve(data_config)
+        if settings.auth_mode == "password":
+            from dataclasses import replace
+            import os
+            from app.accounts import PasswordSessions
+            from app.secrets import read_secret
+
+            auth_user, auth_password = (
+                os.environ["PAPERPILOT_AUTH_USER"],
+                read_secret("PAPERPILOT_AUTH_PASSWORD"),
+            )
+            if auth_user in {
+                data_config.user,
+                audit_config.user,
+                *(r.user for r in readers.values()),
+            } or auth_password in {
+                data_config.password,
+                audit_config.password,
+                *(r.password for r in readers.values()),
+            }:
+                raise ValueError("Authentication identity must be independent")
+            auth_sessions = PasswordSessions(replace(data_config, user=auth_user, password=auth_password))
         data_binding = compose_data_binding(data_config, DataSettings.from_env())
         audit_binding = compose_audit(audit_config)
         # Readiness checks inspect identity/ACL metadata, never run an unaudited statistics query.
@@ -56,8 +79,12 @@ def create_app():
         if settings.c_mode == "real":
             from app.ai.bootstrap import create_app as create_real_c_app
 
-            return create_real_c_app(settings, data_binding=binding, security_factory=security_factory)
-        return create_business_app(settings, data_binding=binding, security_factory=security_factory)
+            return create_real_c_app(
+                settings, data_binding=binding, security_factory=security_factory, auth_sessions=auth_sessions
+            )
+        return create_business_app(
+            settings, data_binding=binding, security_factory=security_factory, auth_sessions=auth_sessions
+        )
     except Exception:
         try:
             close_resources()

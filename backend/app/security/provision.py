@@ -6,8 +6,11 @@ from uuid import UUID
 
 
 def _name(role):
-    if not isinstance(role, str) or re.fullmatch(r"pp_(reader|audit|business)_[a-z0-9_]{1,48}", role) is None:
-        raise ValueError("Use a pp_reader_, pp_audit_ or pp_business_ managed login name")
+    if (
+        not isinstance(role, str)
+        or re.fullmatch(r"pp_(reader|audit|business|auth)_[a-z0-9_]{1,48}", role) is None
+    ):
+        raise ValueError("Use a pp_reader_, pp_audit_, pp_business_ or pp_auth_ managed login name")
 
 
 def _idle_admin(connection):
@@ -70,13 +73,21 @@ BUSINESS_READ_TABLES = "users,projects,project_members,papers,project_papers,top
 BUSINESS_INSERT_TABLES = "projects,project_members,papers,project_papers,chunks,embedding_models,chunk_embeddings,process_indexes,tasks,task_papers,task_attempts,task_results,result_sources,evidence_fields,reports,report_versions,report_version_sources,audit_events,outbox_events,idempotency_records"
 
 
-def create_login(connection, role, password, *, project_id=None, business=False):
+def install_password_auth(connection):
+    _idle_admin(connection)
+    with connection.transaction():
+        connection.execute(
+            files("app.security").joinpath("migrations/004_password_auth.sql").read_text(encoding="utf-8")
+        )
+
+
+def create_login(connection, role, password, *, project_id=None, business=False, auth=False):
     from psycopg import sql
 
     _name(role)
     _idle_admin(connection)
-    kind = "business" if business else "reader" if project_id is not None else "audit"
-    if business and project_id is not None:
+    kind = "auth" if auth else "business" if business else "reader" if project_id is not None else "audit"
+    if (business and auth) or ((business or auth) and project_id is not None):
         raise ValueError("Business login cannot have a reader binding")
     if not role.startswith(f"pp_{kind}_") or (project_id is not None and type(project_id) is not UUID):
         raise ValueError("Login kind and project binding do not match")
@@ -110,6 +121,15 @@ def create_login(connection, role, password, *, project_id=None, business=False)
                 "GRANT SELECT(event_id,event_fingerprint) ON public.audit_events TO {}",
                 "GRANT SELECT(user_id) ON public.users TO {}",
                 "GRANT SELECT(project_id) ON public.projects TO {}",
+            ]
+        elif kind == "auth":
+            grants = [
+                "GRANT USAGE ON SCHEMA public,paperpilot_auth TO {}",
+                "GRANT SELECT(user_id,username) ON public.users TO {}",
+                "GRANT SELECT ON paperpilot_auth.accounts,paperpilot_auth.schema_version TO {}",
+                "GRANT UPDATE(last_authenticated_at) ON paperpilot_auth.accounts TO {}",
+                "GRANT SELECT,INSERT,UPDATE,DELETE ON paperpilot_auth.sessions TO {}",
+                "GRANT SELECT,INSERT,UPDATE ON paperpilot_auth.throttle TO {}",
             ]
         else:
             grants = [
@@ -187,6 +207,13 @@ def revoke_login(connection, role):
                 "REVOKE SELECT(event_id,event_fingerprint) ON public.audit_events FROM {}",
                 "REVOKE SELECT(user_id) ON public.users FROM {}",
                 "REVOKE SELECT(project_id) ON public.projects FROM {}",
+            ]
+        elif kind == "auth":
+            statements = [
+                "REVOKE ALL ON ALL TABLES IN SCHEMA paperpilot_auth FROM {}",
+                "REVOKE UPDATE(last_authenticated_at) ON paperpilot_auth.accounts FROM {}",
+                "REVOKE SELECT(user_id,username) ON public.users FROM {}",
+                "REVOKE ALL ON SCHEMA paperpilot_auth FROM {}",
             ]
         else:
             statements = [

@@ -5,7 +5,7 @@ from enum import StrEnum
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
 
 
 class Schema(BaseModel):
@@ -27,12 +27,13 @@ class User(Schema):
 
 class LoginRequest(Schema):
     username: str = Field(min_length=1, max_length=64)
+    password: SecretStr | None = Field(default=None, min_length=1, max_length=128)
 
 
 class Identity(Schema):
     user: User
-    mock: Literal[True] = True
-    authentication: Literal["development_identity_only"] = "development_identity_only"
+    mock: bool = True
+    authentication: Literal["development_identity_only", "password"] = "development_identity_only"
 
 
 class ProjectCreate(Schema):

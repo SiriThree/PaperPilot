@@ -23,6 +23,7 @@ def create_app(
     data_binding: DataBinding | None = None,
     ai_factory: AIFactory | None = None,
     security_factory: SecurityFactory | None = None,
+    auth_sessions=None,
 ):
     settings = settings or Settings.from_env()
     logger = logging.getLogger("paperpilot")
@@ -35,14 +36,22 @@ def create_app(
     adapters = create_adapters(
         settings, data_binding=data_binding, ai_factory=ai_factory, security_factory=security_factory
     )
+    if settings.auth_mode == "password":
+        from app.accounts import PasswordSessions
+
+        if not isinstance(auth_sessions, PasswordSessions):
+            raise RuntimeError("Password authentication binding is required; startup refused")
+    elif auth_sessions is not None:
+        raise RuntimeError("Development login cannot accept password sessions")
 
     @asynccontextmanager
     async def lifespan(app):
         logging.getLogger("paperpilot").warning(
-            "DEVELOPMENT: adapter_modes a=%s c=%s d=%s; identity=development_only; production_unverified",
+            "runtime_modes a=%s c=%s d=%s authentication=%s",
             settings.a_mode,
             settings.c_mode,
             settings.d_mode,
+            settings.auth_mode,
         )
         worker = asyncio.create_task(app.state.service.worker())
         try:
@@ -51,6 +60,8 @@ def create_app(
             worker.cancel()
             with suppress(asyncio.CancelledError):
                 await worker
+            if auth_sessions is not None:
+                auth_sessions.close()
             if data_binding is not None and data_binding.close is not None:
                 try:
                     data_binding.close()
@@ -58,19 +69,23 @@ def create_app(
                     logger.warning("data_provider_shutdown_failed")
 
     app = FastAPI(
-        title="PaperPilot Secure — ADAPTER DEVELOPMENT"
+        title="PaperPilot Secure"
+        if settings.auth_mode == "password"
+        else "PaperPilot Secure — ADAPTER DEVELOPMENT"
         if any(mode != "mock" for mode in (settings.a_mode, settings.c_mode, settings.d_mode))
         else "PaperPilot Secure Phase 1 — MOCK",
         version="0.1.0",
         lifespan=lifespan,
-        description="Explicitly registered adapters; development identity only; production unverified."
+        description="Password authentication with explicitly registered adapters; inspect health for model modes."
+        if settings.auth_mode == "password"
+        else "Explicitly registered adapters; development identity only; production unverified."
         if any(mode != "mock" for mode in (settings.a_mode, settings.c_mode, settings.d_mode))
         else "Development contracts only. No real AI, durable database or SQL security gateway.",
     )
     app.state.settings = settings
     app.state.adapters = adapters
     app.state.data_binding = data_binding
-    app.state.sessions = DevelopmentSessions()
+    app.state.sessions = auth_sessions if auth_sessions is not None else DevelopmentSessions()
     app.state.service = ResearchService(adapters)
     install_errors(app)
 
@@ -83,6 +98,12 @@ def create_app(
         rid = str(request.state.request_id)
         start = perf_counter()
         denied = None
+        if (
+            settings.auth_mode == "password"
+            and request.url.scheme != "https"
+            and request.url.path != "/api/v1/health"
+        ):
+            denied = (403, "HTTPS_REQUIRED", "密码认证要求 HTTPS 连接")
         if request.method not in {"GET", "HEAD", "OPTIONS"}:
             origin = request.headers.get("Origin")
             if request.headers.get("X-PaperPilot-Client") != "web" or (
@@ -131,11 +152,14 @@ def create_app(
 
     def contract_openapi():
         document = original_openapi()
-        document["components"].setdefault("securitySchemes", {})["DevelopmentSession"] = {
+        scheme = "PasswordSession" if settings.auth_mode == "password" else "DevelopmentSession"
+        document["components"].setdefault("securitySchemes", {})[scheme] = {
             "type": "apiKey",
             "in": "cookie",
             "name": "pp_session",
-            "description": "Ephemeral development identity session; not real password authentication.",
+            "description": "Persistent server-side password session."
+            if settings.auth_mode == "password"
+            else "Ephemeral development identity session; not real password authentication.",
         }
         for path, operations in document["paths"].items():
             for method, operation in operations.items():
@@ -176,7 +200,7 @@ def create_app(
                             }
                         )
                 if path not in {"/api/v1/health", "/api/v1/auth/login"}:
-                    operation["security"] = [{"DevelopmentSession": []}]
+                    operation["security"] = [{scheme: []}]
         return document
 
     app.openapi = contract_openapi

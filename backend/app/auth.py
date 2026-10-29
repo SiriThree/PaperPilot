@@ -33,6 +33,9 @@ class DevelopmentSessions:
             raise AppError(401, "UNAUTHENTICATED", "请先登录")
         return session
 
+    def revoke(self, token):
+        self.records.pop(token, None)
+
 
 def current_user(request: Request):
     session = request.app.state.sessions.current(request.cookies.get("pp_session"))

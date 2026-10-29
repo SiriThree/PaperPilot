@@ -555,20 +555,21 @@ export interface components {
             /**
              * Mock
              * @default true
-             * @constant
              */
-            mock: true;
+            mock: boolean;
             /**
              * Authentication
              * @default development_identity_only
-             * @constant
+             * @enum {string}
              */
-            authentication: "development_identity_only";
+            authentication: "development_identity_only" | "password";
         };
         /** LoginRequest */
         LoginRequest: {
             /** Username */
             username: string;
+            /** Password */
+            password?: string | null;
         };
         /** Member */
         Member: {

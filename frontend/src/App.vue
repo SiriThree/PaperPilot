@@ -3,7 +3,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api, ApiError, onUnauthorized } from './api/client'
 import { formatError } from './api/errors'
-import { booting, health, persistentData, projects, refreshProjects, setIdentity, user } from './state'
+import { booting, health, passwordAuth, persistentData, projects, refreshProjects, setIdentity, user } from './state'
 import { useAction } from './composables/useAction'
 import Feedback from './components/Feedback.vue'
 import AppIcon from './components/AppIcon.vue'
@@ -21,7 +21,7 @@ function switchProject(value: string) {
 watch(() => route.path, () => { sidebarOpen.value = false })
 const projectId = computed(() => String(route.params.projectId || ''))
 const current = computed(() => projects.value.find(p => p.project_id === projectId.value))
-const modeLabel = computed(() => !health.value ? '运行模式未知' : Object.values(health.value.modes).every(mode => mode === 'mock') ? 'MOCK · 开发演示' : '适配器开发 · 待验收')
+const modeLabel = computed(() => !health.value ? '运行模式未知' : passwordAuth.value ? (Object.values(health.value.modes).some(mode => mode === 'mock') ? '账户登录 · 含模拟模块' : '账户登录 · 真实模块') : Object.values(health.value.modes).every(mode => mode === 'mock') ? 'MOCK · 开发演示' : '适配器开发 · 待验收')
 const unsubscribe = onUnauthorized(error => {
   if (user.value) { sessionNotice.value = `登录已失效，请重新登录；未自动重新提交任何操作。${error.requestId ? `请求编号：${error.requestId}` : ''}`; setIdentity(null) }
 })

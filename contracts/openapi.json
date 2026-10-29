@@ -5022,13 +5022,15 @@
           },
           "mock": {
             "type": "boolean",
-            "const": true,
             "title": "Mock",
             "default": true
           },
           "authentication": {
             "type": "string",
-            "const": "development_identity_only",
+            "enum": [
+              "development_identity_only",
+              "password"
+            ],
             "title": "Authentication",
             "default": "development_identity_only"
           }
@@ -5047,6 +5049,21 @@
             "maxLength": 64,
             "minLength": 1,
             "title": "Username"
+          },
+          "password": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128,
+                "minLength": 1,
+                "format": "password",
+                "writeOnly": true
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Password"
           }
         },
         "additionalProperties": false,

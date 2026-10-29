@@ -54,7 +54,7 @@ class ResearchService:
         except Exception:
             raise AppError(503, "AUDIT_UNAVAILABLE", "审计暂不可用，请求未返回执行结果") from None
 
-    def identity_audit(self, user_id, request_id, decision):
+    def identity_audit(self, user_id, request_id, decision, *, mock=True):
         try:
             self.adapters.data.append_audit(
                 AuditEvent(
@@ -68,6 +68,7 @@ class ResearchService:
                     decision=decision,
                     execution_status="completed",
                     duration_ms=0,
+                    mock=mock,
                 )
             )
         except Exception:
