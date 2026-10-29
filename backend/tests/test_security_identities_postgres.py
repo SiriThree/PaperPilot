@@ -157,6 +157,56 @@ def test_audit_permission_drift_rolls_back_insert_before_acknowledgment(pg):
             writer.close()
 
 
+@pytest.mark.parametrize("change", ["schema", "execute", "grant_option", "body", "public"])
+def test_fingerprint_permission_or_definition_drift_prevents_audit_insert(pg, change):
+    import psycopg
+    from psycopg import sql
+
+    from app.security.audit import _FINGERPRINT_BODY
+
+    writer = compose_audit(pg.audit_config)
+    logged = event(pg)
+    statements = {
+        "schema": (
+            "REVOKE USAGE ON SCHEMA paperpilot_audit FROM {}",
+            "GRANT USAGE ON SCHEMA paperpilot_audit TO {}",
+        ),
+        "execute": (
+            "REVOKE EXECUTE ON FUNCTION paperpilot_audit.event_fingerprint(uuid) FROM {}",
+            "GRANT EXECUTE ON FUNCTION paperpilot_audit.event_fingerprint(uuid) TO {}",
+        ),
+        "grant_option": (
+            "GRANT EXECUTE ON FUNCTION paperpilot_audit.event_fingerprint(uuid) TO {} WITH GRANT OPTION",
+            "REVOKE GRANT OPTION FOR EXECUTE ON FUNCTION paperpilot_audit.event_fingerprint(uuid) FROM {}",
+        ),
+        "public": (
+            "GRANT EXECUTE ON FUNCTION paperpilot_audit.event_fingerprint(uuid) TO PUBLIC",
+            "REVOKE EXECUTE ON FUNCTION paperpilot_audit.event_fingerprint(uuid) FROM PUBLIC",
+        ),
+    }
+    with psycopg.connect(**pg.config.conninfo(), autocommit=True) as admin:
+        try:
+            if change == "body":
+                admin.execute(
+                    "CREATE OR REPLACE FUNCTION paperpilot_audit.event_fingerprint(requested_event uuid) RETURNS varchar LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$ SELECT NULL::varchar $$"
+                )
+            else:
+                admin.execute(sql.SQL(statements[change][0]).format(sql.Identifier(pg.audit_config.user)))
+            with pytest.raises(Exception):
+                writer.append(logged)
+            assert count_event(pg, logged.event_id) == 0
+        finally:
+            if change == "body":
+                admin.execute(
+                    sql.SQL(
+                        "CREATE OR REPLACE FUNCTION paperpilot_audit.event_fingerprint(requested_event uuid) RETURNS varchar LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS {}"
+                    ).format(sql.Literal(_FINGERPRINT_BODY))
+                )
+            else:
+                admin.execute(sql.SQL(statements[change][1]).format(sql.Identifier(pg.audit_config.user)))
+            writer.close()
+
+
 def test_audit_grant_option_is_not_a_valid_append_only_identity(pg):
     import psycopg
     from psycopg import sql

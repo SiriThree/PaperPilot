@@ -66,7 +66,7 @@ def upgrade_business_registry(connection):
         )
 
 
-BUSINESS_READ_TABLES = "users,projects,project_members,papers,project_papers,topics,paper_topics,chunks,embedding_models,chunk_embeddings,process_indexes,tasks,task_papers,task_attempts,task_results,result_sources,evidence_fields,reports,report_versions,report_version_sources,audit_events,outbox_events,idempotency_records,schema_migrations"
+BUSINESS_READ_TABLES = "users,projects,project_members,papers,project_papers,topics,paper_topics,chunks,embedding_models,chunk_embeddings,process_indexes,tasks,task_papers,task_attempts,task_results,result_sources,evidence_fields,reports,report_versions,report_version_sources,outbox_events,idempotency_records,schema_migrations"
 BUSINESS_INSERT_TABLES = "projects,project_members,papers,project_papers,chunks,embedding_models,chunk_embeddings,process_indexes,tasks,task_papers,task_attempts,task_results,result_sources,evidence_fields,reports,report_versions,report_version_sources,audit_events,outbox_events,idempotency_records"
 
 
@@ -106,14 +106,18 @@ def create_login(connection, role, password, *, project_id=None, business=False)
         elif kind == "audit":
             grants = [
                 "GRANT USAGE ON SCHEMA public TO {}",
+                "GRANT USAGE ON SCHEMA paperpilot_audit TO {}",
+                "GRANT EXECUTE ON FUNCTION paperpilot_audit.event_fingerprint(uuid) TO {}",
                 "GRANT INSERT ON public.audit_events TO {}",
-                "GRANT SELECT(event_id,event_fingerprint) ON public.audit_events TO {}",
                 "GRANT SELECT(user_id) ON public.users TO {}",
                 "GRANT SELECT(project_id) ON public.projects TO {}",
             ]
         else:
             grants = [
                 "GRANT USAGE ON SCHEMA public TO {}",
+                "GRANT USAGE ON SCHEMA paperpilot_audit TO {}",
+                "GRANT EXECUTE ON FUNCTION paperpilot_audit.event_fingerprint(uuid) TO {}",
+                "GRANT SELECT ON paperpilot_audit.project_events TO {}",
                 "GRANT SELECT ON "
                 + ",".join("public." + t for t in BUSINESS_READ_TABLES.split(","))
                 + " TO {}",
@@ -183,6 +187,8 @@ def revoke_login(connection, role):
             ]
         elif kind == "audit":
             statements = [
+                "REVOKE EXECUTE ON FUNCTION paperpilot_audit.event_fingerprint(uuid) FROM {}",
+                "REVOKE ALL ON SCHEMA paperpilot_audit FROM {}",
                 "REVOKE INSERT ON public.audit_events FROM {}",
                 "REVOKE SELECT(event_id,event_fingerprint) ON public.audit_events FROM {}",
                 "REVOKE SELECT(user_id) ON public.users FROM {}",
@@ -190,6 +196,9 @@ def revoke_login(connection, role):
             ]
         else:
             statements = [
+                "REVOKE EXECUTE ON FUNCTION paperpilot_audit.event_fingerprint(uuid) FROM {}",
+                "REVOKE ALL ON paperpilot_audit.project_events FROM {}",
+                "REVOKE ALL ON SCHEMA paperpilot_audit FROM {}",
                 "REVOKE ALL ON ALL TABLES IN SCHEMA public FROM {}",
                 "REVOKE ALL ON SCHEMA public FROM {}",
             ]

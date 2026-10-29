@@ -885,7 +885,13 @@ def test_credentials_scoped_audit_and_real_security_browser(scoped_stack, restri
     injector.start()
     try:
         result = subprocess.run(
-            command, cwd=root / "frontend", env=environment, capture_output=True, text=True, timeout=150
+            command,
+            cwd=root / "frontend",
+            env=environment,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=150,
         )
     finally:
         stop.set()

@@ -11,10 +11,12 @@
 专用审计登录只获得以下权限：
 
 - public schema USAGE；audit_events INSERT。
-- audit_events 的 event_id/event_fingerprint 列 SELECT，用于 A 的同事件幂等。
+- paperpilot_audit schema USAGE 及迁移 006 的 event_fingerprint(uuid) EXECUTE，用于 A 的同事件幂等；不再直接读取审计列。
 - users.user_id 和 projects.project_id 列 SELECT，用于 A 的主体/项目存在性检查。
 
-不授予 UPDATE、DELETE、TRUNCATE、ALTER、其他业务内容、审计全文、outbox 或 D 绑定/登记表读取权限。无超级用户/BYPASSRLS/建库/建角色/复制/继承、角色成员关系、创建 schema/临时对象或转授权能力。启动时检查权限；A 每次 append 的提交前钩子在同一事务再次检查，权限变化则回滚刚插入的事件，不确认成功。保留 A 的 event_id 幂等和冲突语义；审计失败时 D 不执行或不返回行。
+不授予 UPDATE、DELETE、TRUNCATE、ALTER、其他业务内容、审计全文、outbox 或 D 绑定/登记表读取权限。无超级用户/BYPASSRLS/建库/建角色/复制/继承、角色成员关系、创建 schema/临时对象或转授权能力。启动时和每次事务开始/提交前检查权限；指纹函数只允许迁移中的固定 SQL、稳定性、返回类型、search_path、非自身所有者及专属执行授权。函数体、PUBLIC 或转授权能力漂移会拒绝；保留 A 的 event_id 幂等和冲突语义，审计失败时 D 不执行或不返回行。
+
+2026-10-29 升级说明：旧审计登录缺少迁移 006 函数权限，不能仅替换代码继续使用。由管理员先审核 A 迁移与函数所有者，在维护窗口新建本工具登记的审计登录、切换配置并验收，再撤销旧登录；不自动修改未知身份或接管 A 的对象所有者。业务登录改为通过 project_events 读取项目审计，使用同一指纹函数，不再直接读取系统审计行。
 
 防篡改结论针对这个专用登录，不针对可信 DBA 或拥有管理员权限的其他连接。B 的普通业务日志仍沿用业务 DataPort；正式业务身份的权限收敛、DBA 保护与备份由团队部署验收负责。旧手工工厂调用未传 audit_append 时保留 DataPort 审计行为；新的可信启动入口强制使用独立审计绑定。
 

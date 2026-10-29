@@ -103,6 +103,7 @@ def main():
         environment = dict(
             os.environ,
             PAPERPILOT_ENV="test",
+            PAPERPILOT_AUTH_MODE="development",
             PAPERPILOT_A_MODE="persistent",
             PAPERPILOT_C_MODE="real",
             PAPERPILOT_D_MODE="real",

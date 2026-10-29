@@ -1,6 +1,6 @@
 # 成员 D 当前进度
 
-更新于 2026-10-28。用户授权依次推进并自动本地提交；不推送、不修改远程 PR。采用最小完整改动，公开五方法 AIPort、26 方法 DataPort、两方法 SecurityPort 及 HTTP Schema 保持不变。
+更新于 2026-10-29。当前以 main 合并基线 `2586767` 加本地改动验收，最新结果见 [D 验收清单](member-d-acceptance-20261029.md)、[威胁模型](member-d-threat-model.md)和[安全实验](security-evaluation/README.md)。当前全量 985 通过、34 跳过、0 失败；下文 10 月 28 日的计数和团队快照保留为历史记录，不作为当前验收。未推送、未修改远程 PR，公开 AIPort、DataPort、SecurityPort 及 HTTP Schema 不变。
 
 ## 本轮只读核对并合入的团队快照
 
