@@ -18,14 +18,19 @@ from app.data.settings import DataSettings  # noqa: E402
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=["migrate", "seed-demo", "check"])
+    parser.add_argument("command", choices=["migrate", "seed-demo", "seed-demo-project", "check"])
     options = parser.parse_args()
     database = PostgresDatabase(ConnectionConfig.from_env(os.environ))
+    manifest = None
     try:
         if options.command == "migrate":
             database.migrate()
         elif options.command == "seed-demo":
             database.seed_development_users()
+        elif options.command == "seed-demo-project":
+            from app.data.demo_seed import seed_demo_project
+
+            manifest = seed_demo_project(database, log=lambda message: None)
         else:
             database.ready()
     finally:
@@ -35,6 +40,10 @@ def main():
         f"PostgreSQL {options.command}: ok (lease={settings.lease_seconds}s,"
         f" idempotency_retention={settings.idempotency_retention_seconds})"
     )
+    if manifest is not None:
+        import json
+
+        print(json.dumps(manifest, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
