@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { projects, projectsLoaded, projectsLoading, projectsError, user } from '../state'
+import { health, projects, projectsLoaded, projectsLoading, projectsError, user } from '../state'
 import AppIcon from './AppIcon.vue'
 defineProps<{ logoutBusy: boolean }>()
 defineEmits<{ navigate: []; logout: [] }>()
@@ -38,7 +38,7 @@ const sections = [
     </template>
     <div class="sidebar-bottom">
       <div class="sidebar-principle"><AppIcon name="quote" :size="18" /><p>从文献到结论<br><strong>让研究有迹可循。</strong></p></div>
-      <div class="sidebar-account"><span class="account-avatar">{{ user?.display_name.slice(0, 1) }}</span><span class="account-name">{{ user?.display_name }}<small>开发演示身份</small></span><el-button text :loading="logoutBusy" aria-label="退出" @click="$emit('logout')"><AppIcon name="logout" :size="18" /></el-button></div>
+      <div class="sidebar-account"><span class="account-avatar">{{ user?.display_name.slice(0, 1) }}</span><span class="account-name">{{ user?.display_name }}<small>{{ health?.limitations.includes('development_identity_only') ? '开发演示身份' : '已验证身份' }}</small></span><el-button text :loading="logoutBusy" aria-label="退出" @click="$emit('logout')"><AppIcon name="logout" :size="18" /></el-button></div>
     </div>
   </div>
 </template>

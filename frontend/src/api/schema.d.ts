@@ -21,6 +21,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/csrf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Csrf */
+        get: operations["csrf_api_v1_auth_csrf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -449,6 +466,11 @@ export interface components {
             /** Year */
             year?: number | null;
         };
+        /** CSRFToken */
+        CSRFToken: {
+            /** Csrf Token */
+            csrf_token: string;
+        };
         /** DraftResult */
         DraftResult: {
             /**
@@ -555,20 +577,21 @@ export interface components {
             /**
              * Mock
              * @default true
-             * @constant
              */
-            mock: true;
+            mock: boolean;
             /**
              * Authentication
              * @default development_identity_only
-             * @constant
+             * @enum {string}
              */
-            authentication: "development_identity_only";
+            authentication: "development_identity_only" | "authentication_credentials";
         };
         /** LoginRequest */
         LoginRequest: {
             /** Username */
             username: string;
+            /** Password */
+            password?: string | null;
         };
         /** Member */
         Member: {
@@ -1117,14 +1140,138 @@ export interface operations {
             };
         };
     };
+    csrf_api_v1_auth_csrf_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Optional correlation only; never an authorization credential. Invalid values are replaced. */
+                "X-Request-ID"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CSRFToken"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Login required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role or CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource missing or inaccessible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Upload too large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unsupported file */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Schema validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Adapter contract error */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Required module unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     login_api_v1_auth_login_post: {
         parameters: {
             query?: never;
-            header: {
+            header?: {
                 /** @description Optional correlation only; never an authorization credential. Invalid values are replaced. */
                 "X-Request-ID"?: string;
-                /** @description Custom header required by same-origin browser request policy. */
-                "X-PaperPilot-Client": "web";
+                /** @description Development mode request header; not authentication or CSRF protection. */
+                "X-PaperPilot-Client"?: "web";
+                /** @description Required for state changes in credential mode, together with a trusted Origin and matching cookie. */
+                "X-CSRF-Token"?: string;
             };
             path?: never;
             cookie?: never;
@@ -1209,6 +1356,15 @@ export interface operations {
             };
             /** @description Schema validation failed */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Login rate limit exceeded */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1370,11 +1526,13 @@ export interface operations {
     logout_api_v1_auth_logout_post: {
         parameters: {
             query?: never;
-            header: {
+            header?: {
                 /** @description Optional correlation only; never an authorization credential. Invalid values are replaced. */
                 "X-Request-ID"?: string;
-                /** @description Custom header required by same-origin browser request policy. */
-                "X-PaperPilot-Client": "web";
+                /** @description Development mode request header; not authentication or CSRF protection. */
+                "X-PaperPilot-Client"?: "web";
+                /** @description Required for state changes in credential mode, together with a trusted Origin and matching cookie. */
+                "X-CSRF-Token"?: string;
             };
             path?: never;
             cookie?: never;
@@ -1616,11 +1774,13 @@ export interface operations {
     create_project_api_v1_projects_post: {
         parameters: {
             query?: never;
-            header: {
+            header?: {
                 /** @description Optional correlation only; never an authorization credential. Invalid values are replaced. */
                 "X-Request-ID"?: string;
-                /** @description Custom header required by same-origin browser request policy. */
-                "X-PaperPilot-Client": "web";
+                /** @description Development mode request header; not authentication or CSRF protection. */
+                "X-PaperPilot-Client"?: "web";
+                /** @description Required for state changes in credential mode, together with a trusted Origin and matching cookie. */
+                "X-CSRF-Token"?: string;
             };
             path?: never;
             cookie?: never;
@@ -1868,11 +2028,13 @@ export interface operations {
     add_member_api_v1_projects__project_id__members_post: {
         parameters: {
             query?: never;
-            header: {
+            header?: {
                 /** @description Optional correlation only; never an authorization credential. Invalid values are replaced. */
                 "X-Request-ID"?: string;
-                /** @description Custom header required by same-origin browser request policy. */
-                "X-PaperPilot-Client": "web";
+                /** @description Development mode request header; not authentication or CSRF protection. */
+                "X-PaperPilot-Client"?: "web";
+                /** @description Required for state changes in credential mode, together with a trusted Origin and matching cookie. */
+                "X-CSRF-Token"?: string;
             };
             path: {
                 project_id: string;
@@ -1998,11 +2160,13 @@ export interface operations {
     remove_member_api_v1_projects__project_id__members__user_id__delete: {
         parameters: {
             query?: never;
-            header: {
+            header?: {
                 /** @description Optional correlation only; never an authorization credential. Invalid values are replaced. */
                 "X-Request-ID"?: string;
-                /** @description Custom header required by same-origin browser request policy. */
-                "X-PaperPilot-Client": "web";
+                /** @description Development mode request header; not authentication or CSRF protection. */
+                "X-PaperPilot-Client"?: "web";
+                /** @description Required for state changes in credential mode, together with a trusted Origin and matching cookie. */
+                "X-CSRF-Token"?: string;
             };
             path: {
                 project_id: string;
@@ -2252,11 +2416,13 @@ export interface operations {
     upload_paper_api_v1_projects__project_id__papers_post: {
         parameters: {
             query?: never;
-            header: {
+            header?: {
                 /** @description Optional correlation only; never an authorization credential. Invalid values are replaced. */
                 "X-Request-ID"?: string;
-                /** @description Custom header required by same-origin browser request policy. */
-                "X-PaperPilot-Client": "web";
+                /** @description Development mode request header; not authentication or CSRF protection. */
+                "X-PaperPilot-Client"?: "web";
+                /** @description Required for state changes in credential mode, together with a trusted Origin and matching cookie. */
+                "X-CSRF-Token"?: string;
                 /** @description Reuse the same key and payload when retrying a write; absent key means a new operation. */
                 "Idempotency-Key"?: string;
             };
@@ -2511,11 +2677,13 @@ export interface operations {
             query?: {
                 confirm_source_impact?: boolean;
             };
-            header: {
+            header?: {
                 /** @description Optional correlation only; never an authorization credential. Invalid values are replaced. */
                 "X-Request-ID"?: string;
-                /** @description Custom header required by same-origin browser request policy. */
-                "X-PaperPilot-Client": "web";
+                /** @description Development mode request header; not authentication or CSRF protection. */
+                "X-PaperPilot-Client"?: "web";
+                /** @description Required for state changes in credential mode, together with a trusted Origin and matching cookie. */
+                "X-CSRF-Token"?: string;
             };
             path: {
                 project_id: string;
@@ -2763,11 +2931,13 @@ export interface operations {
     retry_task_api_v1_projects__project_id__tasks__task_id__retry_post: {
         parameters: {
             query?: never;
-            header: {
+            header?: {
                 /** @description Optional correlation only; never an authorization credential. Invalid values are replaced. */
                 "X-Request-ID"?: string;
-                /** @description Custom header required by same-origin browser request policy. */
-                "X-PaperPilot-Client": "web";
+                /** @description Development mode request header; not authentication or CSRF protection. */
+                "X-PaperPilot-Client"?: "web";
+                /** @description Required for state changes in credential mode, together with a trusted Origin and matching cookie. */
+                "X-CSRF-Token"?: string;
             };
             path: {
                 project_id: string;
@@ -2890,11 +3060,13 @@ export interface operations {
     search_api_v1_projects__project_id__search_post: {
         parameters: {
             query?: never;
-            header: {
+            header?: {
                 /** @description Optional correlation only; never an authorization credential. Invalid values are replaced. */
                 "X-Request-ID"?: string;
-                /** @description Custom header required by same-origin browser request policy. */
-                "X-PaperPilot-Client": "web";
+                /** @description Development mode request header; not authentication or CSRF protection. */
+                "X-PaperPilot-Client"?: "web";
+                /** @description Required for state changes in credential mode, together with a trusted Origin and matching cookie. */
+                "X-CSRF-Token"?: string;
             };
             path: {
                 project_id: string;
@@ -3020,11 +3192,13 @@ export interface operations {
     answer_api_v1_projects__project_id__answers_post: {
         parameters: {
             query?: never;
-            header: {
+            header?: {
                 /** @description Optional correlation only; never an authorization credential. Invalid values are replaced. */
                 "X-Request-ID"?: string;
-                /** @description Custom header required by same-origin browser request policy. */
-                "X-PaperPilot-Client": "web";
+                /** @description Development mode request header; not authentication or CSRF protection. */
+                "X-PaperPilot-Client"?: "web";
+                /** @description Required for state changes in credential mode, together with a trusted Origin and matching cookie. */
+                "X-CSRF-Token"?: string;
                 /** @description Reuse the same key and payload when retrying a write; absent key means a new operation. */
                 "Idempotency-Key"?: string;
             };
@@ -3277,11 +3451,13 @@ export interface operations {
     evidence_api_v1_projects__project_id__papers__paper_id__evidence_post: {
         parameters: {
             query?: never;
-            header: {
+            header?: {
                 /** @description Optional correlation only; never an authorization credential. Invalid values are replaced. */
                 "X-Request-ID"?: string;
-                /** @description Custom header required by same-origin browser request policy. */
-                "X-PaperPilot-Client": "web";
+                /** @description Development mode request header; not authentication or CSRF protection. */
+                "X-PaperPilot-Client"?: "web";
+                /** @description Required for state changes in credential mode, together with a trusted Origin and matching cookie. */
+                "X-CSRF-Token"?: string;
                 /** @description Reuse the same key and payload when retrying a write; absent key means a new operation. */
                 "Idempotency-Key"?: string;
             };
@@ -3406,11 +3582,13 @@ export interface operations {
     draft_api_v1_projects__project_id__report_drafts_post: {
         parameters: {
             query?: never;
-            header: {
+            header?: {
                 /** @description Optional correlation only; never an authorization credential. Invalid values are replaced. */
                 "X-Request-ID"?: string;
-                /** @description Custom header required by same-origin browser request policy. */
-                "X-PaperPilot-Client": "web";
+                /** @description Development mode request header; not authentication or CSRF protection. */
+                "X-PaperPilot-Client"?: "web";
+                /** @description Required for state changes in credential mode, together with a trusted Origin and matching cookie. */
+                "X-CSRF-Token"?: string;
                 /** @description Reuse the same key and payload when retrying a write; absent key means a new operation. */
                 "Idempotency-Key"?: string;
             };
@@ -3662,11 +3840,13 @@ export interface operations {
     save_report_api_v1_projects__project_id__reports_post: {
         parameters: {
             query?: never;
-            header: {
+            header?: {
                 /** @description Optional correlation only; never an authorization credential. Invalid values are replaced. */
                 "X-Request-ID"?: string;
-                /** @description Custom header required by same-origin browser request policy. */
-                "X-PaperPilot-Client": "web";
+                /** @description Development mode request header; not authentication or CSRF protection. */
+                "X-PaperPilot-Client"?: "web";
+                /** @description Required for state changes in credential mode, together with a trusted Origin and matching cookie. */
+                "X-CSRF-Token"?: string;
                 /** @description Reuse the same key and payload when retrying a write; absent key means a new operation. */
                 "Idempotency-Key"?: string;
             };
@@ -4045,11 +4225,13 @@ export interface operations {
     secure_query_api_v1_projects__project_id__secure_queries_post: {
         parameters: {
             query?: never;
-            header: {
+            header?: {
                 /** @description Optional correlation only; never an authorization credential. Invalid values are replaced. */
                 "X-Request-ID"?: string;
-                /** @description Custom header required by same-origin browser request policy. */
-                "X-PaperPilot-Client": "web";
+                /** @description Development mode request header; not authentication or CSRF protection. */
+                "X-PaperPilot-Client"?: "web";
+                /** @description Required for state changes in credential mode, together with a trusted Origin and matching cookie. */
+                "X-CSRF-Token"?: string;
             };
             path: {
                 project_id: string;

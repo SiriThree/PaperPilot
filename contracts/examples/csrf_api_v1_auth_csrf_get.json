@@ -1,0 +1,13 @@
+{
+  "method": "get",
+  "path_template": "/api/v1/auth/csrf",
+  "mock": true,
+  "success": {
+    "request": {"path": "/api/v1/auth/csrf", "headers": {}},
+    "response": {"status": 200, "content_type": "application/json", "body": {"csrf_token": "synthetic-example-token"}}
+  },
+  "error": {
+    "request": {"path": "/api/v1/auth/csrf", "headers": {"Content-Length": "invalid"}},
+    "response": {"status": 400, "content_type": "application/json", "body": {"code": "VALIDATION_ERROR", "message": "请求长度格式不正确", "request_id": "00000000-0000-4000-8000-000000000001"}}
+  }
+}

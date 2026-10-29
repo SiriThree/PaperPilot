@@ -51,4 +51,12 @@ def create_app(settings: Settings | None = None):
     except Exception:
         LOGGER.critical("data_binding_initialization_failed")
         raise RuntimeError("Data binding initialization failed; startup refused") from None
-    return create_business_app(settings or Settings.from_env(), data_binding=binding)
+    try:
+        return create_business_app(settings or Settings.from_env(), data_binding=binding)
+    except BaseException:
+        try:
+            if binding.close is not None:
+                binding.close()
+        except Exception:
+            LOGGER.warning("data_provider_cleanup_failed")
+        raise

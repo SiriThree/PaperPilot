@@ -87,9 +87,7 @@ def build_harness(*, tmp_path):
             if operation != failure["operation"]:
                 return
             try:
-                conn.execute(
-                    "INSERT INTO users(user_id, username, display_name) VALUES (NULL, NULL, NULL)"
-                )
+                conn.execute("INSERT INTO users(user_id, username, display_name) VALUES (NULL, NULL, NULL)")
             except psycopg.Error:
                 raise AppError(503, "DATA_UNAVAILABLE", "隔离测试中的已确认回滚故障") from None
             raise AppError(503, "DATA_UNAVAILABLE", "隔离测试中的已确认回滚故障")

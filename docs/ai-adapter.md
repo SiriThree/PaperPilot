@@ -52,7 +52,10 @@ export PAPERPILOT_AI_LOCAL_MODEL_DIR=/absolute/path/to/prepared/model
 | `PAPERPILOT_AI_TIMEOUT_SECONDS` | 每个 AIPort 操作总期限，默认 45，范围 (0,90] 秒，包括所有嵌入批次；需小于 A 的租约 |
 | `PAPERPILOT_AI_MIN_SIMILARITY` | 余弦阈值，默认 0.2；是开发阈值，需要按语料校准 |
 | `PAPERPILOT_AI_TOKEN_LIMIT_PARAMETER` | 默认 `max_tokens`（交大示例）；可明确改成 `max_completion_tokens` |
+| `PAPERPILOT_AI_RESPONSE_FORMAT` | 默认 `json_schema`；DeepSeek 官方 Chat Completions 可显式选 `json_object`。客户端将 JSON Schema 写入系统提示并保留本地严格 Pydantic 校验及引用校验；不自动切换或重试。 |
 | `PAPERPILOT_STORAGE_DIR` | 与 B 共用受控本地上传目录，默认 `.runtime/uploads` |
+
+DeepSeek 官方服务与上述交大历史示例是不同服务；官方地址为 `https://api.deepseek.com`，当前模型标识请以官方 API 文档及账号权限为准。选择 `json_object` 不等于服务端严格保证 Schema；无效结构、非法引用和不支持的状态仍会被拒绝。真实服务、模型额度及嵌入服务须单独确认；未测试前不能声称兼容验收已通过。应用不会自动加载 `.env`。
 
 生成采用 HTTPX，无供应商 SDK 类型外泄。每次 HTTP 调用都用上下文管理器关闭连接，取消会传播；不保留全局客户端，不自动跟随重定向，不隐式读取代理变量。超时/连接故障分别映射安全 AppError 504/503；拒绝请求为 502；无效 JSON、截断、拒答、向量异常为 `AI_INVALID_RESPONSE`。不记录供应商正文、密钥或论文文本。
 

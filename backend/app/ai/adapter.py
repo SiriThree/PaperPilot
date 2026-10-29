@@ -35,7 +35,11 @@ Write plain text without square brackets; the application renders citations itse
 If evidence does not answer the question, set insufficient_evidence=true and statements=[].
 For extraction use pending_verification only with text and supporting citations;
 otherwise use not_mentioned or insufficient_evidence with text=null and citation_ids=[].
-Synthetic sources are examples, never real research evidence. All output needs human review.
+Sources may describe explicitly fictional or simulated examples. You may accurately cite
+their stated methods and outcomes for testing, but every statement about such an example
+must explicitly say it is fictional or simulated, remain pending human verification, and
+never portray it as a real-world research result. Synthetic sources are examples, never
+real research evidence. All output needs human review.
 Respond in the question's language when applicable, strictly using the requested JSON schema.
 """
 

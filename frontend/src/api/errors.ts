@@ -8,6 +8,7 @@ export class ApiError extends Error {
 const messages: Record<string, string> = {
   UNAUTHENTICATED: '请重新登录后继续操作',
   INVALID_IDENTITY: '开发演示账户不存在',
+  INVALID_CREDENTIALS: '账号或密码不正确',
   OWNER_REQUIRED: '此操作需要项目负责人权限',
   RESOURCE_NOT_FOUND: '资源不存在或不可访问',
   VALIDATION_ERROR: '请求字段或筛选条件不正确，请检查后重试',

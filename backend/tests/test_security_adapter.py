@@ -131,6 +131,7 @@ def test_construction_failure_never_falls_back(monkeypatch):
 
 def test_composition_requires_explicit_real_mode(monkeypatch):
     monkeypatch.setenv("PAPERPILOT_ENV", "test")
+    monkeypatch.setenv("PAPERPILOT_AUTH_MODE", "development")
     monkeypatch.setenv("PAPERPILOT_A_MODE", "mock")
     monkeypatch.setenv("PAPERPILOT_C_MODE", "mock")
     monkeypatch.setenv("PAPERPILOT_D_MODE", "mock")
@@ -141,6 +142,7 @@ def test_composition_requires_explicit_real_mode(monkeypatch):
 def test_d_composition_reaches_http_without_changing_public_contract(monkeypatch, tmp_path):
     for key, value in {
         "PAPERPILOT_ENV": "test",
+        "PAPERPILOT_AUTH_MODE": "development",
         "PAPERPILOT_A_MODE": "mock",
         "PAPERPILOT_C_MODE": "mock",
         "PAPERPILOT_D_MODE": "real",

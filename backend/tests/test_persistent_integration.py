@@ -193,9 +193,7 @@ def test_outbox_deliverer_publishes_domain_events_to_audit(signed, project, stac
     finally:
         deliverer.database.close()
 
-    after = signed.get(
-        f"/api/v1/projects/{project}/audit-events", params={"action": "create_project"}
-    )
+    after = signed.get(f"/api/v1/projects/{project}/audit-events", params={"action": "create_project"})
     assert after.status_code == 200
     body = after.json()
     assert body["total"] >= 1 and body["items"][0]["project_id"] == project
@@ -253,9 +251,9 @@ def test_report_versions_conflict_snapshot_and_export(signed, project):
 
     reports = signed.get(f"/api/v1/projects/{project}/reports").json()["items"]
     assert [v["version_id"] for v in reports] == [version_two["version_id"]]
-    versions = signed.get(
-        f"/api/v1/projects/{project}/reports/{version_one['report_id']}/versions"
-    ).json()["items"]
+    versions = signed.get(f"/api/v1/projects/{project}/reports/{version_one['report_id']}/versions").json()[
+        "items"
+    ]
     assert [v["number"] for v in versions] == [1, 2]
     assert versions[0]["sources"] == sources
 
@@ -347,9 +345,7 @@ def test_second_process_restart_preserves_data(client, stack):
         ).json()["items"]
         assert [v["number"] for v in versions] == [1, 2]
         removed_paper = versions[0]["sources"][0]["paper_id"]
-        assert (
-            restarted.get(f"/api/v1/projects/{project_id}/papers/{removed_paper}").status_code == 404
-        )
+        assert restarted.get(f"/api/v1/projects/{project_id}/papers/{removed_paper}").status_code == 404
 
         replay = upload(restarted, project_id, key="biz-upload-1")
         assert replay.status_code == 404  # replay never bypasses removal, even after restart

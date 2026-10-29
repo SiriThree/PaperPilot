@@ -5,13 +5,46 @@ export { ApiError } from './errors'
 
 export type Models = components['schemas']
 let sessionEpoch = 0
+let credentialsMode: boolean | null = null
+let authenticationModePending: Promise<void> | null = null
+let csrfToken: string | null = null
+let csrfPending: Promise<string> | null = null
 const unauthorized = new Set<(error: ApiError) => void>()
 export function sessionChanged() { sessionEpoch++ }
 export function onUnauthorized(handler: (error: ApiError) => void) { unauthorized.add(handler); return () => { unauthorized.delete(handler) } }
+async function csrf(): Promise<string> {
+  if (csrfToken) return csrfToken
+  if (!csrfPending) csrfPending = (async () => {
+    const response = await transport(new Request(new URL('/api/v1/auth/csrf', window.location.origin), { credentials: 'include' }))
+    const data: unknown = await response.json()
+    if (!data || typeof data !== 'object' || !('csrf_token' in data) || typeof data.csrf_token !== 'string' || !data.csrf_token) {
+      throw new ApiError('INVALID_RESPONSE', '安全验证信息不可用，请重新连接服务')
+    }
+    csrfToken = data.csrf_token
+    return csrfToken
+  })().finally(() => { csrfPending = null })
+  return csrfPending
+}
+async function ensureAuthenticationMode(): Promise<void> {
+  if (credentialsMode !== null) return
+  if (!authenticationModePending) authenticationModePending = (async () => {
+    const response = await transport(new Request(new URL('/api/v1/health', window.location.origin), { credentials: 'include' }))
+    const data: Models['Health'] = await response.json()
+    await healthResult({ data, response })
+  })().finally(() => { authenticationModePending = null })
+  await authenticationModePending
+}
 async function transport(request: Request): Promise<Response> {
   const epoch = sessionEpoch
   const signal = AbortSignal.any([request.signal, AbortSignal.timeout(15000)])
   const readOnly = request.method === 'GET' || new URL(request.url).pathname.endsWith('/search')
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method)) await ensureAuthenticationMode()
+  if (credentialsMode && !['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
+    const headers = new Headers(request.headers)
+    headers.set('X-CSRF-Token', await csrf())
+    request = new Request(request, { headers })
+  }
+  if (epoch !== sessionEpoch) throw new ApiError('SESSION_CHANGED', '登录状态已变化，请重新查询')
   let response: Response | undefined
   let body: string
   // These typed API endpoints return JSON. Include reading its body in the
@@ -21,7 +54,7 @@ async function transport(request: Request): Promise<Response> {
     // A received 401 is a definite authorization refusal even if its body stalls.
     if (response?.status === 401) {
       const error = httpError(response, undefined)
-      if (epoch === sessionEpoch) for (const handler of unauthorized) handler(error)
+      if (epoch === sessionEpoch && !new URL(request.url).pathname.endsWith('/auth/login')) for (const handler of unauthorized) handler(error)
       throw error
     }
     const requestId = response ? responseRequestId(response) : undefined
@@ -29,17 +62,21 @@ async function transport(request: Request): Promise<Response> {
     if (signal.aborted) throw new ApiError('REQUEST_CANCELLED', '请求已取消，未自动重新提交', requestId)
     throw new ApiError('NETWORK_ERROR', readOnly ? '网络暂时不可用，请稍后重新查询' : '连接异常，提交结果尚未确认；请先核对原请求', requestId)
   }
+  // A response started under a previous identity must never update the new
+  // user's page, even when the server successfully completed the request.
+  if (epoch !== sessionEpoch) throw new ApiError('SESSION_CHANGED', '登录状态已变化，请重新查询')
   let payload: unknown
   try { payload = JSON.parse(body) } catch { payload = undefined }
   if (!response.ok) {
     const error = httpError(response, payload)
-    if (response.status === 401 && epoch === sessionEpoch) for (const handler of unauthorized) handler(error)
+    if (credentialsMode && response.status === 401 && new URL(request.url).pathname.endsWith('/auth/login')) error.message = '账号或密码不正确'
+    if (response.status === 401 && epoch === sessionEpoch && !new URL(request.url).pathname.endsWith('/auth/login')) for (const handler of unauthorized) handler(error)
     throw error
   }
   if (payload === undefined) throw new ApiError('INVALID_RESPONSE', '服务响应格式不正确，请保留当前输入后重新查询', responseRequestId(response), response.status)
   return new Response(body, { status: response.status, statusText: response.statusText, headers: response.headers })
 }
-const client = createClient<paths>({ baseUrl: '', credentials: 'same-origin', headers: { 'X-PaperPilot-Client': 'web' }, fetch: transport })
+const client = createClient<paths>({ baseUrl: '', credentials: 'include', headers: { 'X-PaperPilot-Client': 'web' }, fetch: transport })
 async function unwrap<T>(result: { data?: T; error?: unknown; response: Response }): Promise<T> {
   if (!result.response.ok || result.error) {
     throw httpError(result.response, result.error)
@@ -55,6 +92,8 @@ async function healthResult(result: { data?: Models['Health']; error?: unknown; 
     || !Array.isArray(data.limitations) || data.limitations.some(value => typeof value !== 'string')) {
     throw new ApiError('INVALID_RESPONSE', '运行状态响应不完整，请重新连接服务', responseRequestId(result.response), result.response.status)
   }
+  credentialsMode = data.limitations.includes('authentication_credentials')
+  csrfToken = null
   return data
 }
 const clientHeader = { 'X-PaperPilot-Client': 'web' as const }
@@ -64,7 +103,7 @@ const writeHeaders = (key: string = crypto.randomUUID()) => ({ 'Idempotency-Key'
 export const api = {
   health: () => client.GET('/api/v1/health').then(healthResult).catch(normalizeError),
   me: () => client.GET('/api/v1/auth/me').then(unwrap).catch(normalizeError),
-  login: (username: string) => client.POST('/api/v1/auth/login', { params: { header: clientHeader }, body: { username } }).then(unwrap).catch(normalizeError),
+  login: (username: string, password?: string) => client.POST('/api/v1/auth/login', { params: { header: clientHeader }, body: password === undefined ? { username } : { username, password } }).then(unwrap).catch(normalizeError),
   logout: () => client.POST('/api/v1/auth/logout', { params: { header: clientHeader } }).then(unwrap).catch(normalizeError),
   projects: () => client.GET('/api/v1/projects').then(unwrap).catch(normalizeError),
   createProject: (name: string) => client.POST('/api/v1/projects', { params: { header: clientHeader }, body: { name, description: '' } }).then(unwrap).catch(normalizeError),

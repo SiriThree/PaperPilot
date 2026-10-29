@@ -11,7 +11,7 @@
 | `backend/app/data/adapter.py` | `PostgresData`：26 个 DataPort 方法（psycopg3），行为对齐 AB-1 与既有共享测试 |
 | `backend/app/data/mapping.py` | 行 → 公开模型映射；成功结果由 `task_results` 派生，不持久化可悬空 result_ref |
 | `backend/app/data/binding.py` | 可信组合入口：`compose_data_binding()` 构造 `DataBinding(data, ready, close)`；`create_app()` 交 B 的工厂以 `a_mode=persistent` 启动 |
-| `backend/app/data/deliverer.py` | `OutboxDeliverer` 事务性 outbox 投递器：`FOR UPDATE SKIP LOCKED` 领取、指数退避、`published_at` 确认；经 DataPort `append_audit` 写审计（event_id 去重，投递 at-least-once、审计效果 exactly-once）；`--once`/循环 CLI（`python -m app.data.deliverer`，凭据读 `PAPERPILOT_DATA_*`） |
+| `backend/app/data/deliverer.py` | `OutboxDeliverer`：原子领取、限时租约和尝试次数 fencing；指数退避、超限死信与 `published_at` 确认。审计按 event_id 去重，投递为至少一次，不能外推为其他下游副作用恰好一次；独立 CLI 读取 `PAPERPILOT_DATA_*`。 |
 | `backend/app/data/provider.py` | 隔离测试 provider `app.data.provider:build_harness`：每 harness 建一个一次性数据库，含真实提交前故障探针、reopen、expire_claim；`disposable_database()` 辅助供其他真实库测试复用 |
 | `backend/tests/test_outbox_delivery.py` | 投递器行为测试：恰好一次审计效果、丢失确认后的仅确认重放、永久失败退避（载荷非法记 `ADAPTER_CONTRACT_ERROR`）、并发投递器、独立构造器 |
 | `backend/tests/test_persistent_integration.py` | persistent 模式业务联调：B 的真实路由 + worker 跑在真实 DataPort 上（登录、上传幂等重放、任务处理、问答/证据、检索、报告版本与冲突、成员/审计、移出保留、HTTP→outbox→投递器→audit 全链路、跨进程重启保留）；无库环境自动整体跳过，不影响 Mock 基线 |

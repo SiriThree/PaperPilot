@@ -655,3 +655,518 @@ DataBinding、ai_factory、security_factory、后端服务/路由和三类Mock�
 实际渲染截图保存在忽略目录`output/connected-workspace/`及`output/demo-data/`；桌面/手机布局及既有304/768px回归均实际运行。已在现有localhost:5174演示站点登录Alice，生成Mock回答、点击引用、打开安全页并提交统计查询，看到一致的查询/审计request_id和18项离线验证计数；保存了应用浏览器预览截图。原8000/5173和演示8001/5174服务保留。
 
 边界仍然存在：片段/页码不是PDF具体坐标；来源加入报告不代表人工核验通过；未保存正文不跨刷新持久化，完整对话历史未持久化；预置失败论文的PaperDetail不含task_id/失败原因，已知任务的安全错误通过原任务恢复区读取，本轮不补造原因或扩展Schema。真实安全测试待D/A提供隔离环境与结果，发布前须重新生成并核对离线报告版本。
+
+## Phase 5A：统一开发组合与 A/B 隔离库验证
+
+基线 `main@14701d5`，开始时工作区干净。新增 `app.dev_composition:create_app`，基于既有 DataBinding 与 C/D 工厂按配置显式组合，不执行迁移、播种或 outbox 投递。初始化失败时按成功创建顺序的逆序调用可用的同步 close，关闭失败不掩盖原错误；现有 C/D 公开端口不包含独立 ready/close。A readiness 实际检查数据库迁移版本；health 报告 C/D 仅代表注册模式，不代表模型服务或真实 SQL 已验收。正式生产认证仍未实现，生产配置被拒绝。
+
+四种模式均实际创建应用并验证健康报告：全 Mock；A PostgreSQL + Mock C/D；A PostgreSQL + RealAI + Mock D；A PostgreSQL + RealAI + D 策略。后三种在专用 PostgreSQL 容器执行，C 使用回环地址和测试配置，未请求真实模型；D 未注入执行器，验证 `allowed/not_executed` 且无结果行。另有数据层替身的八项组合/资源清理测试，不能计为持久化测试。A+C 组合校验单次 AI 操作期限短于任务租约，但不能保证多个操作合计耗时小于租约。
+
+`scripts/test-phase5a-isolated.ps1` 启动专属临时 pgvector PostgreSQL 16 容器，随机生成仅供测试的口令和端口；在临时工作目录中由 A 的 provider 建立随机数据库，测试结束仅清理自己创建的数据库及容器。浏览器使用该容器内独立 `phase5a_browser` 数据库、临时上传目录及端口 61085/61084；迁移和开发身份初始化均明确执行，入口自身不执行。测试 PDF 由 pypdf 生成，单独验证能提取文本；C 在 A/B 流程中为 Mock，来源明确为合成。
+
+实际验证：真实库项目和成员、论文元数据/项目关联/任务、上传同键重放、保存报告及引用快照、审计与 outbox、应用重建后任务/论文/报告、跨项目及撤权（A 现有集成套件）、未迁移库及断连拒绝启动均通过。确认回滚测试在 PostgreSQL 提交前注入异常，验证没有论文或上传文件；确认丢失测试先真实提交再注入异常，验证已采纳文件保留并用原键对账，**并未模拟真实网络断线**。浏览器真实 API 回归验证上传后显示原 task_id、页面刷新、后端停止时状态未知、重启后重新登录读取原 task_id、论文及已保存报告；后端身份会话本身不会跨重启保留。
+
+| 实际命令 | 结果 |
+|---|---|
+| `.\scripts\test-phase5a-isolated.ps1` | 退出 0：隔离 PostgreSQL 业务与组合 17 通过、共享 DataPort 41 通过、浏览器 1 通过；均 0 失败、0 跳过。浏览器中停止后端阶段的代理连接错误是测试主动模拟的服务中断。 |
+| `.\.venv\Scripts\python.exe -m pytest backend/tests/test_dev_composition.py -q` | 8 通过、0 失败、0 跳过，数据层替身。 |
+| `.\.venv\Scripts\python.exe -m pytest -q -rs` | 464 通过、1 失败、86 跳过；既有 C 测试创建符号链接时 Windows 返回 WinError 1314，当前用户缺少该权限。未删除或跳过此失败用例。默认跳过项含正式数据库需显式配置、D 的隔离库需显式启用以及 31 项历史 SQLite 实验；8 项新增 Phase 5A 隔离库测试默认不运行，另在专用容器运行。 |
+| `.\.venv\Scripts\python.exe -m ruff check backend scripts` | 通过。 |
+| `.\.venv\Scripts\python.exe -m ruff format --check backend scripts` | 失败：11 个既有文件不符合当前 Ruff 0.17.2 格式；本次新增 3 个 Python 文件的独立格式检查通过，未格式化 A/C/D 或历史文件。 |
+| `scripts/export_contracts.py --check`、`scripts/export_module_examples.py --check` | 两项通过。 |
+| `npm.cmd --prefix frontend run typecheck`、`npm.cmd --prefix frontend run build` | 通过；构建保留既有大包提示。 |
+| 设置 Mock 测试端口 8100/5273 后运行 `npm.cmd --prefix frontend run test:e2e` | 最终 79 通过、0 失败、0 跳过。首轮 78 通过、1 失败：原测试在保存异步完成前读取报告；增加等待版本出现的断言后复验通过。 |
+| `git diff --check` 及冻结接口/Schema/OpenAPI/类型/锁文件比较 | 通过，未改公共契约、A/C/D 数据库与算法实现。 |
+
+未验收：真实模型及 A+C 联合语料质量、D 受限执行器/正式数据库身份与 SQL 攻防、生产认证/部署、真实提交后网络断线与上传文件补偿清理、outbox 死信和保留策略。由于全量后端有一项环境权限失败、全仓格式检查有既有失败，不能报告 Phase 5A 全部验收通过。下一步先在具备符号链接权限或合适 Linux 环境复验该测试，并协调已有格式基线；随后单独处理 A+C 证据选源。
+## Phase 5B：指定论文证据选源（2026-10-28）
+
+证据任务按项目授权读取指定论文的来源，按页码和片段 UUID 稳定排序，最多传入 50 个片段、摘录总计 60000 字符；C 的更小配置仍会继续限制输入。空来源统一展示证据不足。页面提示结果可能未覆盖全文；现有响应没有实际覆盖数量或截断标识。问答和报告草稿的选源不变。
+
+- 隔离 PostgreSQL + RealAI + HTTP 模型响应夹具 + Mock D：`backend/tests/test_phase5b_evidence.py` 实测 1 通过。构造了另一篇论文的 50 个已持久化来源，并以受控检索结果模拟目标不在 Top-50；断言证据分支不调用此检索，同时验证目标引用、幂等重放、报告快照、跨项目拒绝和模型调用期间撤权。不是实际检索排序质量测试，也不是付费真实模型测试。
+- 默认后端全套：466 通过、1 失败、87 跳过。失败是 Windows 创建符号链接时 WinError 1314；真实库及历史实验的默认跳过项仍需各自的显式隔离配置。此全套与上述隔离库测试重叠，不能直接相加。
+- 一次并行执行的 C 测试中，本地推理超时清理测试失败（46 通过、1 失败、1 项按命令排除）；随后与两个 B 新测试单独复跑为 3 通过。该时序不稳定现象仍需关注，不能将首次失败视为没有发生。
+- `npm.cmd --prefix frontend run test:e2e -- tests/connected-workspace.spec.ts tests/evidence-coverage.spec.ts`：隔离 Mock 服务下 12 通过。`npm.cmd --prefix frontend run build`、`npm.cmd --prefix frontend run typecheck`、`scripts/export_contracts.py --check` 通过。
+- 隔离库用例须将 `PAPERPILOT_PHASE5A_ISOLATED=1` 和 `PAPERPILOT_TEST_DATA_*` 指向专门创建的隔离 PostgreSQL，再执行 `.\.venv\Scripts\python.exe -m pytest backend/tests/test_phase5b_evidence.py -q --tb=short`；fixture 只在显式隔离条件下创建并迁移临时测试库。不得对开发或未知数据库使用此流程。
+
+尚未验证真实模型质量、精确覆盖率或数据库原生权限/RLS；模型等待期间撤权只验证了受控时序，不代表所有并发时序均已证明。
+
+## Phase 5D：PostgreSQL 与 D 策略模式的集成准备（2026-10-28）
+
+当前 D 的 `build_security` 未注册受限查询执行器；支持的统计问题返回 `allowed/not_executed` 和 `QUERY_EXECUTION_DISABLED`，不直接执行 SQL。C 使用 Mock；A 使用专用临时 PostgreSQL，D 使用真实策略及审计代码。真实执行、受限数据库角色、执行超时与结果限制均未验收。
+
+`backend/tests/test_phase5d_policy.py` 使用现有显式隔离 fixture 验证策略允许但未执行、拒绝、审计记录及应用实例重建后读取、项目成员撤权、网关异常无统计备用路径、关键审计失败不返回成功。`frontend/phase5a-tests/security-policy.spec.ts` 通过真实 D 策略响应验证页面区分允许未执行及拒绝。`scripts/test-phase5a-isolated.ps1` 在专用临时容器运行这些用例；不连接开发数据库，测试库由 fixture 创建并回收。
+
+实际执行：隔离脚本的 PostgreSQL 业务及组合测试 20 通过，PostgreSQL 共享 DataPort 契约 41 通过，浏览器 2 通过；每组 0 失败、0 跳过。后续加强撤权前后的成员验证和故障时的备用路径断言后，专用隔离容器重跑新增测试 3 通过。前端 build、类型检查、Ruff 及 OpenAPI 一致性通过。安全相关默认套件 213 通过、27 跳过；27 项为需要显式启用且提供固定 A 参考检出的 D PostgreSQL 测试，不能计为真实权限验收。浏览器原重启测试主动停止后端时的连接错误属于预期中断。
+
+D 仍需交付受限执行器、连接管理、资源限制及失败语义；A/D 需共同落实专用数据库身份、项目绑定视图或适用 RLS、审计保护与隔离验证。测试中的应用账号为隔离库管理员，不能作为最小权限或生产安全证明。没有启用真实 SQL 执行。
+
+## Phase 5D-3：B 侧受限执行器候选（2026-10-28）
+
+新增 `backend/app/security/restricted_executor.py`，默认工厂与生产入口没有启用。它只接收与 D 现有三种重建计划精确匹配且项目一致的请求；可信注入的单项目只读登录须先通过异步 `ready()`，每次查询重新检查权限，使用只读事务、3 秒数据库 statement_timeout、5 秒总期限和独立连接。可显式用 `candidate_security_factory(executor)` 注入 SecurityAdapter 进行测试；调用方仍需手动管理候选的 preflight 和 close，现有健康接口不检查候选。其权限检查不证明安全视图定义、所有者或登录项目绑定可信，A/D 审查前不得启用真实运行模式。
+
+保守行数边界为达到 100 行即失败（最多返回 99 行），避免无法辨别截断；列与行的 UTF-8 JSON 预算为 256 KiB，外层 HTTP 字段和编码开销未计入，不能将此视为完整响应大小上限。错误沿用 D 当前 `QUERY_TIMEOUT` / `QUERY_EXECUTION_FAILED`，没有新增公开端口或 Schema。
+
+实际验证：默认隔离外的受控依赖测试与现有安全测试合计 137 通过；另在专用临时 PostgreSQL、明确创建并确认项目绑定的受限测试登录下，候选真实查询及权限测试 5 通过：合法统计及审计重读、跨项目拒绝和底表拒读、拒绝管理员身份、数据库锁导致的 3 秒超时和后续恢复、100 行失败、执行后审计失败不返回成功。非法计划的拒绝及 256 KiB 列/行数据预算由单元夹具验证，后者尚未在真实数据库/完整 HTTP 响应实测。测试管理员仅用于创建隔离夹具，真实统计查询使用受限登录。应用实例重建并非操作系统进程重启。
+
+首次真实库测试因 Windows 默认 Proactor 循环与 psycopg async 不兼容出现 1 失败、1 setup 错误；测试进程显式使用 Selector 后最终 5 通过、0 失败、0 跳过。Windows 默认应用组合尚未适配此要求。Ruff、格式、OpenAPI 检查与前端 build 通过；未运行真实候选浏览器端到端。未将候选测试扩展为 D 的完整攻防、正式角色生命周期、RLS、生产审计写身份或部署验收。
+
+复现入口：`.\scripts\test-phase5a-isolated.ps1 -ApiPort 61585 -WebPort 61584` 会自行创建并回收专用测试容器和测试库；2026-10-28 最终运行 25 项 PostgreSQL 业务及候选测试、41 项 PostgreSQL 共享数据契约、2 项浏览器测试均通过，均 0 失败、0 跳过。浏览器测试覆盖关闭的 D 策略模式，不是候选真实 SQL 的浏览器测试。原持久化重启测试主动停服时的代理错误属于测试预期。调用本脚本不需要也不得指向现有业务库。
+
+
+## Phase 5D-4：候选运行时与限制验证（2026-10-28）
+
+默认关闭真实执行；仅测试环境显式配置可注册候选。`app.selector_server` 在 Windows 为实际服务器进程创建 Selector 循环；单独的子进程验证 psycopg 在默认 Proactor 的拒绝行为。候选启动预检、故障后不再报告就绪、清理顺序与保留原始初始化错误由隔离测试替身验证，实际候选服务由临时 PostgreSQL、专用受限账号和独立服务进程验证。该进程测试未验证 Windows 优雅停服信号。
+
+实际命令和结果：`powershell -NoProfile -File scripts/test-phase5a-isolated.ps1 -ApiPort 61585 -WebPort 61584` 中真实 PostgreSQL 业务/候选 26 通过、真实 PostgreSQL 共享 DataPort 契约 41 通过、浏览器 2 通过，均 0 失败/跳过。浏览器使用 A 真实 PostgreSQL、C Mock、D 策略未执行模式，并非候选真实执行浏览器验收；浏览器主动重启服务时的代理连接错误为预期。测试身份及视图是临时隔离夹具，尚需 A/D 审查。
+
+`python -m pytest backend/tests/test_phase5d4_runtime.py backend/tests/test_restricted_executor_candidate.py backend/tests/test_dev_composition.py -q`：21 通过、0 失败/跳过。包括完整 HTTP JSON 正文限额测试（使用测试替身，非真实 PostgreSQL 大响应）、超限失败关闭、初始化失败逆序清理与健康状态、Windows 默认 Proactor 驱动错误。此前新增清理测试因替身被注册校验拒绝失败一次，已改用符合接口的替身，最终重跑通过。数据库锁超时及随后的正常查询由上述隔离 PostgreSQL 测试验证；每次查询使用新连接而非连接池复用。
+
+扩展跨模块测试命令 `python -m pytest backend/tests/test_phase5d4_runtime.py backend/tests/test_restricted_executor_candidate.py backend/tests/ai_contracts backend/tests/security_contracts backend/tests/data_contracts -q -rs`：114 通过、1 失败、6 跳过；失败是既有 Windows 符号链接创建权限 WinError 1314，未修改测试；6 跳过是 Mock 运行下的真实数据库门槛，不算通过。该次测试先于最后新增两项单元测试。`ruff check backend scripts`、`ruff format --check backend scripts`（117 文件）、`scripts/export_contracts.py --check` 和 `npm --prefix frontend run build`（含类型检查）通过。构建报告已有大包提示。
+
+A/D 仍须审查角色/视图所有者、项目绑定与撤权、关键审计身份及持久化、SQL 变形和多语句、资源限制；未验收正式数据库权限、生产认证、真实候选浏览器流程或完整 HTTP 大响应的真实数据库场景。不满足默认启用及正式真实浏览器安全验收条件。
+
+## Phase 6：角色和视图预检首轮（2026-10-28）
+
+受限执行器新增显式视图所有者和视图定义摘要核验，以及可见跨项目数据检查。摘要依据 `pg_get_viewdef(oid, false)` 的 UTF-8 内容计算；由可信 A/D 审查并从外部提供。测试从临时隔离库生成摘要用于验证机制，本身不证明视图值得信任。空视图不能证明项目绑定正确，正式所有者权限、其他数据库对象权限和项目绑定仍待 A/D 核验；执行继续默认关闭。候选隔离配置现在必须提供所有者和两个摘要，属于开发测试配置变更，公开端口和 OpenAPI 未改。
+
+实际运行 `scripts/test-phase5a-isolated.ps1 -ApiPort 61785 -WebPort 61784`：隔离 PostgreSQL 业务与候选 31 通过、真实 PostgreSQL 共享数据契约 41 通过、浏览器 2 通过，均零失败/跳过。新增用例验证视图定义被替换、错误所有者配置、受限角色成为视图所有者、授予底表读取权、错误绑定暴露其他项目行时拒绝预检。真实执行使用临时受限登录；测试管理员仅准备隔离环境。浏览器测试仍是 D 策略不执行模式，并非真实执行浏览器验收。服务重启阶段的代理连接错误为测试有意中断。
+
+另外，在另一个专用临时 PostgreSQL 容器中运行 `backend/tests/test_outbox_delivery.py -q -rs --tb=short`：5 通过、0 失败/跳过。此组使用管理员测试数据库身份，不证明正式审计最小权限；永久失败、死信与保留运维仍待完善。策略、审计、候选、生命周期与 SecurityPort 共享测试合计 138 通过；Ruff 与 117 文件格式检查、OpenAPI 一致性检查均通过。尚未运行本轮真实 AI、候选真实执行浏览器、真实数据库超大 HTTP 响应及 Windows 优雅停服验收；尚不满足 Phase 6 最终验收。
+
+## Phase 6：安全查询前置拒绝审计（2026-10-28）
+
+在已进入安全查询路由的未认证和项目授权拒绝路径写入系统级 `secure_query.access_denied`。匿名时 actor 为空；经服务端认证后记录 actor；项目始终为空，不写用户问题或未经授权的项目标识。审计不可用返回 503 且不调用网关。由于项目为空，该事件不出现在项目审计页面，系统级读取权限、保留方式及更早的 CSRF/参数验证拒绝覆盖仍需 A/D 确认；不代表正式身份认证已实现。
+
+`python -m pytest backend/tests/test_secure_query_access_audit.py backend/tests/test_security_audit.py backend/tests/test_security_authorization.py backend/tests/test_phase5d4_runtime.py -q`：91 通过、0 失败/跳过。临时隔离 PostgreSQL 单独执行 `backend/tests/test_phase5d_policy.py -q -rs --tb=short`：5 通过、0 失败/跳过，包含已提交拒绝记录在应用重建后读取以及审计写入故障测试；使用真实 A PostgreSQL 和 D 策略，数据/审计连接为测试管理员，不证明正式数据库最小权限。
+
+`scripts/test-phase5a-isolated.ps1 -ApiPort 61885 -WebPort 61884`：32 项真实 PostgreSQL 业务及候选、41 项 PostgreSQL 共享 DataPort 契约、2 项浏览器测试通过，均 0 失败/跳过；浏览器仍使用 D 策略未执行模式。该脚本先于最后添加的审计故障用例启动，后者由上述单独隔离运行覆盖；两组结果有重叠，不能相加。Ruff、118 个 Python 文件格式、OpenAPI 一致性、前端构建和类型检查通过。真实 AI、真实执行浏览器、生产认证和 A/D 安全联合验收本轮未运行。
+
+## Phase 6：隔离浏览器真实查询（2026-10-28）
+
+`scripts/test-phase6-security-browser.ps1`：1 个 pytest 入口内的 1 个 Playwright 浏览器流程通过、0 失败、0 跳过。临时 PostgreSQL 使用 A 真实持久化、D 真实策略和 B 候选执行器，查询连接为单独的受限测试身份；C 使用 Mock。浏览器验证 2020 年论文数为 1、真实执行及策略拒绝状态、请求编号和项目审计关联、服务停机反馈、服务重启后重新登录并读取审计。使用浏览器共享会话直接发起的 API 请求验证跨项目拒绝和成员撤权后拒绝，页面重载显示项目不可访问。停机测试调用进程终止，不证明优雅停服。
+
+开发中首次和第三次运行因登录后过早导航导致测试失败，第二次因为测试期待的故障提示与页面先检查项目范围的实际行为不同而失败；修正测试等待和断言后，隔离流程连续两次通过。危险 SQL、多语句验证在后端策略测试执行，不通过当前仅接收自然语言的浏览器接口直接发送；关键审计故障、数据库超时和行数限制不在此次浏览器流程中注入。A/D 对正式角色、视图和绑定的审查、空项目绑定证明、生产认证以及 A+C+D 真实模型联调仍未完成，不得将本结果作为正式安全验收通过。
+
+本轮相关策略、审计、候选与共享 SecurityPort 测试 142 通过、0 失败/跳过；Ruff、119 文件格式检查、OpenAPI 一致性、前端类型检查和构建通过。前端构建仍提示现有大包体积。
+
+## Phase 6.2：独立基线与绑定核验候选（2026-10-28）
+
+`view_baseline.py` 固定从一次性 PostgreSQL 16 中仓库安全迁移生成的视图定义摘要；运行时必须与该基线一致，非 16 主版本拒绝。基线及生成链仍待 A/D 审核，不能因数值固定即称可信。隔离测试显式安装独立 `002_binding_verifier.sql`，其 SECURITY DEFINER 函数仅判断 SESSION_USER 和指定项目的绑定；固定搜索路径、函数体、所有者、公开 EXECUTE 与调用权限均检查。测试视图/函数所有者为新建不可登录身份，受限登录独立于测试管理员。应用不会自动安装安全迁移，执行仍默认关闭。
+
+隔离测试覆盖两项目的独立受限身份、重复绑定、空项目正确绑定与空项目缺失/错误绑定、视图定义和 security_invoker 变更、所有者写权限、reader/owner 的 schema 创建权限、函数体篡改和 PUBLIC 授权。受限角色与不可登录所有者的业务表权限进行有限白名单检查；函数、扩展、序列、授予其他账号的函数 EXECUTE 权限及所有数据库对象权限未全面验证。绑定校验和查询是不同语句，并发撤权窗口尚未消除。A/D 尚未确认正式迁移、基线、函数所有者与 ACL，不应在正式环境启用。
+
+`scripts/test-phase5a-isolated.ps1 -ApiPort 62285 -WebPort 62284`：隔离 PostgreSQL 业务及候选 41 通过、PostgreSQL DataPort 共享契约 41 通过、浏览器策略未执行模式 2 通过，均 0 失败/跳过。`scripts/test-phase6-security-browser.ps1`：真实候选执行的隔离浏览器 1 通过。相关策略、审计、候选和 SecurityPort 测试 131 通过。Ruff、120 个 Python 文件格式检查、OpenAPI 一致性、前端类型检查及构建通过；构建保留大包提示。
+
+开发中有两轮隔离失败：一轮运行期间代码变化导致子进程启动失败；另一轮新权限查询的 psycopg 百分号转义错误导致 12 个候选夹具 setup 错误（23 通过），已修正并重新运行上述最终测试。浏览器服务主动中断阶段的代理连接错误属于测试场景。以上结果均非 A/D 正式安全验收；生产认证、完整函数权限和并发撤权仍未验证。
+
+## Phase 6.2-B：依赖、角色继承和绑定再验证（2026-10-28）
+
+候选预检增加视图关系依赖集合、绑定表主键和已验证外键、允许视图的列级写授权、非系统序列权限、额外非系统 SECURITY DEFINER 可执行权限检查，并要求受限登录和所有者 NOINHERIT。基线仍由版本控制中的 PostgreSQL 16 摘要提供，代码未动态信任被检数据库摘要；A/D 对基线和正式权限的独立审查尚未完成。
+
+执行过程中、用户后续补充禁止删除数据的约束之前，`scripts/test-phase5a-isolated.ps1 -ApiPort 62385 -WebPort 62384` 在临时容器运行了 PostgreSQL 业务/候选 46 通过、共享契约 41 通过和浏览器 2 通过，均 0 失败/跳过。补充约束后，仅选择不执行测试数据删除的用例，在新建临时 PostgreSQL 容器中运行 `test_restricted_executor_postgres.py` 的定向组：21 通过、9 未选入；随后单独复测空项目正确绑定、未绑定、绑定改指其他项目后的下一次查询及真实受限查询：4 通过、27 未选入。两组有重叠，不相加；其余未选入项不是通过或 pytest 跳过。绑定改指其他项目撤销了原项目对应关系；受本轮约束，没有另行执行直接删除绑定行的测试。每次只清理本次创建的隔离测试数据库和容器。
+
+相关策略、审计、候选、生命周期和 SecurityPort 测试 139 通过、0 失败/跳过；Ruff、120 文件格式和 OpenAPI 一致性检查通过。对 PostgreSQL 内置/普通函数、扩展、其他账号 ACL、底层表所有权、预检连接的 search_path、并发撤权窗口及生产身份的完整审查仍未完成；不将结果视为正式安全验收，默认执行保持关闭。
+
+## Phase 6.2-B：搜索路径和绑定变更复验（2026-10-28）
+
+后续在候选预检和查询的只读事务内固定 `pg_catalog, public` 搜索路径，查询返回前再次检查绑定。新建隔离 PostgreSQL 中定向执行 `test_restricted_executor_postgres.py`：7 通过、26 未选入，0 失败/跳过；包含角色预设搜索路径被覆盖、预检后绑定改指时结果不被报告为成功、两个项目与空项目、未绑定及连接不可达。只清理本次测试资源；未通过此测试证明所有并发时序，最后一次绑定核验之后仍存在窗口。
+
+相关候选、策略、审计、生命周期和 SecurityPort 测试 139 通过、0 失败/跳过；Ruff、120 文件格式及 OpenAPI 检查通过。真实 SQL 默认关闭；内置/普通函数、扩展、其他身份授权、基线和生产配置仍需独立安全审查。浏览器和真实 AI 联调本轮未运行。
+
+## Phase 6.2：绑定与结果同一语句快照（2026-10-28）
+
+仅对已匹配 D 现有三种可信模板的计划，候选执行器使用固定包装，将绑定判断与统计结果置于同一 PostgreSQL 语句快照；空结果和错误绑定以标记区分，并按原模板的年份、主题或论文标识排序。结果返回前继续执行一次绑定复核。SQL 包装没有修改公开端口或策略允许清单；最后一次复核后仍可能发生并发变更，不能将其视为完整即时撤权保证。
+
+临时隔离 PostgreSQL 定向执行候选测试：11 通过、23 未选入、0 失败/跳过；包括三种统计计划、多年份和论文排序、空项目、两项目身份、绑定变更、连接不可达、数据库超时和 100 行边界。仅清理本次隔离资源，未触碰现有业务库。相关候选、策略、审计、生命周期及 SecurityPort 测试 139 通过；Ruff、格式和 OpenAPI 一致性通过。此轮没有运行真实 AI 或浏览器联调。视图基线、正式角色与函数权限的独立安全审查和完整并发撤权仍未完成，真实执行默认关闭。
+
+## Phase 6.3：隔离执行及响应边界补测（2026-10-28）
+
+临时 PostgreSQL 16 容器中，管理员仅准备迁移、项目、角色和合成数据；统计查询由专用受限登录执行。`test_restricted_executor_postgres.py -k 'not empty_project_binding_is_verified_and_missing_or_wrong_binding_refused and not binding_table_losing_primary_key'`：34 通过、2 未选入、0 失败/跳过。新增前置审计故障测试确认执行器未被调用且恢复审计后查询可执行；已有后置审计故障测试确认查询已执行时仍不返回成功。真实数据库超大响应测试构造结果数据低于执行器预算、完整 JSON 超过 256 KiB 的边界，实际经 FastAPI 返回 503，并保留查询已执行的关联审计。该 HTTP 测试使用 TestClient，并非网络浏览器测试。首次使用单条超长主题时 PostgreSQL 索引项限制使测试数据插入失败；改为两条合成主题后通过。
+
+隔离容器中 `data_contracts/test_real_database.py --data-contract-provider app.data.provider:build_harness`：6 通过、0 失败/跳过，验证 PostgreSQL 重连、并发导入、版本冲突、领取和租约恢复。`phase6_browser_check.py::test_phase63_restricted_read_only_browser`：1 个 pytest 测试通过，内部运行 1 个真实浏览器流程，使用真实 PostgreSQL、D 策略和受限身份，C 为 Mock；覆盖合法结果、拒绝、服务中断、重启后审计与非成员拒绝。进程终止不证明优雅停服，未在此浏览器流程执行成员撤权。
+
+本轮候选、认证审计和 SecurityPort 测试 105 通过；策略测试另 118 通过。默认共享契约运行结果为 104 通过、1 失败、6 跳过：Windows 未赋予创建符号链接的权限导致 AI 文件链接测试失败；6 项真实数据库门槛在 Mock provider 下跳过，已由上述真实数据库独立运行覆盖。Ruff、120 文件格式、OpenAPI 一致性、前端类型检查及构建通过；构建仍有大包体积提示。
+
+预检仍不是全数据库权限审计：普通或内置函数、扩展、其他身份 ACL、底表所有者及生产身份尚未完整验证；视图哈希仅固定 PostgreSQL 16，需独立复核迁移和基线。绑定最终复核后仍有并发撤权窗口。真实模型、本轮 Windows 默认 Proactor 的兼容性与 selector_server 优雅停服、正式认证和正式环境部署未验收。安全执行保持默认关闭，本轮不宣称正式安全验收通过。
+
+## Phase 6.4：Outbox 租约和死信首轮（2026-10-28，部分完成）
+
+环境：Windows、Python 3.12.6、Node 24.14.1、专用临时容器 PostgreSQL 16.15。运行 `powershell -NoProfile -File scripts/test-phase64-isolated.ps1 -Browser`：数据库相关测试组 25 通过、0 失败/跳过（其中 CLI 就绪失败一项使用测试替身）；浏览器入口 1 通过、0 失败/跳过。脚本创建独立容器、随机端口与临时数据库，使用管理员测试身份进行迁移、业务写入和审计投递，因此不能证明业务或审计最小权限；浏览器安全统计使用单独受限身份、真实 D 策略，C 为 Mock。数据库组覆盖版本 1 到 2 的迁移与重复校验、并发领取、旧领取确认保护、模拟确认未知后按 event_id 重投审计、死信、业务事务回滚、上传未知提交对账、应用实例重建和任务租约契约。服务进程和独立投递器重启、真实断网与完整权限隔离未由此证明。
+
+本轮实际执行 `python -m pytest backend/tests/test_task_recovery.py backend/tests/test_security_audit.py backend/tests/test_secure_query_access_audit.py backend/tests/security_contracts -q -rs`：47 通过、0 失败/跳过，使用 Mock 和测试替身。`python -m ruff check backend scripts`、`python -m ruff format --check backend scripts`（120 文件）、`python scripts/export_contracts.py --check`、`npm run typecheck`、`npm run build` 均通过；构建有既有大包警告。测试命令中的 `python` 为仓库 `.venv`，npm 命令在 frontend 下执行。以上组可能与历史测试重叠，不作为相加总数；完整共享契约和完整浏览器业务回归本轮未运行。
+
+迁移 002 只增加最后尝试时间和死信时间及索引，不删除事件。业务启动不自动迁移；显式升级后旧版本不能安全理解死信，回退需停止投递并经备份恢复方案处理。默认 30 秒租约和 5 次失败后死信，原事件和错误类别保留，无自动清理。死信授权重投及完整历史、独立投递器健康与告警、审计追加专用身份和系统级读取、真实连接中断及进程崩溃恢复、任务完整执行期限和 AI 调用未知结果仍未完成。不得把 Mock 故障模拟、测试管理员写入或事件 ID 去重当作生产权限、真实断线或所有下游副作用恰好一次的证明。
+
+## Phase 6.5：凭据与会话首轮（2026-10-28，部分完成）
+
+Windows、Python 3.12.6、Node 24.14.1、隔离 PostgreSQL 16.15：`powershell -NoProfile -File scripts/test-phase65-isolated.ps1 -Browser` 真实数据库认证与 HTTP 组 2 通过、0 失败/跳过；真实浏览器入口 1 通过、0 失败/跳过。随机测试密码由进程环境提供，不写仓库。数据库业务和认证连接使用测试管理员，不能证明最小权限；浏览器使用真实 PostgreSQL 会话，C/D 为 Mock、安全 SQL 关闭。覆盖密码、非法身份、数据库摘要、跨实例、空闲过期、停用、重置撤销、可信 Origin、CSRF、刷新和退出；并不覆盖所有部署与安全场景。
+
+`powershell -NoProfile -File scripts/test-phase64-isolated.ps1 -Browser`：数据库及回归测试组 25 通过（含一项测试替身）、浏览器入口 1 通过，均 0 失败/跳过。首次运行该回归时浏览器 1 项失败：身份恢复后按新逻辑返回原目标项目，测试仍等待项目列表；更新断言以验证项目权限与原审计后重跑通过。此浏览器测试使用受限统计身份与真实 D 策略，但认证为开发身份。`python -m pytest backend/tests/test_task_recovery.py backend/tests/test_security_audit.py backend/tests/test_secure_query_access_audit.py backend/tests/data_contracts backend/tests/security_contracts -q -rs --tb=short`：82 通过、0 失败、6 跳过，跳过项为默认 Mock 下真实数据库门槛。`npx playwright test tests/auth-session.spec.ts --reporter=line`：5 通过，认证响应使用测试替身，涵盖三个视口、403 和迟到响应。
+
+Ruff、124 文件格式、OpenAPI 一致性、前端类型检查及构建通过，构建仍有大包提示。生成 OpenAPI 和 TypeScript 包含新增密码输入、CSRF 路由和认证模式标识，属于必要公开契约扩展。生产启动仍被禁止；生产 TLS/Secure Cookie、认证限速、独立认证数据库最小权限、会话到期/停用审计、登录退出审计与会话事务一致性、完整 A+C 联调和所有浏览器异常情形尚未验收；不能报告正式认证验收通过。
+
+## Phase 6.6：最终集成检查（2026-10-28，未通过）
+
+最终状态为 **未通过正式交付**：生产配置目前主动拒绝启动，正式身份、数据库最小权限及真实 SQL 的全部前置条件未验收；干净环境后端容器构建失败，A+C+D 正式闭环未完成。保留默认关闭真实执行，不能把测试身份及 Mock 结果作为生产安全证明。
+
+| 模块 | 本轮实际证据 | 未完成或风险 |
+| --- | --- | --- |
+| A 数据层 | 隔离 PostgreSQL 16，显式迁移；业务/认证写入使用测试管理员，受限统计使用专用受限角色。 | 正式业务、认证、审计角色和系统级审计读取权限未验证；基线及并发撤权需独立安全复核。 |
+| B 业务与前端 | Playwright 默认配置 85 通过，覆盖 Mock/替身页面、项目、论文、研究、报告与审计；凭据真实库浏览器另行测试。 | 不能据此证明真实四方全链路、进程级故障恢复及生产会话安全。 |
+| C AI | DeepSeek `deepseek-flash` 一次真实聊天成功、0 失败，无重试；FastEmbed `BAAI/bge-small-zh-v1.5` 512 维、本地嵌入。虚构单页 PDF 的三种检索均命中第 1 页；回答 12 篇及引用与该页一致，人工核对一例。 | 实际本轮语料是进程内虚构材料；无真实数据库 A+C+D 完整链路、整体证据质量及科研真实性验收。`synthetic=false` 不代表真实科研结论。 |
+| D 安全 | 隔离库真实策略和受限身份的查询、拒绝、超时、行数、完整 HTTP 响应大小与审计故障见本轮隔离测试。管理员仅用于测试初始化；统计通过受限登录。 | 候选仅允许 test，正式角色、视图所有者、函数/扩展权限、绑定和撤权窗口未完整审查；不启用生产执行。 |
+| 部署 | Compose 配置解析、前端容器独立启动和本机 Mock 服务健康检查通过。 | 后端镜像构建失败，Compose 联合启动、生产 TLS、干净环境与优雅停服未通过。 |
+
+本轮命令和边界：Windows、Python 3.12.6、Node 24.14.1；Docker 使用临时 PostgreSQL 16.15。`python -m pytest backend/tests -m 'not real_database and not legacy_persistence' -q -rs --tb=short`：490 通过、1 失败、0 跳过、139 未选入；失败为 Windows WinError 1314 无权限创建符号链接，本轮不降低断言。初次此组另有四项 CSRF 示例、认证模式配置或报错文字不一致；已补契约示例与显式配置并修复，最终仅剩上述环境失败。测试使用本机 `.venv`，真实数据库另行隔离运行。`npx playwright test --reporter=line`：85 通过，使用现有 Mock/测试替身；`npm run typecheck` 和 `npm run build` 通过，构建有大包警告。
+
+`powershell -NoProfile -File scripts/test-phase65-isolated.ps1 -Browser`：真实 PostgreSQL 认证测试 3 通过，真实浏览器入口 1 通过，0 失败/跳过；认证/业务写入为隔离测试管理员，C/D 为 Mock。`powershell -NoProfile -File scripts/test-phase64-isolated.ps1 -Browser`：27 项数据库及测试替身回归、1 项真实受限查询浏览器入口通过，0 失败/跳过；两组存在测试重叠，不相加。`python -m pytest backend/tests/test_phase5b_evidence.py -q -rs --tb=short` 在单独临时 PostgreSQL 中 1 通过，模型为受控 HTTP 夹具；`python -m pytest backend/tests/ai_contracts/test_ai_port.py --ai-contract-provider ai_contracts.real_provider:build_harness -q -rs`：10 通过，模型为替身、数据为内存。
+
+真实模型调用由一次临时脚本完成，本轮只发起一次、未重试；事后整理的 `scripts/phase66_ai_smoke.py` 是可复现入口，需将本地安全配置注入进程后显式加 `--live-model`，脚本不会读取 .env，也未再次调用。来源预算维持 50 条及 60000 字符，证据编号有效不等于内容已核实。
+
+`docker compose config --quiet` 通过；`docker compose build` 因 BuildKit Windows sharedkey 错误失败；`$env:DOCKER_BUILDKIT='0'; docker build -t paperpilot-phase66-local-backend .` 因容器 DNS 无法解析依赖源失败。相同传统构建方式下前端镜像构建及临时容器 HTTP 200，但未与后端联动。Ruff 检查通过、125 文件格式检查通过（本机有缓存写入权限警告）；`python scripts/export_contracts.py --check` 和 `git diff --check` 通过。
+
+本轮修正：开发 Compose 显式认证模式和健康依赖；新增 CSRF 契约示例和生成逻辑；旧 D 测试显式设置开发认证；登录前置审计改为 pending，避免会话创建失败时虚报已登录；反复领取后崩溃的 Outbox 事件达上限保留并标记 `DELIVERY_OUTCOME_UNKNOWN`。该状态须按 event_id 对账，尚无授权重投和告警。认证成功终态审计与会话更新仍不在同一事务；后台任务完整 AI 调用期限、死信运维、系统级审计授权以及正式部署权限均为未解决阻塞。
+
+`powershell -NoProfile -File scripts/test-phase5a-isolated.ps1 -ApiPort 62985 -WebPort 62984` 最终退出 0：隔离 PostgreSQL 业务、策略及受限执行器测试 58 通过，共享 PostgreSQL DataPort 契约 41 通过，浏览器 2 通过，均 0 失败/跳过；浏览器分别为 A 真实库加 Mock C/D，以及 A 真实库加真实 D 策略的未执行模式。首次运行前两组 58 和 41 通过，但 Windows PowerShell 引号处理导致测试 PDF 创建失败，浏览器未运行；修正脚本并完整重跑后上述三组通过。重启故障场景中代理连接中断是测试主动停服造成。业务连接使用临时数据库管理员身份，不能证明生产最小权限；受限执行器测试使用单独测试角色。各测试组有重叠，不加总。
+
+## Phase 6.2–6.6：持续修复与复验（2026-10-28，尚未最终通过）
+
+本轮继续修复：凭据会话登录/退出终态审计与会话操作同一 PostgreSQL 事务；新增数据库共享登录限速和已知失效会话审计；任务提交与领取串行化并拒绝过期租约，worker 有总体等待期限；Outbox 未知结果需对账后才能显式重投，保留事件 ID、递增尝试次数及不可变重投历史；存储故障后的独立投递循环重试；健康接口报告已知 worker 故障。新增迁移 004–006，均需显式对确认的数据库迁移，启动不自动迁移。限速使用 ASGI peer，反向代理可能改写或共享该地址；未知外部调用结果并不能由本地超时判断。事件去重不等于外部副作用端到端恰好一次。
+
+独立 PG16 角色测试：受限统计身份或视图所有者被授予服务器文件函数权限时拒绝就绪；执行器测试 38 通过。审计角色测试 11 通过：专用业务测试身份可追加审计、不可直接读取/更新/删除审计底表，系统事件不进入项目视图；单独 NOLOGIN 所有者及显式 `scripts/check_audit_boundary.py` 预检。该视图仍允许共享业务身份查询不同项目事件，项目之间的访问控制依赖服务端；默认迁移所有者不是受审查的生产角色。预检必须显式运行，尚未纳入生产启动；函数、序列和扩展的全部权限未证明。管理员仅准备隔离库、角色及种子；上述受限行为使用专用身份。
+
+隔离 PostgreSQL 16.15 最终迁移版本 6：`powershell -NoProfile -File scripts/test-phase64-isolated.ps1 -Browser`：32 通过、浏览器入口 1 通过，0 失败/跳过；含真正终止测试 worker 进程、人工将租约置过期后新进程恢复、投递器进程恢复、死信重投和事务回滚。租约过期采用数据库时间注入而非等待真实时长；业务和投递连接为测试管理员，部分故障由测试替身模拟。`powershell -NoProfile -File scripts/test-phase65-isolated.ps1 -Browser`：6 项认证数据库测试、1 项真实浏览器入口通过，0 失败/跳过，数据库业务身份为测试管理员。`powershell -NoProfile -File scripts/test-phase5a-isolated.ps1 -ApiPort 63185 -WebPort 63184`：60 项真实 PostgreSQL/策略和受限执行器测试、41 项真实 PostgreSQL DataPort 契约、2 项浏览器测试通过，0 失败/跳过。期间一次浏览器回归旧断言等待项目首页，但新登录恢复原项目；更正断言验证原项目与原任务后重跑通过。故障测试中主动停服产生的代理连接错误不是生产故障。
+
+真实模型联调使用虚构 PDF、本地 BGE FastEmbed、隔离 PostgreSQL、凭据会话和真实 D 策略，SQL 始终关闭，数据库业务连接为测试管理员。三轮独立评测各调用聊天问答 1 次和证据提取 1 次，合计 6 次、无自动重试。前两轮严格检查失败：五个证据字段无引用，不能认定选源缺陷；在澄清提示中的虚构内容边界后第三轮 1 通过，五字段均待核验、每项引用与数据库 paper_id/chunk_id/页码/摘录一致，字段包含 fictional/simulated 限定，报告快照及实例重建重读通过。这里只对标识和限定词做自动匹配，尚未人工逐项核对语义支持；提示不能保证未来输出的限定，不能作为真实科研结论或模型整体质量验收。前三轮结果均保留；SQL 真实执行和 A+C+D 生产验收未因此通过。
+
+Windows 下符号链接测试仍因 WinError 1314 失败；只读挂载工作区的隔离 Linux 容器运行同一测试 1 通过。Linux 联调镜像执行 `python -m pytest backend/tests -m 'not real_database and not legacy_persistence' -p no:cacheprovider -q -rs --tb=short`：493 通过、1 跳过（仅 Windows Proactor 探针）、160 未选入。最初在 Mock 后端镜像执行时有 11 项收集错误，原因是该镜像未装 PostgreSQL 驱动；改用包含锁定驱动的隔离联调镜像重测。镜像及 Compose 在临时 Docker DNS 映射下可构建，Mock 开发模式完整容器启动和重启通过；单独真实组合开发镜像在隔离 PostgreSQL 上验证凭据登录、真实 C 注册及 D 策略，未执行外部模型或 SQL。默认容器 DNS、生产 TLS、生产身份和真实 SQL 尚未通过部署验收。
+
+本轮最终前端 `npx playwright test --reporter=line`：85 通过、0 失败/跳过，主要使用 Mock 或路由替身；`npm run typecheck`、`npm run build`、OpenAPI 检查、Ruff 和 130 个 Python 文件格式检查通过。新认证限速在登录路由新增 429 契约响应，并同步生成 OpenAPI 和 TypeScript。构建保留现有大包警告。历史 SQLite、原测试及未提交成果未删除；未提交或推送 Git。
+
+## 安全边界继续复验（2026-10-29，尚未通过生产验收）
+
+新增显式审计预检配置 `PAPERPILOT_AUDIT_PREFLIGHT=required` 与独立提供的 `PAPERPILOT_AUDIT_TRUSTED_OWNER`：统一应用入口在启动、健康检查和安全查询之前检查业务身份、视图与审计所有者权限；检查失败关闭，不调用网关。默认 `disabled` 仅保留开发及隔离测试用途，生产模式仍拒绝启动。预检与执行分属不同事务，不能消除并发 DDL/权限变更窗口；生产管理身份及权限变更仍须单独管控。共享业务身份的审计视图包含所有项目事件，项目间隔离仍依赖服务端授权，不是数据库原生隔离。
+
+真实隔离 PostgreSQL 16.15：`powershell -NoProfile -File scripts/test-phase6-security-browser.ps1` 的 Python 测试入口 4 通过、0 失败、0 跳过，使用真实浏览器、真实 D 策略、独立受限统计身份；新增场景另使用审计受限业务身份、受信 NOLOGIN 所有者和 required 预检，管理员仅准备隔离环境，C 为 Mock、使用开发身份。验证真实统计结果、审计关联、策略拒绝、跨项目拒绝和服务恢复。该业务测试身份对非审计业务表授权较宽，不证明生产最小权限。首次运行旧入口误执行需要另一个夹具的认证浏览器，2 通过、1 失败；修正测试文件选择后重跑如上。受限查询预检的序列权限检查采用 CASE 按对象类型求值，并在存在无授权额外序列时验证。
+
+`powershell -NoProfile -File scripts/test-phase5a-isolated.ps1 -ApiPort 63285 -WebPort 63284`：61 项真实 PostgreSQL 业务/策略/受限执行器测试、41 项 PostgreSQL 共享 DataPort 契约、2 项浏览器测试通过，均 0 失败/跳过。隔离环境使用管理员准备及一般业务连接；统计执行测试使用单独受限身份。重启测试中主动停服产生的代理连接中断不代表正常运行故障。测试组之间存在重叠，不相加。
+
+审计角色隔离 PG 测试最终 17 通过、0 失败/跳过：包括多余服务器文件函数、未经审查的 SECURITY DEFINER、所有者序列授权拒绝，以及启动后实际权限漂移阻断网关；普通无授权序列不影响合法预检。`.venv\Scripts\python.exe -m pytest backend/tests/test_audit_startup_preflight.py backend/tests/test_dev_composition.py backend/tests/test_data_binding.py backend/tests/test_secure_query_access_audit.py backend/tests/test_database_pool_shutdown.py backend/tests/test_restricted_executor_candidate.py -q`：40 通过；其中启动和连接池生命周期包含测试替身，不能作为数据库权限证明。数据库连接池关闭后拒绝新连接、唤醒等待者，并关闭停服期间才建立完成的连接。
+
+`powershell -NoProfile -File scripts/test-audit-candidate-isolated.ps1`：隔离 PostgreSQL 16.15 上 18 项测试通过、0 失败/跳过（含上述 17 项角色测试，不重复相加）。另外一项候选测试使用不同项目的专用登录，验证数据库 `SESSION_USER` 绑定、不同项目只读各自审计、错误或缺失绑定、重复绑定、绑定撤销、用户停用、成员权限以及底表和绑定表不可读取。普通 GUC 和角色切换不能扩大读取范围；撤销后的测试使用 READ COMMITTED 新语句，不证明旧事务快照立即失效。管理员只准备本次隔离环境。候选 SQL `backend/app/security/migrations/003_candidate_scoped_audit.sql` 不由现有数据迁移器自动执行，也未接入 DataPort：仍需独立可信定义/所有者预检、项目与用户凭据供应和轮换、隔离连接池及运维，不能描述为现有业务审计已具备数据库原生项目隔离。
+
+只读挂载工作区的 Linux 联调容器执行 `python -m pytest backend/tests -m 'not real_database and not legacy_persistence' -p no:cacheprovider -q -rs --tb=short`：503 通过、1 跳过（Windows Proactor 专属探针）、167 未选入。Windows 下 `python -m ruff check --no-cache backend`、`python -m ruff format --check backend`（最终 117 文件）、`python scripts/export_contracts.py --check`、前端 `npm run typecheck` 与 `npm run build` 通过；构建仍提示大包。`npx playwright test --reporter=line`：85 通过、0 失败/跳过，为 Mock 与替身前端回归。上述结果均为本轮运行，不代表真实模型、正式生产部署或完整权限验收通过。
+
+## Phase 6.7：受限审计读取联合验证（2026-10-29，部分完成）
+
+统一组合入口增加默认关闭、仅 `test` 环境可启用的单用户/项目审计读取：凭据会话提供的用户和服务端项目上下文必须匹配独立配置，专用 PostgreSQL 登录由绑定表及 `SESSION_USER` 确定数据库可见范围。每次读取采用新建只读事务连接，检查版本控制中的候选迁移和 PostgreSQL 16 固定搜索路径下的视图摘要、绑定函数、角色属性与受限权限，随后读取该项目审计。业务认证/授权仍在服务端重新检查；普通成员及非成员不得读取负责人审计。配置错误、绑定撤销或读取不就绪时拒绝，不使用共享视图作为备用路径；安全查询也先检查审计读取是否可用。统一入口启用候选时强制业务审计预检，并要求业务身份没有旧项目审计视图的 SELECT 权限。候选沿用既有 003 SQL，未加入自动数据迁移，不会自动配置角色。
+
+信任边界：当前只有一组固定映射，凭据通过受保护的进程环境注入，未实现多用户凭据分发、轮换/撤销服务；部署时需独立审查 owner、绑定表写入身份、基表及全部依赖对象与其他数据库权限。摘要是从版本控制迁移在隔离 PostgreSQL 的已知搜索路径下生成并固定到代码中，尚无独立第三方审查；不从待验收数据库即取即信。读取使用同一只读事务快照，正在运行的查询不会因撤权立即取消；检查与后续 SQL 仍有并发权限和 DDL 变化窗口。系统级审计不向项目读取身份开放，系统级运维读取方案仍待完成。生产配置继续拒绝启动，真实 SQL 默认关闭。
+
+Windows、Python 3.12.6、Node 24.14.1，测试独立临时 PostgreSQL 16.15：`powershell -NoProfile -File scripts/test-audit-candidate-isolated.ps1` 最终 31 通过、0 失败、0 跳过。涵盖两项目独立身份、绑定缺失/冲突/撤销、成员及停用检查、视图与所有者篡改、业务底表及敏感列授权、角色继承、故障失败关闭。首次新代码测试 22 通过、2 失败：固定视图摘要使用了不同搜索路径，故障夹具替换函数遗漏参数名称；修正后一次 23 通过、1 失败，定位为视图规范化搜索路径不一致；统一固定搜索路径和重算版本控制迁移基线后复验通过。
+
+同组包含真实浏览器联合流程：凭据登录、真实 D 策略、独立受限统计身份实际执行、独立审计身份读取关联 request_id、拒绝不支持的问题、后端重启后会话与审计恢复、退出、成员撤权及非成员拒绝。使用管理员在测试中撤销专用审计绑定来注入故障，浏览器收到 503 并显示带请求编号的审计错误；真实 PostgreSQL API 测试另验证故障时执行器未被调用。业务连接使用独立非超级用户测试身份且无审计底表和旧视图 SELECT；为运行测试对其他业务表授予较宽权限，不能证明生产最小权限。管理员仅负责隔离准备和故障注入；C 为 Mock。扩充浏览器故障场景后先后两次 11 通过、1 失败：失败原因是错误提示匹配到两个同样文案的 alert，改为使用响应 request_id 定位后，`powershell -NoProfile -File scripts/test-audit-candidate-isolated.ps1 -ScopedOnly` 最终 12 通过、0 失败/跳过。这与上面 31 项有重叠；查询中途撤权和其他真实故障场景仍不视作全部通过。
+
+`powershell -NoProfile -File scripts/test-phase5a-isolated.ps1 -ApiPort 63385 -WebPort 63384`：真实 PostgreSQL 业务/安全组 61 通过、PostgreSQL DataPort 契约 41 通过、浏览器 2 通过，0 失败/跳过；测试组有重叠。`python -m pytest backend/tests/test_scoped_audit_wiring.py backend/tests/test_audit_startup_preflight.py backend/tests/test_dev_composition.py backend/tests/test_data_binding.py backend/tests/test_secure_query_access_audit.py backend/tests/data_contracts backend/tests/security_contracts -q -rs`：77 通过、6 跳过，跳过项要求真实数据库 provider；该组以 Mock 和替身为主。Linux 只读工作区回归 `python -m pytest backend/tests -m 'not real_database and not legacy_persistence' -p no:cacheprovider -q -rs --tb=short`：506 通过、1 跳过 Windows 专属探针、181 未选入。测试数量不跨组相加。
+
+Ruff 全部通过、后端 120 文件格式检查通过、OpenAPI 一致性通过，前端 `npm run typecheck` 和 `npm run build` 通过（大包警告仍在）。`docker build -f Dockerfile.integration -t paperpilot-phase67-test .` 因 Docker 默认 DNS 无法解析依赖源而失败；通过 `--add-host` 临时指定经本机 DNS 查询的依赖源地址后，最终代码的镜像构建成功，并确认候选迁移已打入镜像。该结果不代表默认网络环境、完整 Compose 部署、生产 TLS 或多用户生产安全已验收。无生产/未知数据库操作、提交或推送。
+
+## Phase 6.7：多身份继续联调（2026-10-29，部分完成）
+
+隔离测试组合入口支持以受保护环境注入的 JSON 列表配置至多 64 组用户、项目与独立数据库登录，保留原单组配置；两种形式混用、重复映射/登录、额外字段和数据库目标不一致均拒绝。没有凭据打印和日志输出。路由只按可信会话用户及服务端项目上下文查找映射；每次读取建立并关闭该身份专属连接，数据库视图再次校验绑定。所有映射在启动与全局健康检查时验证，安全查询仅检查对应项目；有问题的配置不会静默回退。普通业务用户读取查询改为只选择公开用户字段，不再把密码摘要带入 DataPort 用户映射；认证与业务仍共享数据库身份，因此并不证明该身份无法读取密码摘要或其他项目业务表。
+
+本轮凭据轮换支持受控重启：在隔离库中变更专用测试账号密码后，旧配置连接被拒绝，使用新配置创建的读取器可访问原项目；取消绑定后该身份的新读取被拒绝，其他项目读取不受身份路由影响。配置固定于进程启动；没有集中秘密管理、在线热更新、自动密钥轮换或多 worker 原子切换。运维须验证新实例并排空旧实例后撤销旧凭据。运行中的查询仍可能持有旧快照；全局健康检查遇到任一配置失效会报告故障。默认 SQL 执行继续关闭，生产配置仍拒绝启动。
+
+Windows / Python 3.12.6 / Node 24.14.1，独立 PostgreSQL 16.15：`powershell -NoProfile -File scripts/test-audit-candidate-isolated.ps1` 32 通过、0 失败/跳过；代码最后调整后 `-ScopedOnly` 13 通过、0 失败/跳过。两组重叠，不能相加。真实隔离测试覆盖两个项目专用登录、服务端身份路由、跨项目拒绝、错误/重复映射、绑定撤销、凭据轮换及项目范围的就绪检查。真实浏览器在同一应用实例中以两组凭据分别读取对应项目审计，并验证真实 D 策略、受限 SQL、审计故障和撤权；C 为 Mock。管理员仅准备与故障注入，业务测试身份并非生产最小权限，统计查询身份和审计读取身份独立受限。初次并行运行中浏览器脚本先于测试夹具更新而收到 422，12 通过、1 失败；同步后重新运行通过。
+
+`powershell -NoProfile -File scripts/test-phase65-isolated.ps1 -Browser`：隔离 PostgreSQL 凭据测试 6 通过、浏览器入口 1 通过；业务身份为测试管理员，C/D 为 Mock。`powershell -NoProfile -File scripts/test-phase5a-isolated.ps1 -ApiPort 63485 -WebPort 63484`：真实数据库业务和策略组 61 通过、PostgreSQL 共享契约 41 通过、浏览器 2 通过；浏览器业务连接使用测试管理员，测试主动重启会产生代理断连日志。`python -m pytest backend/tests/test_scoped_audit_wiring.py backend/tests/test_audit_startup_preflight.py backend/tests/test_dev_composition.py backend/tests/test_data_binding.py backend/tests/test_secure_query_access_audit.py backend/tests/data_contracts backend/tests/security_contracts -q -rs`：78 通过、6 跳过，跳过项要求数据库 provider。Linux 联调容器非真实数据库回归：507 通过、1 跳过 Windows 专属探针、182 未选入。前端 `npm run build` 通过并包含类型检查，存在大包警告；OpenAPI 一致性与 Ruff/格式检查通过。
+
+使用经本机 DNS 解析、`--add-host` 临时映射的方式构建 `Dockerfile.integration` 成功；新镜像在独立 Mock 容器中启动、健康检查 HTTP 200 并停止。生产环境配置检查按既有门槛拒绝启动（预期退出 1）。上述不是带真实 PostgreSQL、独立角色和 TLS 的正式容器部署验收；Docker 默认 DNS 的历史问题仍未处理。未操作生产或未知数据库，没有提交或推送。
+
+## Phase 6.7：认证连接分离与多项目统计候选复验（2026-10-29，部分完成）
+
+真实 SQL 默认关闭、生产模式拒绝启动；以下均仅在本机隔离测试环境有效。`PAPERPILOT_AUTH_DATABASE=isolated` 明确注册独立认证数据库连接，要求认证与业务登录不同、同一本机数据库，并在启动、健康检查和每个认证事务前检查角色与权限。认证连接单独关闭，故障不回退共享连接。检查认证角色不得为超级用户、BYPASSRLS、角色成员或能创建数据库/schema/临时对象，拒绝其业务表权限、可调用的非系统 SECURITY DEFINER、审计读取及多余会话表权限；业务连接不得读取或改写密码摘要、访问认证表或改写用户停用状态。检查不覆盖所有数据库函数和系统对象，因此不能证明完整生产最小权限。为避免竞态，认证实现仍使用行锁，候选认证身份需要 `users.password_hash` 的 UPDATE 权限，受攻陷后可能篡改密码摘要，构成正式部署阻塞项。业务测试身份对其他业务表权限较宽，不代表生产最小权限。代码不打印凭据，连接配置的 repr 隐藏密码；环境变量仍非正式密钥管理，缺少集中供应、动态轮换与撤销。
+
+`PAPERPILOT_SECURITY_DB_BINDINGS` 显式配置最多 64 个项目与不同受限登录；以服务端项目上下文选择身份，每项目连接复用原候选的数据库 SESSION_USER 绑定、可信视图、授权与策略检查。缺失映射、重复项目/身份、与单项目配置混用及不满足安全前置条件均拒绝；单项目配置继续兼容。启动与全局健康检查要求所有配置就绪。连接逐次建立关闭，没有跨项目连接池复用；仍没有正式密钥生命周期和大量项目的运维方案。
+
+最终本轮 `powershell -NoProfile -File scripts/test-audit-candidate-isolated.ps1 -ScopedOnly`：隔离 PostgreSQL 16.15，16 通过、0 失败、0 跳过；其中浏览器测试使用正式密码会话、分别受限的业务/认证/两个项目统计/两个用户审计身份、真实 D 策略和执行器、Mock C。管理员只准备隔离角色、种子并注入故障；合法查询以受限身份执行。两个项目分别返回各自统计，审计/会话撤销及故障关闭、服务重启恢复均在真实浏览器场景覆盖；第二项目无论文，返回空统计。另一数据库测试通过两个项目的不同年份记录验证非空隔离、撤销绑定和拒绝访问，权限扩张和意外授权 SECURITY DEFINER 的预检拒绝由真实数据库验证。测试身份不构成正式环境审查。
+
+`.venv\\Scripts\\python.exe -m pytest backend/tests/test_restricted_executor_candidate.py backend/tests/test_dev_composition.py backend/tests/test_phase5d4_runtime.py backend/tests/test_scoped_audit_wiring.py backend/tests/test_audit_startup_preflight.py backend/tests/data_contracts backend/tests/security_contracts -q -rs --tb=short`：79 通过、0 失败、6 跳过；跳过项要求真实 DataPort provider，本组使用 Mock/替身为主。此前同轮独立 PostgreSQL DataPort 契约测试 41 通过；与其他分组可能重叠，不能相加。`npm --prefix frontend run test:e2e -- tests/auth-session.spec.ts tests/business-states.spec.ts tests/sprint-quality.spec.ts`：41 通过，使用浏览器请求替身和 Mock，不代表真实数据库验收。`npm --prefix frontend run build`、`npm --prefix frontend run typecheck`、Ruff、138 个 Python 文件格式检查和 `scripts/export_contracts.py --check` 通过；前端有现存大包警告。`git diff --check` 通过，Git 提示部分已有文件的 LF/CRLF 转换。
+
+过程中的首次联合浏览器未就绪：审计预检闭包误引用新认证连接，修复为始终使用业务连接；随后故障注入早于前端完成健康读取而返回 403，调整测试等待就绪，并补充前端未知认证模式时先重新获取健康状态再进行写操作，相关恢复测试通过。扩大回归曾在 Windows 取得 133 通过、6 跳过、1 失败：既有符号链接测试因 WinError 1314 无创建权限失败，未删除或降低该断言。本轮未重新验证该用例的 Linux 环境。
+
+正式部署仍阻塞：认证身份密码摘要写权限需经独立审查并收敛；业务身份其他表授权、身份与资源撤权、系统函数与所有者权限、密钥供应/轮换、TLS/代理与正式角色配置尚未完成生产验收；未使用生产或未知数据库，未提交或推送。开发配置和复现方法见开发指南。
+
+本轮 `docker build -f Dockerfile.integration -t paperpilot-phase67-split-auth .` 成功，从锁文件安装依赖；以独立开发容器启动全 Mock 模式，健康检查返回 200、`a/c/d=mock`，随后停止本次创建的容器。镜像内调用生产设置校验明确拒绝启动（预期失败）。这是开发容器构建和 Mock 启动验证，不是带真实角色、TLS、秘密管理和外部依赖的干净生产部署验收。
+
+## Phase 6.7：认证行锁与受保护文件继续整改（2026-10-29，部分完成）
+
+本轮新增版本化的隔离候选 `backend/app/security/migrations/004_auth_lock_candidate.sql`；不由应用自动执行。认证会话创建使用经校验的 SECURITY DEFINER 函数对用户行 `FOR UPDATE`，认证登录不再具有 `public.users.password_hash` 的 UPDATE 权限；独立 NOLOGIN 函数所有者仅拥有必要列的读取和行锁所需更新授权，不能登录、继承或拥有成员。启动及认证事务前校验受版本控制的函数体、签名、搜索路径、所有者、EXECUTE 授权及所有者权限；业务角色不能调用该函数。此前关于认证登录必须直接拥有密码摘要更新权的描述仅适用于旧候选，已由本轮候选替代。开发指南记录显式隔离库准备步骤。尚未完成对生产管理员与 DDL 变更窗口、完整系统函数、正式业务角色及部署环境的独立审查。
+
+隔离 PostgreSQL 16.15 的 `powershell -NoProfile -File scripts/test-audit-candidate-isolated.ps1 -ScopedOnly` 最终 16 通过、0 失败、0 跳过（包含真实浏览器，C 为 Mock）。真实角色测试验证认证身份直接更新密码摘要被拒绝；不受信所有者、修改函数定义、额外 EXECUTE 授权或所有者越权均拒绝就绪；密码重置持有用户行锁时旧凭据创建会话实际等待，重置提交后被拒绝，旧会话被撤销，新密码可以登录。浏览器联合场景使用正式凭据会话、真实 D 策略及受限 SQL，不代表正式部署已经安全。另一次隔离 PostgreSQL 数据契约为 41 通过；`scripts/test-phase65-isolated.ps1 -Browser` 认证数据库测试 6 通过、浏览器入口 1 通过，组间可能重叠，不累加。
+
+新增 POSIX 受保护文件输入，供业务数据库密码、认证密码及统计和审计单身份/多身份凭据清单使用；检查绝对路径、文件类型、所有者、group/other 权限、符号链接和大小，配置不安全即失败关闭。Windows ACL 尚不受支持，Windows 文件模式主动拒绝。Linux 联调容器以只读源码挂载运行 `python -m pytest /workspace/backend/tests/test_secret_config.py -p no:cacheprovider -q -rs --tb=short`：4 通过，包括文件权限和四类配置解析；这些是文件及解析测试，没有证明生产容器秘密挂载、集中密钥服务或在线轮换。重启和轮换说明见开发指南。
+
+Windows 后端相关测试及 Mock 契约组：81 通过、0 失败、8 跳过，其中 2 项需要 POSIX、6 项需要真实 DataPort provider；对应 POSIX 文件测试和 PostgreSQL DataPort 已分别运行，测试组不能相加。Ruff、140 个 Python 文件格式检查、OpenAPI 一致性、前端类型检查和构建通过，前端仍有大包警告。本轮未重新运行 Windows 既有符号链接测试，先前 WinError 1314 限制仍存在。
+
+`docker build -f Dockerfile.integration -t paperpilot-phase67-auth-lock .` 首次因 Docker DNS 无法解析依赖源失败；本机解析依赖源并以 `docker build --add-host files.pythonhosted.org:151.101.0.223 --add-host pypi.org:151.101.128.223 -f Dockerfile.integration -t paperpilot-phase67-auth-lock .` 重试成功。开发 Mock 容器健康检查通过，安装包包含候选迁移；该验证不覆盖真实 PostgreSQL 身份、TLS 和正式部署。真实 SQL 默认关闭，生产模式仍拒绝启动；没有提交、推送或操作未知数据库。
+
+## Phase 6.7：Windows ACL、业务最小权限候选与容器联合验证（2026-10-29，部分完成）
+
+新增 Windows 文件读取候选：使用文件句柄检查有效身份、文件所有者和受保护 DACL，仅允许当前用户的简单显式允许 ACE；要求本地固定磁盘上的普通文件，拒绝其他账户授权、继承、重解析点、未知 ACE、并发可写共享及异常大小。读取与权限检查使用同一打开的句柄。Windows 的 OS、管理员、备份/调试特权主体及同一运行身份下其他进程仍在信任边界；尚未经过独立 Windows 安全审查。实际 Windows 测试验证当前用户专属 ACL 可读、默认继承和 Everyone 授权被拒绝，并验证写入句柄冲突、大小限制及重读更新文件。Windows 上相关组 82 通过、8 跳过，其中 2 个 POSIX 测试另在 Linux 容器中运行；Linux 文件组 4 通过、1 跳过 Windows ACL 测试。
+
+新增 `PAPERPILOT_BUSINESS_PRIVILEGE_PREFLIGHT=required` 隔离候选及受版本控制的表操作权限基线：业务/worker 身份只获得现有查询、项目、任务、报告、outbox 插入等实际所需表权限，拒绝报告历史删除、无关表/列授权、危险 DDL 权限及已列明的高风险函数；业务身份不读取密码摘要、会话表或审计底表。隔离数据库实际验证权限漂移导致健康检查 503；以该身份完成项目成员操作、论文任务、报告引用快照、审计和 outbox 写入。此配置仍按表级操作赋权，未完成列级最小化；业务角色可以跨项目直接读取所授权业务表，隔离仍依赖应用授权，不能声称数据库原生项目隔离。outbox 投递身份仍须独立审查，生产模式仍拒绝启动。
+
+最终 `powershell -NoProfile -File scripts/test-audit-candidate-isolated.ps1 -ScopedOnly -ContainerImage paperpilot-phase67-boundary-test`：Windows / PostgreSQL 16.15，16 通过、0 失败、0 跳过；包含真实浏览器和显式本地 Docker 测试镜像。该组合使用真实数据库、分别受限的业务/认证/两组统计与审计身份、真实 D 策略和执行器，C 为 Mock。测试创建独立 PG 容器、运维角色准备测试对象，应用不使用管理员执行统计。单独应用容器真实执行统计查询并关联审计，容器重新创建后会话和审计仍可读取。该测试凭据通过进程环境注入，不证明生产秘密挂载或 TLS。
+
+另在真实隔离 PostgreSQL 上使用 Windows 受保护临时文件供应认证数据库密码，排空旧进程后更改专用测试登录密码：旧凭据不能创建新数据库连接，更新受保护文件并启动新实例后正常登录。仅验证单实例重启轮换，不是动态热更新、多实例原子切换或长期密钥服务。测试脚本只停止本次创建的隔离容器；未操作生产或未知数据库。
+
+最终 Python 相关测试及 Mock 契约：82 通过、0 失败、8 跳过（2 项 POSIX、6 项需真实数据库 provider）；Ruff、142 个 Python 文件格式、OpenAPI 一致性、前端类型检查和构建通过，存在已有大包警告。各测试组存在重叠，不相加。新镜像构建使用经本机 DNS 解析的临时 `--add-host`，默认 Docker DNS 和带 TLS/集中秘密的正式部署未验收；Windows 既有符号链接用例本轮未运行。没有提交或推送，真实 SQL 默认关闭。
+
+本轮最后一次变更将业务授权基线检查从健康检查扩展到受控业务数据库的每个事务入口，包含后台 worker；检查失败回滚并返回不可用，权限恢复后可以重新处理。隔离 PostgreSQL 测试验证运行中授予历史报告 DELETE 权限后，健康检查与既有会话请求返回 503；撤销授权后恢复。`powershell -NoProfile -File scripts/test-audit-candidate-isolated.ps1 -ScopedOnly -ContainerImage paperpilot-phase67-guard-test` 使用最终代码重新构建的本地测试镜像，16 通过、0 失败/跳过，覆盖真实测试身份 SQL、容器重建、审计及真实浏览器（C 为 Mock）。表级业务权限核验每个事务都会带来数据库目录查询开销，尚未进行性能验证；对数据库管理员同时变更权限或对象的事务内竞态仍需独立审查。
+
+最终 Python 测试组合 `.venv\Scripts\python.exe -m pytest backend/tests/test_secret_config.py backend/tests/test_restricted_executor_candidate.py backend/tests/test_dev_composition.py backend/tests/test_phase5d4_runtime.py backend/tests/test_scoped_audit_wiring.py backend/tests/test_audit_startup_preflight.py backend/tests/test_database_pool_shutdown.py backend/tests/data_contracts backend/tests/security_contracts -q -rs --tb=short`：85 通过、0 失败、8 跳过（2 项需 POSIX、6 项需真实数据库 provider）；最终 Ruff、142 文件格式、OpenAPI、前端类型检查和构建通过。上述结果取代本小节前面使用旧镜像和旧测试组合的数字，但不改变真实业务表行隔离、正式密钥服务、TLS 和独立安全审查仍未完成的结论。
+# Phase 6.7：业务项目隔离候选增量验证（2026-10-29）
+
+状态：部分完成，未进行正式部署或完整业务 API 的数据库原生隔离验收。环境为 Windows、Python 3.12.6、Node 24.14.1、npm 11.11.0；隔离容器为 PostgreSQL 16.15。候选迁移只在测试脚本新建的专用容器中执行，管理员只负责测试环境准备；实际项目读取、跨项目写入和撤权查询使用不同的专用受限测试角色。候选不注册到现有应用，真实 SQL 执行默认关闭。
+
+| 本轮命令（仓库根目录） | 实际结果 |
+| --- | --- |
+| `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-audit-candidate-isolated.ps1 -ScopedOnly -BusinessRls` | 20 通过、0 失败、0 跳过；包括新增 4 项业务项目隔离测试及既有审计/认证/统计隔离测试。 |
+| `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-phase6-security-browser.ps1` | 4 通过、0 失败、0 跳过；其中安全执行浏览器测试使用开发身份、真实 D 策略及受限 PostgreSQL，正式凭据浏览器测试使用 Mock D。该组没有验收上述业务 RLS 候选。 |
+| `.venv\Scripts\python.exe -m pytest backend/tests/test_secret_config.py backend/tests/test_scoped_audit_wiring.py backend/tests/test_dev_composition.py -q -rs --tb=short` | 15 通过、0 失败、2 跳过；跳过项要求 POSIX 环境。 |
+| `.venv\Scripts\python.exe -m pytest backend/tests/data_contracts backend/tests/security_contracts -q -rs --tb=short` | 43 通过、0 失败、6 跳过；6 项需显式真实数据库 provider，当前为 Mock。 |
+| `.venv\Scripts\python.exe -m ruff check backend scripts` | 通过。 |
+| `.venv\Scripts\python.exe -m ruff format --check backend scripts` | 144 个文件通过。 |
+| `.venv\Scripts\python.exe scripts/export_contracts.py --check` | OpenAPI 与应用 Schema 一致。 |
+| `npm --prefix frontend run build` | 类型检查与构建通过；存在 JS 大包警告。 |
+| `git diff --check` | 通过，提示部分既有文件换行格式转换。 |
+
+受限角色使用 `SESSION_USER` 与唯一的用户/项目绑定访问 22 张开启强制 RLS 的表。测试覆盖两个项目的实际读取隔离、伪造项目上下文、跨项目写入拒绝、成员撤销后的后续读取拒绝、错误/缺失/重复绑定、列授权和 RLS 漂移失败关闭。该结果不代表全部项目表列级最小权限已完成，也不代表后台 worker、项目创建和全部业务读写已接入。测试之间存在重叠，不能将各组通过数相加视为总数。
+
+本轮未验证生产角色及对象授权全貌、生产密钥保险库与多实例在线轮换、完整用户停用撤销、正式环境部署和新候选的浏览器端到端。项目绑定和 DDL 的运维可信边界、系统函数与所有列的最小授权仍需独立审查；不能在现有数据库直接应用该候选迁移。真实 SQL 继续默认关闭。
+
+## Phase 6.7：业务读取身份路由增量（2026-10-29）
+
+状态：部分完成。新增仅限 `environment=test` 的显式 `ScopedBusinessRouter` 注入，将论文、来源、任务和报告的指定 GET 路由按服务端用户和项目选择受限数据库身份；无绑定或预检失败时不回退。为防止未迁移接口使用共享身份绕过隔离，试验模式拒绝其他业务 API，且不启动后台 worker。它没有接入默认开发组合，亦不是完整 DataPort 或正式部署方案。
+
+本轮 Windows、Python 3.12.6、PostgreSQL 16.15 结果如下（各组含重叠用例，不能相加）：
+
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-audit-candidate-isolated.ps1 -BusinessOnly`：6 通过、0 失败、0 跳过。项目读取使用真实受限 PostgreSQL 身份；新增 API 路由测试的认证和项目授权为测试替身，未证明正式认证与 RLS 的联合安全性。
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-audit-candidate-isolated.ps1 -ScopedOnly -BusinessRls`：22 通过、0 失败、0 跳过。包含现有正式凭据、真实 D 策略、受限查询及隔离审计的浏览器联合场景；该浏览器场景不使用新业务 RLS 路由，AI 为 Mock，容器部署可选分支本次未启用。
+- `.venv\Scripts\python.exe -m pytest backend/tests/test_scoped_audit_wiring.py backend/tests/test_dev_composition.py backend/tests/test_task_recovery.py backend/tests/data_contracts backend/tests/security_contracts -q -rs --tb=short`：68 通过、0 失败、6 跳过；跳过项需要显式真实数据库 provider。
+- `.venv\Scripts\python.exe -m ruff check backend scripts`、`.venv\Scripts\python.exe -m ruff format --check backend scripts`（144 文件）和 `.venv\Scripts\python.exe scripts/export_contracts.py --check`：均通过。
+
+未实现：项目创建、业务写入、全局任务领取及 worker 的数据库原生隔离，完整列级最小授权和生产密钥供应轮换；未完成新业务 RLS 与正式认证、真实安全查询、隔离审计的一体化浏览器验收。RLS 候选不能直接应用到既有数据库，真实 SQL 仍默认关闭。
+
+## Phase 6.7：受限业务写入候选增量（2026-10-29）
+
+结论为部分完成。仅在专用隔离 PostgreSQL 中应用 `005_candidate_business_rls.sql` 和 `006_candidate_business_actor_checks.sql`，后者为论文导入、任务、幂等及 outbox 写入增加操作者与受信数据库登录的绑定校验。`ScopedBusinessWriter` 使用受限身份和六张表的列级 INSERT 清单执行论文导入与任务创建，不注册到 API 或 worker；这不代表项目创建、报告保存、任务领取或其他写入已经完成数据库隔离。
+
+隔离测试中，管理员只负责创建测试对象和授权，业务写入使用专用受限角色。验证了论文和任务同键重试、跨项目上下文拒绝、伪造 outbox 操作者拒绝、写入权限及策略漂移时拒绝就绪，以及通过提交前故障注入验证论文、幂等记录和 outbox 一同回滚。故障注入为测试替身，不是数据库断线测试。
+
+本轮 Windows / Python 3.12.6 / PostgreSQL 16.15 实际结果：
+
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-audit-candidate-isolated.ps1 -ScopedOnly -BusinessRls`：23 通过、0 失败、0 跳过；包括现有正式凭据、真实 D 策略、受限统计执行器与审计的浏览器场景，但该场景没有使用本轮新增业务写入候选，C 为 Mock。
+- `.venv\Scripts\python.exe -m pytest backend/tests/test_scoped_audit_wiring.py backend/tests/test_dev_composition.py backend/tests/test_task_recovery.py backend/tests/data_contracts backend/tests/security_contracts -q -rs --tb=short`：68 通过、0 失败、6 跳过，跳过项需要显式真实数据库 provider。
+- `.venv\Scripts\python.exe -m ruff check backend scripts`、`.venv\Scripts\python.exe -m ruff format --check backend scripts`（144 文件）及 `.venv\Scripts\python.exe scripts/export_contracts.py --check` 均通过。
+
+测试组存在重叠，不相加。未完成项目创建及后台任务的受控身份与路由、报告和其余业务写入、生产凭据供应与轮换，以及正式认证、业务 RLS、安全查询和审计在同一应用中的浏览器联合验收；真实 SQL 继续默认关闭。
+
+## Phase 6.7：报告写入和任务领取候选（2026-10-29）
+
+本轮为部分完成：新增仅限隔离测试的 `007_candidate_report_actor_checks.sql`、`008_candidate_worker_actor_checks.sql`。`ScopedReportWriter` 限定报告作者及列权限，沿用现有报告版本链约束；`ScopedClaimWorker` 使用可信的用户/项目范围调用领取，默认 `PostgresData` 仍保持原全局领取行为。两种候选均未接入业务 API 或后台服务，不构成正式部署方案。
+
+真实隔离 PostgreSQL 测试覆盖同项目跨成员编辑、历史版本及引用快照、并发版本冲突、模拟提交前失败回滚、伪造作者拒绝、并发领取、租约到期重新领取、其他成员任务未被领取和绑定撤销后拒绝领取。管理员只用于建立隔离测试环境及模拟租约过期，实际候选读写与领取使用受限身份。故障注入不是数据库断线测试；旧 worker 结果提交尚未由该候选支持或验证。
+
+本轮 Windows / Python 3.12.6 / PostgreSQL 16.15 实际执行结果：
+
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-audit-candidate-isolated.ps1 -ScopedOnly -BusinessRls`：25 通过、0 失败、0 跳过。包含现有正式凭据、真实 D 策略、受限统计执行器和审计读取的联合浏览器测试；该浏览器测试未使用本轮报告和 worker 候选，C 为 Mock。
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-phase5a-isolated.ps1`：既有真实 PostgreSQL 业务测试 61 通过、共享 DataPort 契约测试 41 通过、Playwright 2 通过，均无失败和跳过。该脚本的业务与契约测试使用隔离数据库管理员身份，不证明数据库最小权限；浏览器使用开发身份，安全执行未启用。重启测试期间出现预期的连接重置日志。
+- `.venv\Scripts\python.exe -m pytest backend/tests/test_task_recovery.py backend/tests/test_dev_composition.py backend/tests/data_contracts backend/tests/security_contracts -q -rs --tb=short`：64 通过、0 失败、6 跳过；6 项需显式真实数据库 provider。
+- `.venv\Scripts\python.exe -m ruff check backend scripts`、`.venv\Scripts\python.exe -m ruff format --check backend scripts`（144 文件）及 `.venv\Scripts\python.exe scripts/export_contracts.py --check` 均通过。测试组相互重叠，不应相加。
+
+未完成：项目创建时的可信身份初始化、其他业务写入、worker 结果提交与失败处理、任务发起人撤权后的调度策略、全部候选的运行时及密钥生命周期接入，和正式认证、业务 RLS、安全查询、审计同一链路的浏览器联合验收。真实 SQL 仍默认关闭。
+
+## Phase 6.7：任务结果与失败处理候选（2026-10-29）
+
+部分完成。`ScopedFailureWorker` 和 `ScopedResultWorker` 仅供隔离库使用；新增 `009_candidate_worker_result_checks.sql` 通过调用者权限函数和限制性 RLS，在结果、证据、来源和片段写入时检查项目、用户及有效任务租约，预检验证函数和策略。候选未接入 API 或后台服务，且没有完成数据库状态机和生产凭据审查。
+
+本轮 Windows、Python 3.12.6、专用隔离 PostgreSQL 16.15：
+
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-audit-candidate-isolated.ps1 -BusinessOnly`：最终代码 10 通过、0 失败、0 跳过。使用受限身份验证进程类、证据、回答和草稿结果提交，失败处理、重复操作、旧尝试拒绝、直接数据库旧尝试写入拒绝、事务回滚以及函数和策略漂移拒绝；结果内容均为受控测试夹具，并非真实 AI 验收。
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-audit-candidate-isolated.ps1 -ScopedOnly -BusinessRls`：26 通过、0 失败、0 跳过；在最后增加回答和草稿测试断言之前执行，包含原有正式认证、安全查询和审计联合浏览器测试，不包含新增 worker 候选的浏览器接入。
+- `.venv\Scripts\python.exe -m pytest backend/tests/test_task_recovery.py backend/tests/test_dev_composition.py backend/tests/data_contracts backend/tests/security_contracts -q -rs --tb=short`：64 通过、0 失败、6 跳过，需真实数据库 provider 的用例在此 Mock 测试组跳过。
+- `.venv\Scripts\python.exe -m ruff check backend scripts`、`.venv\Scripts\python.exe -m ruff format --check backend scripts`（144 文件）和 `.venv\Scripts\python.exe scripts/export_contracts.py --check` 均通过。各组存在重叠，不能相加。
+
+项目创建的可信身份初始化、其余业务写入、候选与正式认证及审计的运行时联合接入、生产密钥和安全审查仍未完成；受限凭据持有者直接更新项目内状态的风险尚未由数据库完全约束，不能启用为正式 worker。成员撤权后的未完成任务托管仍需设计。真实 SQL 继续默认关闭。
+
+## Phase 6.7：项目创建身份候选（2026-10-29）
+
+状态为部分完成。新增仅限隔离测试的 `010_candidate_project_bootstrap.sql` 和 `ScopedProjectCreator`：数据库根据专用登录的 `SESSION_USER` 确定用户，经独立 NOLOGIN 函数所有者在同一事务中写入项目、负责人及 outbox。测试包括不同用户伪造、调用方直接读取业务表、停用用户直接调用、绑定缺失、策略/函数/权限漂移与 outbox 故障回滚。项目创建者使用受限身份，管理员仅用于初始化及故障注入；故障注入不等同于真实断线测试。
+
+本轮 Windows、Python 3.12.6、隔离 PostgreSQL 16.15 实际结果：
+
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-audit-candidate-isolated.ps1 -BusinessOnly`：最终代码 12 通过、0 失败、0 跳过。首次试运行因多个临时数据库共用 PostgreSQL 集群角色，出现 11 通过、1 个测试初始化错误；已限定复用本次专用容器中的 NOLOGIN 角色，最终复验通过。
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-audit-candidate-isolated.ps1 -ScopedOnly -BusinessRls`：28 通过、0 失败、0 跳过，包含既有正式认证、受限统计和审计联合浏览器场景；此组在最终增加公共绑定函数预检和篡改断言之前执行，候选最终代码由上面的隔离组复验。浏览器未接入本轮项目创建候选及业务 RLS 全链路，C 为 Mock。
+- `.venv\Scripts\python.exe -m pytest backend/tests/test_dev_composition.py backend/tests/test_task_recovery.py backend/tests/data_contracts backend/tests/security_contracts -q -rs --tb=short`：64 通过、0 失败、6 跳过；跳过项需要显式真实数据库 provider。
+- `.venv\Scripts\python.exe -m ruff check backend scripts`、`.venv\Scripts\python.exe -m ruff format --check backend scripts`（146 文件）、`.venv\Scripts\python.exe scripts/export_contracts.py --check` 和 `git diff --check` 均通过。各测试组重叠，不能相加。
+
+当前项目创建候选尚未自动供应新项目的数据库身份，未与其他候选策略完整共存和正式认证路由联测；创建未知提交结果没有幂等重放机制，不能盲目重试。数据库状态转换、密钥管理、角色和函数的独立安全审查以及完整浏览器联合验收仍未完成；真实 SQL 保持默认关闭。
+
+## Phase 6.7：项目创建对账及提交错误分类（2026-10-29）
+
+状态：部分完成。新增仅供隔离测试的 `011_candidate_project_replay.sql` 和 `ScopedReplayProjectCreator.create_project_with_key`，采用独立操作键而非 request_id；原 `DataPort.create_project`、OpenAPI 和前端类型没有变化。原项目创建方法仍无幂等键。重复操作只在相同用户和相同参数下返回已创建项目，并发请求依靠数据库唯一约束；回滚时对账记录、项目和 outbox 均不保留。新候选未接入 HTTP 或正式部署。
+
+`PostgresDatabase.transaction` 现将写事务 COMMIT 期间的非约束异常保守标记为 `DATA_COMMIT_UNKNOWN` 并丢弃连接，不因后续 rollback 成功而断定写入失败；约束冲突仍有确定语义。最终测试在真实隔离 PostgreSQL 上先提交，再通过连接替身模拟确认丢失并以原操作键在新适配器实例对账；未注入真实网络断线或真实进程崩溃。
+
+本轮 Windows / Python 3.12.6 / 隔离 PostgreSQL 16.15：
+
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-audit-candidate-isolated.ps1 -BusinessOnly`：最终代码 15 通过、0 失败、0 跳过，覆盖并发同键、跨用户、绑定切换和撤销、参数冲突、失败回滚后重试及模拟确认丢失。写入使用受限身份，管理员只用于隔离环境初始化和故障注入。
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-audit-candidate-isolated.ps1 -ScopedOnly -BusinessRls`：30 通过、0 失败、0 跳过；执行于最后补充确认丢失和绑定切换测试之前。包含现有正式认证、真实 D 策略和审计浏览器测试，不包含新项目候选的浏览器接入，C 为 Mock。
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-phase5a-isolated.ps1`：真实 PostgreSQL 业务测试 61 通过、DataPort 共享契约 41 通过、浏览器 2 通过，均无失败和跳过；使用隔离库管理员身份及开发身份，不能证明生产最小权限。重启测试产生连接中断日志。
+- `.venv\Scripts\python.exe -m pytest backend/tests/test_dev_composition.py backend/tests/test_task_recovery.py backend/tests/test_database_commit_outcome.py backend/tests/data_contracts backend/tests/security_contracts -q -rs --tb=short`：69 通过、0 失败、6 跳过；需显式真实数据库 provider 的用例在此组跳过。
+- `.venv\Scripts\python.exe -m ruff check backend scripts`、`.venv\Scripts\python.exe -m ruff format --check backend scripts`（147 文件）和 `.venv\Scripts\python.exe scripts/export_contracts.py --check` 均通过。不同组有重叠，不应相加。
+
+尚未完成：项目身份与密钥的自动安全供应及轮换、将独立操作键以兼容方式接入现有业务和前端、其他业务写入和后台状态转换的完整数据库隔离、正式认证与业务 RLS/统计查询/审计在同一应用中的联合浏览器验收。真实 SQL 执行保持默认关闭。
+
+## Phase 6.7：项目创建与业务 RLS 候选共存（2026-10-29）
+
+状态：部分完成。业务预检仅接受 010 的三个已知项目创建策略：限定固定 NOLOGIN 角色、策略类型、表和表达式，并检查角色成员关系和数据库及 schema 创建权限。任何策略不完整、角色变更或表达式变更都会拒绝就绪。项目创建角色对 005 的 `bound_identity` 增加执行授权，以便 006 的 outbox 操作者检查执行；创建候选对该函数的受审查迁移定义、所有者、安全属性和授权进行预检。创建与业务读取候选仍分别校验，不能把业务读取预检作为整个项目创建安全边界的验证。
+
+本轮隔离 PostgreSQL 16.15、Windows / Python 3.12：
+
+- `.\scripts\test-audit-candidate-isolated.ps1 -BusinessOnly`：最终 17 通过、0 失败、0 跳过。测试显式组合 005–010，在已创建项目中用新建受限身份验证项目可见范围及绑定撤销；测试角色授权或策略被篡改时拒绝就绪。管理员只用于隔离容器的准备、授予及故障注入；业务读取和项目创建使用对应受限身份。初次完整策略联测暴露 006 outbox 策略缺少函数执行授权，修复后复验通过。
+- `.\scripts\test-audit-candidate-isolated.ps1 -ScopedOnly -BusinessRls`：33 通过、0 失败、0 跳过；包含既有正式认证、受限查询、审计读取浏览器测试及业务候选测试，但浏览器没有使用新项目创建和业务 RLS 全链路。此组运行后补充了一条 `bound_identity` 安全属性的断言，该断言在上面的 BusinessOnly 最终回归中验证。
+- `.\.venv\Scripts\python.exe -m pytest backend/tests/test_dev_composition.py backend/tests/test_task_recovery.py backend/tests/test_database_commit_outcome.py backend/tests/data_contracts backend/tests/security_contracts -q -rs --tb=short`：69 通过、0 失败、6 跳过；跳过项要求显式真实数据库 provider，不能计作持久化成功。
+- `.\.venv\Scripts\python.exe -m ruff check backend scripts`、`.\.venv\Scripts\python.exe -m ruff format --check backend scripts`（147 文件）及 `.\.venv\Scripts\python.exe scripts/export_contracts.py --check` 通过。相关测试组有重叠，不能相加。
+- `npm.cmd --prefix frontend run typecheck` 和 `npm.cmd --prefix frontend run build` 均通过；Vite 报告压缩后部分文件块超过 500 kB 的构建警告。`git diff --check` 通过，Git 报告部分现有文件的换行符提示。
+
+创建后新项目身份由隔离测试管理员显式供应，未实现正式自动凭据供应、轮换和撤销；尚未将创建、所有业务写入及后台 worker 全部接入正式应用，也没有完成正式认证、业务 RLS、统计和审计的同一浏览器联合验收。真实 SQL 默认关闭，完整 Phase 6.7 及正式部署不能标记通过。
+
+## Phase 6.7：受限上传 API 隔离试验（2026-10-29）
+
+状态：部分完成。显式测试模式下，上传路由从服务端用户、项目选择 `ScopedBusinessWriter`，没有匹配写身份时拒绝，不走共享数据连接；健康结果标记上传试验。后台 worker 和其他未支持的写入仍关闭。上传原有公开 API、端口签名及 OpenAPI 未改。
+
+Windows / Python 3.12.6 / 独立临时 PostgreSQL 16.15：
+
+- `.\scripts\test-audit-candidate-isolated.ps1 -BusinessOnly`：最终代码 18 通过、0 失败、0 跳过。新测试通过 HTTP 测试客户端和真实受限 PostgreSQL 业务写身份验证上传、同键重试、应用实例重建后的读取、跨项目缺少身份拒绝、绑定撤销与健康失败。登录使用开发会话，项目成员查询使用隔离测试管理员连接；审计由测试替身记录或注入故障，故障下无文件落地；不能作为正式认证及真实审计写入验收。初次测试因 Mock 审计夹具没有测试项目而失败，改为明确的审计替身后复验通过。
+- `.\scripts\test-audit-candidate-isolated.ps1 -ScopedOnly -BusinessRls`：34 通过、0 失败、0 跳过，含既有真实认证、受限查询、审计浏览器场景；该浏览器场景没有使用本次上传试验。最终补充健康状态断言后，由 BusinessOnly 复测。
+- `.\.venv\Scripts\python.exe -m pytest backend/tests/test_task_recovery.py backend/tests/test_api.py backend/tests/data_contracts backend/tests/security_contracts -q -rs --tb=short`：102 通过、0 失败、6 跳过；跳过项需要真实数据库 provider。首次误指定不存在的 `test_papers.py`，未执行测试；改用实际存在的 `test_api.py` 后通过。
+- `.\.venv\Scripts\python.exe -m ruff check --no-cache backend scripts`、`.\.venv\Scripts\python.exe -m ruff format --check backend scripts`（147 文件）和 `.\.venv\Scripts\python.exe scripts/export_contracts.py --check` 通过。各组存在重叠，不相加。
+
+尚未接入正式模式、新项目身份供应、正式认证及审计的完整上传链路，也未接入后台 worker 或报告和其他业务写入。上传后任务在此试验中保持待处理，不代表 AI 已处理。真实 SQL 默认关闭。
+
+## Phase 6.7：受限报告 API 隔离试验（2026-10-29）
+
+状态：部分完成。测试模式显式注册 `ScopedReportWriter` 后，报告保存和引用来源校验通过相同用户、项目绑定的受限连接；缺失身份拒绝，不回退共享业务连接。报告版本与引用快照仍使用既有接口，健康接口标记试验。审计仍来自应用原有服务。
+
+在 Windows / Python 3.12.6 的独立临时 PostgreSQL 16.15 中：
+
+- `.\scripts\test-audit-candidate-isolated.ps1 -ScopedOnly -BusinessRls`：35 通过、0 失败、0 跳过。报告 API 测试使用真实受限 PostgreSQL 业务身份和 HTTP 测试客户端，覆盖跨项目来源拒绝、历史版本和引用快照、同键重试，以及审计替身在提交前和提交后失败时的行为；成员查询仍使用隔离数据库管理员连接、登录为开发会话、审计为替身。组内另有既有真实认证、安全查询及审计浏览器测试，但未将本次报告试验纳入该浏览器链路。
+- `.\.venv\Scripts\python.exe -m pytest backend/tests/test_task_recovery.py backend/tests/test_api.py backend/tests/data_contracts backend/tests/security_contracts -q -rs --tb=short`：102 通过、0 失败、6 跳过，跳过项需要显式真实数据库 provider。
+- `.\.venv\Scripts\python.exe -m ruff check --no-cache backend scripts`、`.\.venv\Scripts\python.exe -m ruff format --check backend scripts`（147 文件）及 `.\.venv\Scripts\python.exe scripts/export_contracts.py --check` 通过；不同测试组存在重叠。
+
+数据库身份与密钥仍依赖隔离测试中的管理员手动供应。后台 worker 没有接入：005 的身份绑定函数未检查用户停用，账户停用后的后台处理及身份撤销尚未获得数据库保障；不得因为项目成员绑定仍在就推断用户可继续执行任务。正式认证、报告、后台任务与审计仍未完成同一浏览器联合测试。真实 SQL 默认关闭。
+
+## Phase 6.7：停用账户的项目访问和任务提交隔离候选（2026-10-29）
+
+状态：部分完成。`012_candidate_business_active_identity.sql` 在隔离候选中替换 005 的两个绑定函数，按数据库登录绑定及 `users.disabled` 过滤项目范围。业务与项目创建候选预检以 012 的受控函数体作为独立基线，要求函数所有者仅能读取用户标识与停用状态，禁止读取密码摘要及写入用户表。012 不在正式迁移链中，需显式在隔离库应用，不代表正式部署已迁移。
+
+Windows / Python 3.12.6 / 新建隔离 PostgreSQL 16.15：
+
+- `.\scripts\test-audit-candidate-isolated.ps1 -BusinessOnly`：最终代码 20 通过、0 失败、0 跳过。使用专用受限身份验证账户停用后数据库项目行不可见，领取、结果提交及失败提交被拒绝，直接写入任务结果受 RLS 拒绝；恢复账户后新事务可再次通过预检。另验证函数定义回退及所有者获得密码摘要读取权会使预检拒绝。管理员仅用于测试环境准备与状态变更；这些不是生产数据库权限证明。
+- `.\scripts\test-audit-candidate-isolated.ps1 -ScopedOnly -BusinessRls`：36 通过、0 失败、0 跳过；含既有认证、审计和安全查询浏览器测试，浏览器并未接入本次业务 worker 候选。最后仅向 012 添加明确的 PUBLIC 执行权限撤销，随后以 BusinessOnly 复测最终迁移。
+- `.\.venv\Scripts\python.exe -m pytest backend/tests/test_task_recovery.py backend/tests/test_api.py backend/tests/data_contracts backend/tests/security_contracts -q -rs --tb=short`：102 通过、0 失败、6 跳过；真实数据库 provider 用例在该 Mock 组中跳过。
+- Ruff、147 文件格式检查和 OpenAPI 一致性检查通过。组间有重叠，不相加。
+
+该候选不撤销数据库登录口令，受限登录仍可能读取事先授权的非项目用户展示列；停用只在 READ COMMITTED 后续语句生效，不取消已运行语句或旧快照。没有验证真实密钥轮换、自动身份供应、独立后台 worker 进程接入或完整浏览器联合流程。需要继续完成受控供应与撤销、任务托管和独立审查；真实 SQL 保持默认关闭。
+
+## Phase 6.7：受保护的业务身份清单及隔离组合（2026-10-29）
+
+状态：部分完成。`scoped_business_config.py` 从受保护文件解析上限 64 项的服务端用户/项目与数据库身份映射，限定 `read`、`upload`、`report` 三个 profile，拒绝重复键、重复映射、非本机目标、配置不完整和跨模块数据库身份复用；清单不支持明文环境变量。`app.dev_composition:create_app` 仅在显式测试模式及持久化数据配置下接入，并在失败时关闭已初始化资源。此入口不会创建、轮换或撤销角色，也不会启用后台 worker。健康检查逐一验证映射，单一映射停用或故障会令整体就绪失败。
+
+Windows / Python 3.12.6 / 隔离 PostgreSQL 16.15：
+
+- `.\scripts\test-audit-candidate-isolated.ps1 -BusinessOnly`：最终 21 通过、0 失败、0 跳过。新增测试用 Windows 受保护 ACL 清单和真实受限数据库身份，通过组合入口验证两个项目、缺失映射、账户停用、显式修改测试角色密码后更新清单及应用重建；新密码可用、旧密码不能用于新启动连接。管理员只用于专用隔离环境准备和轮换。登录为开发会话，成员查询使用测试管理员连接；不是正式认证及完整数据库最小权限验收。
+- `.\scripts\test-audit-candidate-isolated.ps1 -ScopedOnly -BusinessRls`：37 通过、0 失败、0 跳过；包含既有真实认证、受限查询和审计浏览器场景，但没有将本轮清单及业务 worker 一起接入该浏览器场景。其后仅调整初始化失败资源关闭异常处理及对应单元测试，最终数据库候选由 BusinessOnly 复验。
+- `.\.venv\Scripts\python.exe -m pytest backend/tests/test_scoped_business_config.py backend/tests/test_dev_composition.py backend/tests/test_secret_config.py -q -rs --tb=short`：22 通过、0 失败、2 跳过。跳过为 POSIX 专属 owner/mode 测试，当前 Windows ACL 测试实际运行。
+- Ruff、149 文件格式检查和 OpenAPI 一致性检查通过；测试组存在重叠，不能相加。
+
+密码轮换测试先关闭应用，再更改隔离测试角色密码、更新清单并重建应用；没有证明在线轮换会撤销既存连接。正式身份自动供应、连接吊销、后台任务托管与独立 worker 接入、正式认证及业务 RLS/统计/审计同一浏览器联合测试仍未完成。真实 SQL 默认关闭。
+
+## Phase 6.7：受限 worker 生命周期隔离试验（2026-10-29）
+
+状态：部分完成。`scoped_worker.py` 将独立用户/项目的 `ScopedResultWorker` 桥接到既有任务编排；仅通过测试代码显式向 `create_app` 注入，要求对应业务身份、不同数据库登录、Mock AI 和显式审计回调。启动时检查所有 worker 后才开始处理，健康接口反映已知领取故障或异常退出，停服取消任务并关闭各 worker。未注册时受限业务模式仍停用 worker；默认组合和正式部署不启用该试验。
+
+Windows / Python 3.12.6 / 明确新建的隔离 PostgreSQL 16.15：
+
+- `.\scripts\test-audit-candidate-isolated.ps1 -BusinessOnly`：最终代码 22 通过、0 失败、0 跳过。通过 HTTP 测试客户端上传，由独立受限 worker 身份领取并提交结果，验证成功及受控 Mock 处理失败、账户停用后的健康失败；还验证缺少显式审计回调或重复 worker 被拒绝，以及启动预检失败时关闭资源且关闭异常不掩盖原始失败。Mock AI 返回合成片段；项目授权使用隔离测试管理员连接、认证为开发会话、审计为测试替身，不构成真实认证、模型或审计验收。
+- `.\scripts\test-audit-candidate-isolated.ps1 -ScopedOnly -BusinessRls`：38 通过、0 失败、0 跳过，包含既有正式认证、安全查询和审计浏览器场景；该浏览器场景未使用此次 worker。其后收紧启动顺序、资源关闭和身份校验并增加测试，最终业务候选由 BusinessOnly 再次验证。
+- `.\.venv\Scripts\python.exe -m pytest backend/tests/test_task_recovery.py backend/tests/test_api.py backend/tests/test_dev_composition.py backend/tests/test_scoped_business_config.py backend/tests/data_contracts backend/tests/security_contracts -q -rs --tb=short`：121 通过、0 失败、6 跳过；跳过项需要显式真实数据库 provider。
+- Ruff、150 文件格式检查与 OpenAPI 一致性检查通过。各测试组有重叠，不相加。
+
+未完成：受限 worker 的真实 C 接入、真实审计回调与故障门槛、独立进程崩溃和任务托管恢复、身份自动供应与连接吊销，以及正式认证、业务 RLS、worker、真实安全查询与审计的同一浏览器联合测试。当前账户停用只阻断后续数据库操作，不取消在途外部调用；真实 SQL 默认关闭。
+
+## Phase 6.7：worker 真实审计写入与 outbox 故障试验（2026-10-29）
+
+状态：部分完成。worker 审计转发会先校验事件的用户与项目是否匹配该 worker 的服务端绑定。隔离测试为 worker、审计写入和 outbox 投递分别准备独立 PostgreSQL 身份；Mock AI 和开发会话仍用于本次任务，授权查询使用隔离测试管理员连接。
+
+Windows / Python 3.12.6 / 新建隔离 PostgreSQL 16.15：
+
+- `.\scripts\test-audit-candidate-isolated.ps1 -BusinessOnly`：最终 22 通过、0 失败、0 跳过。测试用独立受限审计身份写入真实审计事件并按 request_id、项目、用户关联，验证该身份不能直接 SELECT 审计底表；在任务处理期间撤销其 INSERT 权限，确认业务结果已提交、`process.completed` 审计未写入但 `complete_job` outbox 存在；恢复权限后使用独立项目绑定投递身份投递该事件，重复投递没有第二条审计。权限撤销为真实隔离数据库故障注入，不是数据库断网或进程重启。首轮恢复测试因投递角色缺少 `bound_identity` 所需 EXECUTE 权限而失败，补足该隔离角色授权后重跑通过。
+- `.\scripts\test-audit-candidate-isolated.ps1 -ScopedOnly -BusinessRls`：38 通过、0 失败、0 跳过，含既有认证、安全查询与审计浏览器测试；该组在最后增加真实 outbox 恢复验证之前运行，浏览器未使用本次 worker 链路。
+- `.\.venv\Scripts\python.exe -m pytest backend/tests/test_scoped_worker.py backend/tests/test_task_recovery.py backend/tests/test_api.py backend/tests/data_contracts backend/tests/security_contracts -q -rs --tb=short`：103 通过、0 失败、6 跳过，跳过项需要显式真实数据库 provider。
+- Ruff、151 文件格式检查和 OpenAPI 一致性检查通过。各组存在重叠，不能相加。
+
+风险：测试审计角色直接拥有 `audit_events` INSERT，现有表未实现数据库原生项目/操作者写入绑定；该角色可能通过直接 SQL 伪造其他有效身份的审计。应用层事件匹配检查不能取代数据库限制，故该身份不得用于正式部署。`process.completed` 写入失败后补投的 `complete_job` 是不同事件，未恢复原事件；投递进程重启、可靠对账及正式身份预检仍未验证。真实 C、正式认证与 worker/业务 RLS/安全查询/审计同一浏览器联合验收仍未完成，真实 SQL 默认关闭。
+
+## Phase 6.7：worker 审计写入 RLS 候选（2026-10-29）
+
+状态：部分完成。新增仅供隔离测试的 `013_candidate_worker_audit_rls.sql`，强制审计表 RLS，将项目事件写入与数据库登录绑定的用户和项目关联，指纹重放读取限定固定 NOLOGIN 函数所有者。该脚本不属于正式迁移链，缺少完整预检和系统级审计通道，不能部署到现有系统。
+
+Windows / Python 3.12.6 / 隔离 PostgreSQL 16.15：`.\scripts\test-audit-candidate-isolated.ps1 -BusinessOnly` 最终 22 通过、0 失败、0 跳过。测试先在回滚事务中证实旧权限下受限审计角色可以插入其他项目/用户的伪造事件；显式应用 013 后，同项目事件写入和 outbox 恢复投递成功，跨项目、同项目冒充其他用户以及无项目事件的直接写入均被 RLS 拒绝。管理员只用于专用隔离环境准备、故障注入和验证；业务、worker、审计和投递各用独立测试身份。应用认证为开发会话、模型为 Mock，不证明正式认证、真实 C 或浏览器完整链路。
+
+`.\.venv\Scripts\python.exe -m pytest backend/tests/test_scoped_worker.py backend/tests/test_task_recovery.py backend/tests/test_api.py backend/tests/data_contracts backend/tests/security_contracts -q -rs --tb=short`：103 通过、0 失败、6 跳过；真实数据库 provider 用例在该组跳过。Ruff、151 文件格式及 OpenAPI 一致性检查通过。既有认证、安全查询和审计浏览器回归此前 38 通过，但没有使用 013 或本次 worker，不能计为候选联合验收。
+
+013 目前没有独立的视图、策略、函数所有者与授权预检；固定角色需要可信供应及最小权限审查。它没有允许项目为空的登录/系统审计写入通道，不能与正式认证直接组合。还需验证角色成员关系、对象权限漂移、持久化投递器的重启恢复及真正的联合浏览器链路。真实 SQL 保持默认关闭。
+
+## Phase 6.7：worker 审计身份预检候选（2026-10-29）
+
+状态：部分完成。`ScopedWorkerAuditWriter` 在隔离候选审计写入前检查角色、授权、绑定、函数定义与 013 的 RLS 策略，支持显式将 `ready()` 用作测试应用启动及健康检查。012 和 006 的受版本控制内容提供函数预期；013 策略预期来自代码中的固定声明，而不是从被检查数据库即时采信。检查并非完整生产配置审查，且默认组合入口未接入此候选。
+
+Windows / Python 3.12.6 / 新建隔离 PostgreSQL 16.15：
+
+- `./scripts/test-audit-candidate-isolated.ps1 -BusinessOnly`：最终 22 通过、0 失败、0 跳过。使用独立受限审计角色写入：校验正常配置、修改 RLS 策略、授予审计底表列读取、变更指纹函数安全属性、打开角色继承、停用账户，以及恢复配置后的就绪与写入；策略变更时健康接口返回 503，显式审计就绪检查失败时应用启动被拒绝。SQL 身份和准备方式同上一节；不是正式认证或真实 C 联调。
+- `./scripts/test-audit-candidate-isolated.ps1 -ScopedOnly -BusinessRls`：38 通过、0 失败、0 跳过，包含既有认证、安全查询和审计浏览器场景；该组开始后又在业务测试增加了角色继承及账户停用检查，最终版本由上述 BusinessOnly 重新验证。浏览器场景没有使用此次 worker 审计候选。
+- `./.venv/Scripts/python.exe -m pytest backend/tests/test_scoped_worker.py backend/tests/test_task_recovery.py backend/tests/test_api.py backend/tests/data_contracts backend/tests/security_contracts -q -rs --tb=short`：103 通过、0 失败、6 跳过；跳过的共享用例未显式配置真实数据库 provider。测试组存在重叠，不相加。
+- 全 `backend` 和 `scripts` 的 Ruff 检查、152 个 Python 文件格式检查及 OpenAPI 一致性检查通过。执行期间两次 BusinessOnly 初次运行因新增序列权限检查对非序列调用 PostgreSQL 权限函数而失败（每次 21 通过、1 失败）；修正后整组重跑通过。
+
+剩余限制：013 只允许项目绑定审计，不提供匿名登录和系统事件通道；当前不保证数据库所有者、全部内置函数、并发 DDL 及凭据管理已满足生产安全需求。受限审计身份仍需可信供应，后台投递进程重启与原始事件补录未验证。正式认证、业务 RLS、真实安全执行和本候选 worker 审计尚无同一浏览器联合验收。真实 SQL 默认关闭，不能据此报告 Phase 6.7 完整通过。
+
+## Phase 6.7：认证完成审计 RLS 候选（2026-10-29）
+
+状态：部分完成。隔离候选 014 使用认证专用数据库登录，将已完成的会话事件与会话创建或撤销放在同一数据库事务。新增的限制性策略与 013 的公共策略叠加，防止该身份误绑定项目时扩大为项目事件写入；worker 的候选预检检查两条策略的准确表达式、受限身份与限制性属性。014 不自动迁移、不接入默认组合，不能部署到正式数据库。
+
+Windows / Python 3.12.6 / 每次新建的隔离 PostgreSQL 16.15：
+
+- `./scripts/test-audit-candidate-isolated.ps1 -BusinessOnly`：23 通过、0 失败、0 跳过。专用受限认证数据库身份通过 `PostgresSessions` 创建会话及事务内写入真实完成审计；拒绝项目事件和不支持的系统事件；向该测试身份错误绑定项目后仍拒绝项目事件。撤销审计 INSERT 后，登录创建及注销失败且事务回滚，原会话保持有效，授权恢复后注销成功。由测试管理员准备角色及注入故障，实际会话写入使用独立认证身份；测试使用直接调用和适配器替身，未通过 014 运行完整 HTTP 登录流程。现有受限 worker 预检验证两条 014 策略正常时接受、任一策略被改宽时拒绝。
+- `./scripts/test-phase65-isolated.ps1 -Browser`：隔离 PostgreSQL 认证测试 6 通过、0 失败、0 跳过；独立真实浏览器认证测试 1 通过、0 失败、0 跳过。该测试没有启用 013/014，不是本轮候选联合浏览器验收。
+- `./.venv/Scripts/python.exe -m pytest backend/tests/test_scoped_worker.py backend/tests/test_authentication_http_postgres.py backend/tests/data_contracts backend/tests/security_contracts -q -rs --tb=short`：44 通过、0 失败、10 跳过，其中 4 项认证测试与 6 项持久化契约因该运行未配置隔离 provider 而跳过；上面的独立 PostgreSQL 认证测试实际运行，不将重叠测试数量相加。
+- Ruff、152 个 Python 文件格式检查及 OpenAPI 一致性检查通过。最后增加断言后首次格式检查发现 1 个文件需格式化，格式化后复检通过。FastAPI 测试客户端发出依赖弃用警告。
+
+014 仅处理已完成的会话事件，现有登录前的审计门槛、匿名拒绝等仍无隔离系统审计通道；数据库认证身份可以构造其允许范围内的事件，尚无完整防伪保证。尚需建立认证身份独立预检、正式角色与密钥供应、系统事件读取权限、受限审计路由，并在同一真实浏览器流程中验证认证、业务 RLS、安全执行和审计。真实 SQL 仍默认关闭；不能报告 Phase 6.7 完整通过。
+
+## Phase 6.7：系统事件审计与认证侧预检候选（2026-10-29）
+
+状态：部分完成。新增 015、隔离系统审计写入身份及认证侧附加预检候选。015 将登录前门槛和匿名安全查询拒绝限定为特定的无项目事件，另设限制性策略防止身份误绑定项目后借其他宽松策略写入项目事件。测试模式可显式注入系统审计，启动、健康和每次写入检查失败时拒绝；默认组合未接入。014 完成审计与会话变更仍在同一事务，登录前 `pending` 审计使用独立事务。
+
+Windows / Python 3.12.6 / 新建隔离 PostgreSQL 16.15：
+
+- `./scripts/test-audit-candidate-isolated.ps1 -BusinessOnly`：最终 23 通过、0 失败、0 跳过。专用认证和系统审计身份分别在真实数据库写入会话完成事件、登录失败和匿名拒绝事件；通过 HTTP 测试客户端验证审计 INSERT 权限被撤销后登录失败、不返回会话，恢复后登录与注销成功。测试覆盖系统角色误绑定项目、审计策略和函数属性被修改、认证角色误绑定及认证策略被改宽时的拒绝，以及 worker 与 013/014/015 策略共存。角色、迁移和故障由隔离管理员准备；HTTP 项目授权数据仍通过测试管理员读取，认证数据库连接使用受限身份并由测试显式注入，不是正式完整认证边界验收。
+- `./scripts/test-audit-candidate-isolated.ps1 -ScopedOnly -BusinessRls`：39 通过、0 失败、0 跳过，包括既有真实浏览器认证/安全查询/审计场景。该组在最后新增认证侧附加预检之前启动，其浏览器场景未使用 015；最终候选由上述 BusinessOnly 重新验证，不能作为同一浏览器联合验收。
+- `./.venv/Scripts/python.exe -m pytest backend/tests/test_api.py backend/tests/test_secure_query_access_audit.py backend/tests/test_scoped_worker.py backend/tests/data_contracts backend/tests/security_contracts -q -rs --tb=short`：94 通过、0 失败、6 跳过，跳过的真实数据库共享契约未在该组配置 provider。测试组有重叠，不合计。
+- Ruff、154 个 Python 文件格式检查和 OpenAPI 一致性检查通过；测试客户端发出依赖弃用警告。
+
+限制：候选迁移尚未加入正式迁移链；角色与随机口令由测试夹具在临时容器中创建，不是生产密钥供应或轮换。`CandidateAuthAuditGuard` 是附加预检，尚未与 `AuthenticationBoundary` 完整组合，不能证明正式认证角色全部最小权限。系统审计白名单不能防止该专用身份伪造其允许范围内的事件，系统事件读取与权限、所有者完整权限、投递恢复及独立安全审查仍未完成。实际浏览器尚未同时使用 015、受限业务身份、真实 SQL 执行和审计；真实 SQL 默认关闭。Phase 6.7 不满足完整验收条件。

@@ -27,12 +27,19 @@ class User(Schema):
 
 class LoginRequest(Schema):
     username: str = Field(min_length=1, max_length=64)
+    password: str | None = Field(default=None, min_length=1, max_length=1024, repr=False)
 
 
 class Identity(Schema):
     user: User
-    mock: Literal[True] = True
-    authentication: Literal["development_identity_only"] = "development_identity_only"
+    mock: bool = True
+    authentication: Literal["development_identity_only", "authentication_credentials"] = (
+        "development_identity_only"
+    )
+
+
+class CSRFToken(Schema):
+    csrf_token: str
 
 
 class ProjectCreate(Schema):
