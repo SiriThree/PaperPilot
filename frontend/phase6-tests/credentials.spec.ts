@@ -6,7 +6,7 @@ test('Phase 6.5 PostgreSQL credentials, refresh and logout', async ({ page, cont
   const port = Number(process.env.PAPERPILOT_PHASE6_API_PORT)
   const password = process.env.PAPERPILOT_PHASE65_TEST_PASSWORD
   if (!password) throw new Error('Isolated credential fixture not configured')
-  const python = path.resolve('..', '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python')
+  const python = process.env.PAPERPILOT_E2E_PYTHON || path.resolve('..', '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python')
   let server: ChildProcess | undefined = spawn(python, ['-m', 'app.selector_server', '--port', String(port)], {
     cwd: '..', windowsHide: true, stdio: 'ignore', env: process.env,
   })

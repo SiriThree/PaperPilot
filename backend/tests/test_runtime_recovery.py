@@ -153,17 +153,23 @@ def test_dead_letter_and_manual_replay_preserve_identity_and_idempotence(pg):
         conn.execute("UPDATE outbox_events SET next_attempt_at=now() WHERE event_id=%s", (row["event_id"],))
     assert not delivery.deliver_one(row)
     assert row["event_id"] not in {r["event_id"] for r in delivery._due_events()}
-    assert delivery.status()["dead"] >= 1
-    assert delivery.replay_dead(row["event_id"]) and not delivery.replay_dead(row["event_id"])
+    assert len(delivery.dead_letters()) >= 1
+    assert delivery.requeue_dead_letter(row["event_id"]) and not delivery.requeue_dead_letter(row["event_id"])
     delivery.data = pg.data
     assert delivery.deliver_one(row)
     assert not delivery.deliver_one(row)
     with pg.data.database.transaction() as conn:
         state = conn.execute(
-            "SELECT delivery_attempts,manual_replays,last_replayed_at,payload FROM outbox_events WHERE event_id=%s",
+            "SELECT delivery_attempts,payload FROM outbox_events WHERE event_id=%s",
             (row["event_id"],),
         ).fetchone()
-        assert state["delivery_attempts"] == 3 and state["manual_replays"] == 1 and state["last_replayed_at"]
+        assert state["delivery_attempts"] == 3
+        assert (
+            conn.execute(
+                "SELECT count(*) AS n FROM outbox_requeue_history WHERE event_id=%s", (row["event_id"],)
+            ).fetchone()["n"]
+            == 1
+        )
         assert "PRIVATE" not in str(state)
         assert (
             conn.execute(
@@ -180,14 +186,14 @@ def test_stale_outbox_claim_cannot_confirm_new_owner(pg):
     assert delivery._claim(row["event_id"]) is None
     with pg.data.database.transaction(write=True) as conn:
         conn.execute(
-            "UPDATE outbox_events SET delivery_lease_until=now()-interval '1 second' WHERE event_id=%s",
+            "UPDATE outbox_events SET next_attempt_at=now()-interval '1 second' WHERE event_id=%s",
             (row["event_id"],),
         )
     second = delivery._claim(row["event_id"])
-    assert second["claim_token"] != first["claim_token"]
-    assert not delivery._confirm(row["event_id"], first["claim_token"])
-    delivery._record_failure(row["event_id"], first["claim_token"], 1, "DATA_UNAVAILABLE")
-    assert delivery._confirm(row["event_id"], second["claim_token"])
+    assert second != first
+    assert not delivery._confirm(row["event_id"], first)
+    delivery._record_failure(row["event_id"], first, "DATA_UNAVAILABLE")
+    assert delivery._confirm(row["event_id"], second)
 
 
 def test_crashed_delivery_stops_at_budget_and_remains_replayable(pg):
@@ -196,9 +202,11 @@ def test_crashed_delivery_stops_at_budget_and_remains_replayable(pg):
     assert delivery._claim(row["event_id"])
     with pg.data.database.transaction(write=True) as conn:
         conn.execute(
-            "UPDATE outbox_events SET delivery_lease_until=now()-interval '1 second' WHERE event_id=%s",
+            "UPDATE outbox_events SET next_attempt_at=now()-interval '1 second' WHERE event_id=%s",
             (row["event_id"],),
         )
     assert delivery._claim(row["event_id"]) is None
-    assert delivery.status()["dead"] >= 1
-    assert delivery.replay_dead(row["event_id"])
+    assert len(delivery.dead_letters()) >= 1
+    with pytest.raises(ValueError, match="reconciled"):
+        delivery.requeue_dead_letter(row["event_id"])
+    assert delivery.requeue_dead_letter(row["event_id"], unknown_reconciled=True)

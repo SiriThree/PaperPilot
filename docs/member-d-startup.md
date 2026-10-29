@@ -12,6 +12,7 @@
 
 ```powershell
 $env:PAPERPILOT_ENV='development'
+$env:PAPERPILOT_AUTH_MODE='development' # 显式开发身份，仅用于本机演示；不冒充凭据认证验收。
 $env:PAPERPILOT_A_MODE='persistent'
 $env:PAPERPILOT_D_MODE='real'
 $env:PAPERPILOT_C_MODE='mock'

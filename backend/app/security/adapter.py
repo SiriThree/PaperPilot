@@ -25,7 +25,7 @@ AuditAppend = Callable[[AuditEvent], None]
 
 
 class SecurityAdapter:
-    policy_id = "postgres-statistics-v2"
+    policy_id = "postgres-statistics-v2-template"
 
     def __init__(
         self,
@@ -42,6 +42,8 @@ class SecurityAdapter:
         if audit_append is not None and not callable(audit_append):
             raise ValueError("Audit append must be callable")
         self.data = data
+        if candidate_generator is not generate_candidate:
+            self.policy_id = "postgres-statistics-v2-injected"
         self._candidate_generator = candidate_generator
         self._query_executor = query_executor
         self._audit_append = audit_append

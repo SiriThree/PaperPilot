@@ -25,6 +25,9 @@ def main():
     with postgres_workspace() as pg:
         environment = dict(
             os.environ,
+            PAPERPILOT_AUTH_MODE="development",
+            PAPERPILOT_PHASE5A_ISOLATED="1",
+            PAPERPILOT_E2E_PYTHON=sys.executable,
             PAPERPILOT_SECURITY_POSTGRES_TESTS="1",
             PAPERPILOT_SECURITY_TEAM_TESTS="1",
             PAPERPILOT_SECURITY_TEST_A_SOURCE=str(ROOT),
