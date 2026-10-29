@@ -4,7 +4,16 @@ from fastapi import APIRouter, Request
 
 from app.auth import current_user, project_context
 from app.routes.common import ERRORS
-from app.schemas import Acknowledgement, Member, MemberInput, MemberList, Project, ProjectCreate, ProjectList
+from app.schemas import (
+    Acknowledgement,
+    AuditDetails,
+    Member,
+    MemberInput,
+    MemberList,
+    Project,
+    ProjectCreate,
+    ProjectList,
+)
 
 router = APIRouter(prefix="/api/v1", tags=["projects"], responses=ERRORS)
 
@@ -19,7 +28,12 @@ def create_project(data: ProjectCreate, request: Request):
     user = current_user(request)
     project = request.app.state.adapters.data.create_project(user.user_id, data, request.state.request_id)
     ctx = project_context(request, project.project_id)
-    request.app.state.service.audit(ctx, "project.created", "project")
+    request.app.state.service.audit(
+        ctx,
+        "project.created",
+        "project",
+        details=AuditDetails(resource_ids=[project.project_id], resource_name=project.name),
+    )
     return project
 
 
@@ -33,7 +47,12 @@ def list_members(project_id: UUID, request: Request):
 def add_member(project_id: UUID, data: MemberInput, request: Request):
     ctx = project_context(request, project_id, "members.manage")
     result = request.app.state.adapters.data.add_member(ctx, data.username)
-    request.app.state.service.audit(ctx, "member.added", "member")
+    request.app.state.service.audit(
+        ctx,
+        "member.added",
+        "member",
+        details=AuditDetails(resource_ids=[result.user.user_id], resource_name=result.user.display_name),
+    )
     return result
 
 
@@ -41,5 +60,7 @@ def add_member(project_id: UUID, data: MemberInput, request: Request):
 def remove_member(project_id: UUID, user_id: UUID, request: Request):
     ctx = project_context(request, project_id, "members.manage")
     request.app.state.adapters.data.remove_member(ctx, user_id)
-    request.app.state.service.audit(ctx, "member.removed", "member")
+    request.app.state.service.audit(
+        ctx, "member.removed", "member", details=AuditDetails(resource_ids=[user_id])
+    )
     return Acknowledgement(message="成员已移除，后续请求立即重新校验权限")

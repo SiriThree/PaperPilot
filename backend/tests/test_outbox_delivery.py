@@ -149,7 +149,7 @@ def test_version_one_database_upgrades_and_rechecks(harness):
             database.migrate()  # Checksums and already applied versions must remain valid.
             with database.transaction() as conn:
                 versions = conn.execute("SELECT version FROM schema_migrations ORDER BY version").fetchall()
-                assert [row["version"] for row in versions] == [1, 2, 3, 4, 5, 6, 7]
+                assert [row["version"] for row in versions] == [1, 2, 3, 4, 5, 6, 7, 8]
         finally:
             database.close()
 

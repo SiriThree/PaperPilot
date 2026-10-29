@@ -2,10 +2,11 @@
 
 from datetime import datetime
 from enum import StrEnum
+import re
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class Schema(BaseModel):
@@ -287,6 +288,28 @@ class SecureQueryResult(Schema):
         return self
 
 
+class AuditDetails(Schema):
+    question: str | None = Field(default=None, max_length=2000)
+    sql: str | None = Field(default=None, max_length=4096)
+    resource_ids: list[UUID] = Field(default_factory=list, max_length=50)
+    resource_name: str | None = Field(default=None, max_length=200)
+
+    @field_validator("question", "resource_name", mode="before")
+    @classmethod
+    def safe_text(cls, value):
+        # Retain useful operation text, but omit the entire text on credential markers.
+        if isinstance(value, str):
+            if re.search(
+                r"password|passwd|secret|token|api[\s_-]*key|authorization|cookie|bearer|"
+                r"[a-z][a-z0-9+.-]*://|-----BEGIN|\bsk-[\w-]+|密码|口令|令牌|密钥",
+                value,
+                re.I,
+            ):
+                return "[已隐藏：内容可能包含凭据或敏感连接信息]"
+            return " ".join(value.split())
+        return value
+
+
 class AuditEvent(Schema):
     event_id: UUID
     timestamp: datetime
@@ -300,6 +323,7 @@ class AuditEvent(Schema):
     execution_status: str
     duration_ms: float = Field(ge=0)
     mock: bool = True
+    details: AuditDetails | None = None
 
 
 class AuditList(Schema):

@@ -4,7 +4,7 @@ import path from 'node:path'
 
 const port = Number(process.env.PAPERPILOT_PHASE6_API_PORT)
 const project = process.env.PAPERPILOT_SECURITY_DB_PROJECT_ID!
-const python = path.resolve('..', '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python')
+const python = process.env.PAPERPILOT_E2E_PYTHON || path.resolve('..', '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python')
 let server: ChildProcess | undefined
 
 async function start() {

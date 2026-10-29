@@ -10,7 +10,7 @@ from pydantic import BaseModel, ValidationError
 
 from app.adapters.ports import FileReference
 from app.errors import AppError
-from app.schemas import AnswerResult, DraftResult, EvidenceResult, ProcessResult, QuestionRequest
+from app.schemas import AnswerResult, AuditEvent, DraftResult, EvidenceResult, ProcessResult, QuestionRequest
 
 
 def invalid():
@@ -24,6 +24,9 @@ def validate_key(key):
 
 def canonical(value):
     def encode(item):
+        if isinstance(item, AuditEvent) and item.details is None:
+            # Preserve pre-details event fingerprints and outbox replay idempotency.
+            return item.model_dump(mode="json", exclude={"details"})
         if isinstance(item, BaseModel):
             return item.model_dump(mode="json")
         if is_dataclass(item):

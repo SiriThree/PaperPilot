@@ -91,7 +91,7 @@ def scoped_stack(isolated_database):  # noqa: F811
         admin.execute(sql.SQL("GRANT CREATE ON SCHEMA paperpilot_audit TO {}").format(sql.Identifier(owner)))
         admin.execute(
             sql.SQL(
-                "GRANT SELECT (event_id,timestamp,request_id,actor_id,project_id,action,resource_type,decision,execution_status,policy_id,duration_ms,mock) ON public.audit_events TO {}"
+                "GRANT SELECT (event_id,timestamp,request_id,actor_id,project_id,action,resource_type,decision,execution_status,policy_id,duration_ms,mock,details) ON public.audit_events TO {}"
             ).format(sql.Identifier(owner))
         )
         admin.execute(
@@ -335,7 +335,7 @@ def test_scoped_reader_rejects_unsafe_configuration(scoped_stack, change):
             )
         elif change == "view":
             admin.execute(
-                "CREATE OR REPLACE VIEW paperpilot_audit.candidate_project_events WITH (security_barrier=true) AS SELECT event_id,timestamp,request_id,actor_id,project_id,action,resource_type,decision,execution_status,policy_id,duration_ms,mock FROM public.audit_events"
+                "CREATE OR REPLACE VIEW paperpilot_audit.candidate_project_events WITH (security_barrier=true) AS SELECT event_id,timestamp,request_id,actor_id,project_id,action,resource_type,decision,execution_status,policy_id,duration_ms,mock,details FROM public.audit_events"
             )
         elif change == "owner_password":
             admin.execute(
@@ -885,7 +885,13 @@ def test_credentials_scoped_audit_and_real_security_browser(scoped_stack, restri
     injector.start()
     try:
         result = subprocess.run(
-            command, cwd=root / "frontend", env=environment, capture_output=True, text=True, timeout=150
+            command,
+            cwd=root / "frontend",
+            env=environment,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=150,
         )
     finally:
         stop.set()

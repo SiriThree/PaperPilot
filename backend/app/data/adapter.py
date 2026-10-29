@@ -29,6 +29,7 @@ from app.data.database import PostgresDatabase
 from app.data.settings import DataSettings
 from app.errors import AppError
 from app.schemas import (
+    AuditDetails,
     AuditEvent,
     AuditList,
     EvidenceField,
@@ -156,7 +157,7 @@ class PostgresData:
             ),
         )
 
-    def _outbox(self, action, *, ctx, resource_type, resource_id, execution_status="succeeded"):
+    def _outbox(self, action, *, ctx, resource_type, resource_id, execution_status="succeeded", details=None):
         self._db.execute(
             "INSERT INTO outbox_events(event_id, project_id, actor_id, request_id, payload)"
             " VALUES(%s,%s,%s,%s,%s::jsonb)",
@@ -174,6 +175,9 @@ class PostgresData:
                         "execution_status": execution_status,
                         "duration_ms": 0,
                         "mock": False,
+                        "details": (details or AuditDetails(resource_ids=[resource_id])).model_dump(
+                            mode="json"
+                        ),
                     }
                 ),
             ),
@@ -284,7 +288,7 @@ class PostgresData:
             ):
                 raise AppError(502, "INVALID_CITATION", "来源与授权片段不一致")
 
-    def _job_record(self, job):
+    def _job_record(self, job, *, allow_expired=False):
         # Serialize completion/failure with lease recovery on the same task row.
         self._one("SELECT task_id FROM tasks WHERE task_id=%s FOR UPDATE", (job.task.task_id,))
         row = self._task_full_row(job.task.task_id)
@@ -304,10 +308,14 @@ class PostgresData:
             or fingerprint(stored.payload) != fingerprint(job.payload)
         ):
             self._state_conflict()
-        if stored.task.status == "processing" and not self._one(
-            "SELECT 1 FROM task_attempts WHERE task_id=%s AND attempt_no=%s"
-            " AND status='processing' AND lease_expires_at > clock_timestamp()",
-            (job.task.task_id, job.task.attempts),
+        if (
+            stored.task.status == "processing"
+            and not allow_expired
+            and not self._one(
+                "SELECT 1 FROM task_attempts WHERE task_id=%s AND attempt_no=%s"
+                " AND status='processing' AND lease_expires_at > clock_timestamp()",
+                (job.task.task_id, job.task.attempts),
+            )
         ):
             self._state_conflict()
         return stored
@@ -679,7 +687,7 @@ class PostgresData:
             and row["recovery_failures"] >= self.settings.max_automatic_attempts - 1
         ):
             job = self._job_of(self._task_full_row(row["task_id"]))
-            self._fail_job(job, "TASK_RETRY_LIMIT", "自动恢复次数已达上限，请核对后明确重试")
+            self._fail_job(job, "TASK_RETRY_LIMIT", "自动恢复次数已达上限，请核对后明确重试", expired=True)
             return None
         # Expire the stale attempt first: only one processing attempt per task may exist.
         self._db.execute(
@@ -688,8 +696,8 @@ class PostgresData:
             (row["task_id"],),
         )
         self._db.execute(
-            "UPDATE tasks SET status='processing', attempts=attempts+1, updated_at=now() WHERE task_id=%s",
-            (row["task_id"],),
+            "UPDATE tasks SET status='processing', attempts=attempts+1, recovery_failures=recovery_failures+%s, updated_at=now() WHERE task_id=%s",
+            (int(row["status"] == "processing"), row["task_id"]),
         )
         task_row = self._one("SELECT * FROM tasks WHERE task_id=%s", (row["task_id"],))
         lease_until = now() + timedelta(seconds=self.settings.lease_seconds)
@@ -768,7 +776,12 @@ class PostgresData:
             self._paper(job.context, pid)
         result = normalize_result(job.task.kind, result)
         if stored.task.status == "succeeded" and fingerprint(stored.task.result) == fingerprint(result):
-            saved = self._one("SELECT fingerprint FROM process_indexes WHERE task_id=%s", (job.task.task_id,))
+            # Mock results have no vector index; restricted Mock workers need no index-table grant.
+            saved = (
+                self._one("SELECT fingerprint FROM process_indexes WHERE task_id=%s", (job.task.task_id,))
+                if job.task.kind == "process" and not result.mock
+                else None
+            )
             if (saved is not None) != (index is not None) or (
                 saved and saved["fingerprint"] != fingerprint(index)
             ):
@@ -839,6 +852,15 @@ class PostgresData:
             resource_type="task",
             resource_id=job.task.task_id,
             execution_status="succeeded",
+            details=AuditDetails(
+                resource_ids=job.payload["paper_ids"][:50],
+                resource_name={
+                    "process": "PDF 解析与索引",
+                    "evidence": "论文证据提取",
+                    "answer": "文献问答",
+                    "draft": "报告草稿生成",
+                }[job.task.kind],
+            ),
         )
 
     def _commit_index(self, job, index):
@@ -1007,8 +1029,8 @@ class PostgresData:
     def fail_job(self, job, code, message):
         self._fail_job(job, code, message)
 
-    def _fail_job(self, job, code, message):
-        stored = self._job_record(job)
+    def _fail_job(self, job, code, message, *, expired=False):
+        stored = self._job_record(job, allow_expired=expired)
         error = TaskError(code=code, message=message)
         if stored.task.status == "failed" and stored.task.error == error:
             return
@@ -1017,7 +1039,11 @@ class PostgresData:
         attempt = self._db.execute(
             "UPDATE task_attempts SET status='failed', finished_at=now(), error_code=%s, error_message=%s"
             " WHERE task_id=%s AND attempt_no=%s AND status='processing'"
-            " AND lease_expires_at > clock_timestamp()",
+            + (
+                " AND lease_expires_at <= clock_timestamp()"
+                if expired
+                else " AND lease_expires_at > clock_timestamp()"
+            ),
             (code, message, job.task.task_id, job.task.attempts),
         )
         if attempt.rowcount != 1:
@@ -1041,6 +1067,15 @@ class PostgresData:
             resource_type="task",
             resource_id=job.task.task_id,
             execution_status="failed",
+            details=AuditDetails(
+                resource_ids=job.payload["paper_ids"][:50],
+                resource_name={
+                    "process": "PDF 解析与索引",
+                    "evidence": "论文证据提取",
+                    "answer": "文献问答",
+                    "draft": "报告草稿生成",
+                }[job.task.kind],
+            ),
         )
 
     # ---- reports -----------------------------------------------------------
@@ -1291,7 +1326,7 @@ class PostgresData:
         self._db.execute(
             "INSERT INTO audit_events(event_id, timestamp, request_id, actor_id, project_id,"
             " action, resource_type, decision, execution_status, policy_id, duration_ms, mock,"
-            " event_fingerprint) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            " event_fingerprint, details) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)",
             (
                 event.event_id,
                 event.timestamp,
@@ -1306,6 +1341,7 @@ class PostgresData:
                 event.duration_ms,
                 event.mock,
                 digest,
+                event.details.model_dump_json() if event.details is not None else None,
             ),
         )
 
@@ -1344,7 +1380,7 @@ class PostgresData:
         total = self._one("SELECT count(*) AS total" + where, values)["total"]
         rows = self._rows(
             "SELECT event_id, timestamp, request_id, actor_id, project_id, action, resource_type,"
-            " decision, execution_status, policy_id, duration_ms, mock"
+            " decision, execution_status, policy_id, duration_ms, mock, details"
             + where
             + " ORDER BY timestamp DESC, event_id DESC LIMIT %s OFFSET %s",
             (*values, limit, offset),
@@ -1364,6 +1400,7 @@ class PostgresData:
                     execution_status=row["execution_status"],
                     duration_ms=row["duration_ms"],
                     mock=row["mock"],
+                    details=row["details"],
                 )
                 for row in rows
             ],

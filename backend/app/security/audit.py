@@ -6,6 +6,10 @@ from dataclasses import dataclass
 from app.schemas import AuditEvent
 from app.security.executor import QueryUnavailable, verify_login
 
+_FINGERPRINT_BODY = (
+    "\n    SELECT event_fingerprint FROM public.audit_events WHERE event_id = requested_event\n"
+)
+
 
 def verify_writer(connection, user):
     from psycopg.rows import tuple_row
@@ -30,22 +34,34 @@ def verify_writer(connection, user):
             "AND n.nspname !~ '^pg_' AND n.nspname<>'information_schema' "
             "AND (has_column_privilege(c.oid,a.attnum,'SELECT WITH GRANT OPTION') OR "
             "(has_column_privilege(c.oid,a.attnum,'SELECT') AND NOT (n.nspname='public' AND ("
-            " (c.relname='audit_events' AND a.attname IN ('event_id','event_fingerprint')) "
-            " OR (c.relname='users' AND a.attname='user_id') "
+            " (c.relname='users' AND a.attname='user_id') "
             " OR (c.relname='projects' AND a.attname='project_id')))))) "
             "OR EXISTS(SELECT 1 FROM pg_catalog.pg_proc p "
             "JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace "
             "WHERE n.nspname !~ '^pg_' AND n.nspname<>'information_schema' "
-            "AND p.prosecdef AND has_function_privilege(p.oid,'EXECUTE'))"
+            "AND p.prosecdef AND has_function_privilege(p.oid,'EXECUTE') "
+            "AND p.oid<>COALESCE(to_regprocedure('paperpilot_audit.event_fingerprint(uuid)')::oid,0::oid))"
         ).fetchone()[0]
         required = cursor.execute(
             "SELECT has_table_privilege('public.audit_events','INSERT') "
-            "AND has_column_privilege('public.audit_events','event_id','SELECT') "
-            "AND has_column_privilege('public.audit_events','event_fingerprint','SELECT') "
             "AND has_column_privilege('public.users','user_id','SELECT') "
             "AND has_column_privilege('public.projects','project_id','SELECT')"
         ).fetchone()[0]
         if unsafe or not required:
+            raise QueryUnavailable()
+        # Only A's reviewed idempotency lookup may cross this SECURITY DEFINER boundary.
+        function = cursor.execute(
+            "SELECT p.prosecdef,p.provolatile='s',p.proconfig=ARRAY['search_path=pg_catalog'], "
+            "p.prosrc=%s,p.proowner<>(SELECT oid FROM pg_roles WHERE rolname=current_user), "
+            "p.prorettype='character varying'::regtype,p.prolang=(SELECT oid FROM pg_language WHERE lanname='sql'), "
+            "has_schema_privilege('paperpilot_audit','USAGE'),has_function_privilege(p.oid,'EXECUTE'), "
+            "NOT has_function_privilege(p.oid,'EXECUTE WITH GRANT OPTION'), "
+            "NOT EXISTS(SELECT 1 FROM aclexplode(COALESCE(p.proacl,acldefault('f',p.proowner))) a "
+            "WHERE a.grantee=0 AND a.privilege_type='EXECUTE') "
+            "FROM pg_proc p WHERE p.oid=to_regprocedure('paperpilot_audit.event_fingerprint(uuid)')",
+            (_FINGERPRINT_BODY,),
+        ).fetchone()
+        if not function or not all(function):
             raise QueryUnavailable()
 
 
@@ -71,6 +87,7 @@ def compose_audit(config) -> AuditBinding:
     try:
         with database.transaction() as connection:
             verify_writer(connection, config.user)
+        database.set_transaction_guard(lambda connection: verify_writer(connection, config.user))
         data = PostgresData(database, DataSettings(), before_commit=before_commit)
         return AuditBinding(append=data.append_audit, close=database.close)
     except Exception:

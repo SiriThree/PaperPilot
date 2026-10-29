@@ -488,7 +488,14 @@ def test_upload_api_uses_bound_writer_and_fails_closed(scoped_business, monkeypa
         repeated = client.post(root + "/papers", data={"title": "Scoped API"}, files=files, headers=headers)
         assert repeated.status_code == 202, repeated.text
         assert repeated.json() == first.json()
-        assert len(audit_events) == 2
+        assert [e.action for e in audit_events] == [
+            "paper.import_requested",
+            "paper.imported",
+            "paper.import_requested",
+            "paper.imported",
+        ]
+        imported = [e for e in audit_events if e.action == "paper.imported"]
+        assert all(str(e.details.resource_ids[0]) == first.json()["paper"]["paper_id"] for e in imported)
         task_id = first.json()["task"]["task_id"]
         paper_id = first.json()["paper"]["paper_id"]
         assert len(list(tmp_path.iterdir())) == 1

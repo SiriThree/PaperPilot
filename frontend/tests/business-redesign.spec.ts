@@ -77,7 +77,7 @@ test('query result keeps submitted question and disclosed error examples retain 
   await page.getByLabel('统计问题').fill('尚未提交的新问题')
   await expect(page.locator('.query-result-summary')).toContainText('按年份统计论文数量')
   await expect(page.locator('.query-result-summary')).not.toContainText('尚未提交的新问题')
-  await page.locator('.simulation-examples summary').click()
+  await page.getByText('异常场景演示', { exact: true }).click()
   await page.getByRole('button', { name: '模拟执行失败', exact: true }).click()
   await expect(page.getByLabel('统计问题')).toHaveValue('模拟执行失败')
   await page.getByRole('button', { name: '提交 Mock 查询' }).click()
