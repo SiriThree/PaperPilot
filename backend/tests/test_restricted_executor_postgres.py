@@ -795,7 +795,7 @@ def test_real_postgres_http_response_budget_fails_closed(restricted):
             execution_status="executed",
             columns=columns,
             rows=rows,
-            policy_id="postgres-statistics-v2",
+            policy_id=SecurityAdapter.policy_id,
             request_id=ctx.request_id,
             mock=False,
         )
@@ -833,7 +833,7 @@ def test_real_postgres_http_response_budget_fails_closed(restricted):
         assert any(
             event["request_id"] == request_id
             and event["action"] == "security.query.finished"
-            and event["execution_status"] == "executed"
+            and event["execution_status"] == "failed"
             for event in events
         )
 

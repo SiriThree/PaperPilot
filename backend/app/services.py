@@ -254,7 +254,9 @@ class ResearchService:
                         chars += len(source.excerpt)
                 else:
                     search = await self.search(
-                        ctx, SearchRequest(query=question.question, mode="hybrid", limit=50)
+                        ctx,
+                        SearchRequest(query=question.question, mode="hybrid", limit=50),
+                        paper_ids=job.payload["paper_ids"],
                     )
                     sources = [h.source for h in search.items if h.paper.paper_id in job.payload["paper_ids"]]
                 sources = [s.model_copy(update={"citation_id": str(i + 1)}) for i, s in enumerate(sources)]
@@ -352,7 +354,7 @@ class ResearchService:
                 await asyncio.sleep(0.08)
                 try:
                     async with asyncio.timeout(self.job_timeout_seconds):
-                        await self.run_job(job)
+                        await self._run_leased(job)
                 except TimeoutError:
                     # Cancellation cannot prove whether a remote model received the request.
                     self._fail_job(job, "TASK_TIMEOUT", "任务处理超时，请核对后重试")
@@ -401,6 +403,12 @@ class ResearchService:
             result = SecureQueryResult.model_validate(await self.adapters.security.execute(ctx, question))
             if result.request_id != ctx.request_id:
                 raise ValueError("request correlation mismatch")
+            from fastapi.responses import JSONResponse
+
+            if (result.reason and result.reason.code == "QUERY_RESULT_TOO_LARGE") or len(
+                JSONResponse(content=result.model_dump(mode="json")).body
+            ) > 256 * 1024:
+                raise AppError(503, "QUERY_RESPONSE_TOO_LARGE", "查询结果超过响应大小限制")
         except AppError:
             self.audit(
                 ctx,

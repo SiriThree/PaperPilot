@@ -70,6 +70,7 @@ def environment(pg, tmp_path, monkeypatch):
     config.write_text(json.dumps(pg.security_document), encoding="utf-8")
     values = {
         "PAPERPILOT_ENV": "test",
+        "PAPERPILOT_AUTH_MODE": "development",
         "PAPERPILOT_A_MODE": "persistent",
         "PAPERPILOT_C_MODE": "mock",
         "PAPERPILOT_D_MODE": "real",

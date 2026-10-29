@@ -40,6 +40,7 @@ def test_worker_limits_total_task_time_without_starting_another_task(app, monkey
         await asyncio.sleep(5)
 
     monkeypatch.setattr(app.state.adapters.ai, "search", stalled_search)
+    monkeypatch.setattr(app.state.adapters.ai, "search_scoped", stalled_search)
     with TestClient(app, headers={"X-PaperPilot-Client": "web"}) as client:
         assert client.post("/api/v1/auth/login", json={"username": "alice"}).status_code == 200
         for _ in range(100):
