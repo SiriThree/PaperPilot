@@ -2,10 +2,10 @@
   "schema_version": 2,
   "scope": "postgres_security",
   "environment": "隔离 PostgreSQL 16 · 真实 A/C/D · 本地模型替身",
-  "generated_at": "2026-10-28T15:38:46.865692+00:00",
-  "commit": "749c4f2dcab7eea0a117da4e8cd03ea9b2f696e3",
+  "generated_at": "2026-10-29T04:46:55.827095+00:00",
+  "commit": "cd1aae442100320bde7ac026edcc99c2fadcf7a7",
   "worktree_dirty": true,
-  "code_fingerprint": "7307051e55743e5d74e647a7aefc7359aaa34c9efbee7746ed693468d80b5496",
+  "code_fingerprint": "0a686189bf9fb8a383f17a13a8f9d68d55a88b3ca2782236270c88fe07d83bf6",
   "source": {
     "verified": true,
     "checkout": "current_checkout",
@@ -42,12 +42,13 @@
       "id": "audit_identity",
       "label": "关键审计、身份生命周期及业务降权",
       "status": "passed",
-      "passed": 40,
+      "passed": 57,
       "failed": 0,
       "skipped": 0,
       "selectors": [
         "backend/tests/test_security_identities_postgres.py",
-        "backend/tests/test_business_login.py"
+        "backend/tests/test_business_login.py",
+        "backend/tests/test_password_auth_postgres.py"
       ]
     },
     {
@@ -66,11 +67,11 @@
     }
   ],
   "verification_totals": {
-    "passed": 759,
+    "passed": 790,
     "failed": 0,
     "skipped": 31
   },
-  "junit_report": ".runtime/real-security-evidence-19078b433444.xml",
+  "junit_report": ".runtime/real-security-evidence-f50717e2edff.xml",
   "not_verified": [
     "生产认证与正式业务库部署未验收",
     "外部模型质量、大规模性能及底表原生 RLS 未验收",

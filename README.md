@@ -2,7 +2,7 @@
 
 面向科研文献研究的 AI 数据库应用与安全平台。此仓库包含工程骨架、AB-1 数据契约、数据库中立接入及任务恢复；在 Phase 3 协作基线上增加 **Phase 4B：B 侧页面状态、错误处理和业务集成**。各成员从 [统一开发指南](docs/development-guide.md) 开始，实际验收与限制见 [验证记录](docs/verification.md)。
 
-**默认 Mock；持久化模式必须显式注册 A 的适配器，未注册就拒绝启动。C 已提供可选真实 PDF 解析、三模式检索及交大模型接入，见 [C 实现与配置](docs/ai-adapter.md) 和 [实际评测](docs/ai-evaluation/README.md)。默认入口不自动启用。没有真实密码认证或生产部署；已有 SQLite 文件保留为历史实验。**
+**默认 Mock；持久化模式必须显式注册 A 的适配器，未注册就拒绝启动。C 已提供可选真实 PDF 解析、三模式检索及交大模型接入，见 [C 实现与配置](docs/ai-adapter.md) 和 [实际评测](docs/ai-evaluation/README.md)。默认入口不自动启用。新增[本机 HTTPS 与密码认证部署](docs/local-deployment.md)，包含持久数据库、账号隔离、备份恢复和巡检；真实模型配置尚待提供，不能视为完整生产验收。已有 SQLite 文件保留为历史实验。**
 
 ## 技术栈
 
