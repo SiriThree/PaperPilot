@@ -1,0 +1,200 @@
+{
+  "version": "rag300-v1",
+  "verified_at": "2026-10-29T17:23:21.977014+00:00",
+  "code_commit": "874cf2918da9575cd4f0d4c0661428f3d4b978d2",
+  "catalog_sha256": "d79c005c2b39af0717fe3f0b4003f4a5efef1fe8ead41a694149bd5968fe0263",
+  "domain": "Retrieval-Augmented Generation in NLP",
+  "paper_count": 300,
+  "distinct_arxiv_ids": 300,
+  "distinct_pdf_sha256": 300,
+  "years": {
+    "2020": 1,
+    "2021": 2,
+    "2022": 2,
+    "2023": 17,
+    "2024": 252,
+    "2025": 26
+  },
+  "pdf_bytes": 514105919,
+  "uploaded_pdf_bytes": 514105919,
+  "pages": 5031,
+  "pages_with_text": 5030,
+  "chunks": 19659,
+  "synthetic_chunks": 0,
+  "embeddings": 19659,
+  "min_dimensions": 512,
+  "max_dimensions": 512,
+  "process_indexes": 300,
+  "tasks": [
+    {
+      "kind": "process",
+      "status": "succeeded",
+      "count": 300
+    }
+  ],
+  "task_attempts": [
+    {
+      "status": "failed",
+      "error_code": "AI_INVALID_RESPONSE",
+      "count": 2
+    },
+    {
+      "status": "failed",
+      "error_code": "PDF_INVALID",
+      "count": 1
+    },
+    {
+      "status": "succeeded",
+      "error_code": null,
+      "count": 300
+    }
+  ],
+  "packages": {
+    "pypdf": "6.21.3",
+    "fastembed": "0.9.1",
+    "onnxruntime": "1.31.1",
+    "psycopg": "3.3.6"
+  },
+  "embedding_models": [
+    {
+      "provider": "fastembed",
+      "model_name": "BAAI/bge-small-zh-v1.5",
+      "revision": "46fbe35fd4374a00fee7de77dfddaeb6dd6a2c59",
+      "dimensions": 512,
+      "distance_metric": "cosine"
+    }
+  ],
+  "chunking": {
+    "characters": 1200,
+    "overlap": 120
+  },
+  "postgresql": "16.15",
+  "pgvector": "0.8.7",
+  "schema_version": 8,
+  "database_bytes": 162733079,
+  "relations": [
+    {
+      "relname": "audit_events",
+      "bytes": 1105920
+    },
+    {
+      "relname": "auth_login_limits",
+      "bytes": 49152
+    },
+    {
+      "relname": "auth_sessions",
+      "bytes": 98304
+    },
+    {
+      "relname": "authors",
+      "bytes": 24576
+    },
+    {
+      "relname": "chunk_embeddings",
+      "bytes": 58130432
+    },
+    {
+      "relname": "chunks",
+      "bytes": 48791552
+    },
+    {
+      "relname": "embedding_models",
+      "bytes": 65536
+    },
+    {
+      "relname": "evidence_fields",
+      "bytes": 24576
+    },
+    {
+      "relname": "idempotency_records",
+      "bytes": 638976
+    },
+    {
+      "relname": "outbox_events",
+      "bytes": 638976
+    },
+    {
+      "relname": "outbox_requeue_history",
+      "bytes": 24576
+    },
+    {
+      "relname": "paper_authors",
+      "bytes": 16384
+    },
+    {
+      "relname": "paper_topics",
+      "bytes": 8192
+    },
+    {
+      "relname": "papers",
+      "bytes": 163840
+    },
+    {
+      "relname": "process_indexes",
+      "bytes": 278528
+    },
+    {
+      "relname": "project_members",
+      "bytes": 65536
+    },
+    {
+      "relname": "project_papers",
+      "bytes": 360448
+    },
+    {
+      "relname": "projects",
+      "bytes": 32768
+    },
+    {
+      "relname": "report_version_sources",
+      "bytes": 24576
+    },
+    {
+      "relname": "report_versions",
+      "bytes": 49152
+    },
+    {
+      "relname": "reports",
+      "bytes": 16384
+    },
+    {
+      "relname": "result_sources",
+      "bytes": 29663232
+    },
+    {
+      "relname": "schema_migrations",
+      "bytes": 24576
+    },
+    {
+      "relname": "task_attempts",
+      "bytes": 204800
+    },
+    {
+      "relname": "task_papers",
+      "bytes": 90112
+    },
+    {
+      "relname": "task_results",
+      "bytes": 12566528
+    },
+    {
+      "relname": "tasks",
+      "bytes": 360448
+    },
+    {
+      "relname": "topics",
+      "bytes": 32768
+    },
+    {
+      "relname": "users",
+      "bytes": 49152
+    }
+  ],
+  "filesystem_free_bytes": 121574522880,
+  "filesystem_total_bytes": 421606629376,
+  "limitations": [
+    "Not a relevance benchmark: questions have no human relevance judgments.",
+    "Current retrieval rejects more than 1000 candidate chunks (AI_CORPUS_LIMIT).",
+    "No full-corpus latency or throughput result is claimed."
+  ]
+}
