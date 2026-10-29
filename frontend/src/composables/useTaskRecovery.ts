@@ -11,7 +11,7 @@ export type RecoveryRecord = {
   key: string; fingerprint: string; phase: Phase; taskId?: string
   paperId?: string; paperIds: string[]
 }
-type Intent = { kind: Kind; question?: string; file?: File; title?: string; paperId?: string }
+type Intent = { kind: Kind; question?: string; file?: File; title?: string; paperId?: string; paperIds?: string[] }
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const kinds: Kind[] = ['process', 'answer', 'evidence', 'draft']
 const safeError = (error: unknown) => error instanceof ApiError ? `${error.message}（${error.code}）` : '网络暂时不可用'
@@ -116,7 +116,9 @@ export function useTaskRecovery(projectId: string, page: RecoveryRecord['page'],
       const previous = reconcile ? unresolved.value : undefined
       if (reconcile && (!previous || previous.kind !== intent.kind)) throw new Error('请先恢复原请求对应的输入，再进行核对。')
       const paperIds = previous?.paperIds || ((intent.kind === 'answer' || intent.kind === 'draft')
-        ? (await api.papers(projectId)).items.filter(p => p.status === 'searchable').map(p => p.paper_id).sort() : [])
+        ? intent.paperIds !== undefined ? [...new Set(intent.paperIds)].sort() : (await api.papers(projectId)).items.filter(p => p.status === 'searchable').map(p => p.paper_id).sort() : [])
+      if (paperIds.some(id => !uuid.test(id))) throw new Error('文献范围无效，请重新选择。')
+      if (intent.paperIds !== undefined && !paperIds.length) throw new Error('请至少选择一篇可检索文献。')
       if (paperIds.length > 50) throw new Error('当前文献范围超过 50 篇，请先限定项目范围；未提交任务。')
       let payload: unknown
       if (intent.kind === 'process') {
