@@ -141,6 +141,7 @@ def test_pdf_subprocess_preserves_pages_and_versions_chunk_ids(tokenizer_directo
             configuration(),
             embedding_backend="fastembed",
             local_model_dir=tokenizer_directory,
+            chunk_strategy="sentence-token-v2",
             chunk_tokens=32,
             chunk_token_overlap=8,
         )
@@ -161,8 +162,24 @@ def test_strategy_configuration_requires_matching_local_tokenizer(tokenizer_dire
         configuration(
             embedding_backend="fastembed", local_model_dir=tokenizer_directory
         ).active_chunk_strategy
+        == "character-v1"
+    )
+    assert (
+        configuration(
+            embedding_backend="fastembed",
+            embedding_model="BAAI/bge-small-zh-v1.5",
+            local_model_dir=tokenizer_directory,
+        ).active_chunk_strategy
         == "sentence-token-v2"
     )
+    with pytest.raises(RuntimeError, match="prefixes"):
+        LocalEmbeddings(
+            configuration(
+                embedding_backend="fastembed",
+                local_model_dir=tokenizer_directory,
+                chunk_strategy="sentence-token-v2",
+            )
+        )
     with pytest.raises(ValueError, match="local"):
         configuration(chunk_strategy="sentence-token-v2")
     with pytest.raises(ValueError, match="token budget"):

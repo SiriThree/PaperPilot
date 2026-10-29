@@ -13,6 +13,15 @@ class LocalEmbeddings:
     """Prepared ONNX model only. Inference runs in a cancellable CPU subprocess."""
 
     def __init__(self, settings):
+        from app.ai.settings import TOKEN_CHUNK_MODEL
+
+        if (
+            settings.active_chunk_strategy == "sentence-token-v2"
+            and settings.embedding_model != TOKEN_CHUNK_MODEL
+        ):
+            raise RuntimeError(
+                "Sentence token policy is not validated for this model's input prefixes; startup refused"
+            )
         try:
             from fastembed import TextEmbedding
 

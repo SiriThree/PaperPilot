@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import urlsplit
 
+TOKEN_CHUNK_MODEL = "BAAI/bge-small-zh-v1.5"
+
 
 @dataclass(frozen=True)
 class AISettings:
@@ -32,7 +34,11 @@ class AISettings:
     @property
     def active_chunk_strategy(self):
         if self.chunk_strategy == "auto":
-            return "sentence-token-v2" if self.embedding_backend == "fastembed" else "character-v1"
+            return (
+                "sentence-token-v2"
+                if self.embedding_backend == "fastembed" and self.embedding_model == TOKEN_CHUNK_MODEL
+                else "character-v1"
+            )
         return self.chunk_strategy
 
     def __post_init__(self):

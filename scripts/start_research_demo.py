@@ -163,7 +163,7 @@ def main():
             "frontend_pid": children[2].pid,
             "stop_file": str(stop),
             "api_workers": args.api_workers,
-            "chunk_strategy": "sentence-token-v2" if args.chunk_strategy == "auto" else args.chunk_strategy,
+            "chunk_strategy": args.chunk_strategy,
             "chunk_tokens": args.chunk_tokens,
             "chunk_token_overlap": args.chunk_token_overlap,
         }
