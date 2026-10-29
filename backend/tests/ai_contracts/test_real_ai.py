@@ -117,6 +117,44 @@ def test_keyword_is_real_ranking_and_does_not_call_models(real):
     assert fuse([0, 1], [1])[1] > fuse([0, 1], [1])[0]
 
 
+def test_fictional_extraction_keeps_provenance_and_rejects_invented_citations(real):
+    original = real.data.sources(real.ctx, real.file.paper_id)[0]
+    source = original.model_copy(
+        update={"excerpt": "FICTIONAL example: simulated method compared twelve documents."}
+    )
+    real.data.source_records[real.file.paper_id] = [source]
+    captured = []
+    citation = [source.citation_id]
+
+    def handler(request):
+        body = json.loads(request.content)
+        captured.append(body["messages"][0]["content"])
+        payload = {
+            name: {"text": None, "status": "not_mentioned", "citation_ids": []}
+            for name in ("research_question", "method", "results", "conclusion", "limitations")
+        }
+        payload["method"] = {
+            "text": "The fictional simulated example compared twelve documents.",
+            "status": "pending_verification",
+            "citation_ids": citation,
+        }
+        return httpx.Response(
+            200, json={"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(payload)}}]}
+        )
+
+    real.ai.client = model_client(handler=handler)
+    result = run(real.ai.extract(real.ctx, real.file.paper_id, [source]))
+    assert "fictional or simulated" in captured[0]
+    assert result.method.status == "pending_verification"
+    assert "fictional" in result.method.text.lower()
+    assert result.method.sources == [source]
+    assert result.limitations.status == "not_mentioned" and not result.limitations.sources
+    citation[:] = ["invented"]
+    with pytest.raises(AppError) as exc:
+        run(real.ai.extract(real.ctx, real.file.paper_id, [source]))
+    assert exc.value.code == "INVALID_CITATION"
+
+
 def test_semantic_uses_cosine_and_hybrid_fuses_rankings(real):
     # Make embeddings rank a lexically unrelated paper first; three paths must differ.
     from app.adapters.mock_data import seed_id
@@ -459,7 +497,14 @@ def test_factory_config_and_explicit_composition(real, monkeypatch, tmp_path):
     }.items():
         monkeypatch.setenv("PAPERPILOT_AI_" + name, value)
     assert isinstance(build_ai(real.data), RealAI)
+    monkeypatch.delenv("PAPERPILOT_AI_EMBEDDING_REVISION", raising=False)
     assert AISettings.from_env().embedding_dimensions == 3
+    assert AISettings.from_env().embedding_revision is None
+    monkeypatch.setenv("PAPERPILOT_AI_EMBEDDING_REVISION", "fixture-v1")
+    assert AISettings.from_env().embedding_revision == "fixture-v1"
+    monkeypatch.setenv("PAPERPILOT_AI_EMBEDDING_REVISION", " ")
+    with pytest.raises(RuntimeError, match="configuration"):
+        AISettings.from_env()
 
 
 def test_business_upload_search_answer_evidence_draft_and_save(tmp_path):

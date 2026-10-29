@@ -71,7 +71,14 @@ def compose_audit(config) -> AuditBinding:
     try:
         with database.transaction() as connection:
             verify_writer(connection, config.user)
-        data = PostgresData(database, DataSettings(), before_commit=before_commit)
+
+        class RestrictedAuditData(PostgresData):
+            def _existing_audit_fingerprint(self, event_id):
+                return self._one(
+                    "SELECT event_fingerprint FROM public.audit_events WHERE event_id=%s", (event_id,)
+                )
+
+        data = RestrictedAuditData(database, DataSettings(), before_commit=before_commit)
         return AuditBinding(append=data.append_audit, close=database.close)
     except Exception:
         database.close()

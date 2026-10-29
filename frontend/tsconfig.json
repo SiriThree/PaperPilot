@@ -5,5 +5,5 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"], "types": ["vite/client"],
     "noEmit": true, "resolveJsonModule": true
   },
-  "include": ["src/**/*.ts", "src/**/*.vue", "vite.config.ts", "playwright.config.ts", "playwright.demo.config.ts", "tests/**/*.ts", "demo-tests/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.vue", "vite.config.ts", "playwright.config.ts", "playwright.demo.config.ts", "playwright.phase5a.config.ts", "tests/**/*.ts", "demo-tests/**/*.ts", "phase5a-tests/**/*.ts"]
 }

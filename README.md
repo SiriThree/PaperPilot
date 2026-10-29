@@ -1,8 +1,10 @@
 # PaperPilot Secure
 
+本机 HTTPS 运维入口及从旧 D 环境升级到 B 凭据方案见[本机部署](docs/local-deployment.md)。该入口为本机非生产验收，保留显式密码、独立身份与安全 SQL；PRD 完成情况见[D 核对](docs/member-d-prd-check-20261029.md)。
+
 面向科研文献研究的 AI 数据库应用与安全平台。此仓库包含工程骨架、AB-1 数据契约、数据库中立接入及任务恢复；在 Phase 3 协作基线上增加 **Phase 4B：B 侧页面状态、错误处理和业务集成**。各成员从 [统一开发指南](docs/development-guide.md) 开始，实际验收与限制见 [验证记录](docs/verification.md)。
 
-**默认 Mock；持久化模式必须显式注册 A 的适配器，未注册就拒绝启动。C 已提供可选真实 PDF 解析、三模式检索及交大模型接入，见 [C 实现与配置](docs/ai-adapter.md) 和 [实际评测](docs/ai-evaluation/README.md)。默认入口不自动启用。新增[本机 HTTPS 与密码认证部署](docs/local-deployment.md)，包含持久数据库、账号隔离、备份恢复和巡检；真实模型配置尚待提供，不能视为完整生产验收。已有 SQLite 文件保留为历史实验。**
+**开发模式可显式选择 Mock，统一组合入口可注册 PostgreSQL、真实 AI 与 D 策略适配器。已实现基于 PostgreSQL 的凭据认证；正式认证、数据库安全权限及生产部署尚未完成验收，生产模式拒绝启动。真实 SQL 执行默认关闭，候选执行器只允许明确的隔离测试配置。历史 SQLite 实验保留。**
 
 ## 技术栈
 
@@ -10,7 +12,7 @@
 - 后端：Python 3.12、FastAPI、Pydantic，按 routes/services/adapters 分层。
 - 契约：后端 Schema → OpenAPI 3.1 JSON → 自动生成 TypeScript 类型。
 - 验证：pytest、JSON Schema、Ruff、vue-tsc、Vite build、Playwright。
-- 数据：数据库中立 DataPort + 独立生命周期注册；引擎、驱动、正式模型与迁移由 A/团队决定。
+- 数据：DataPort 和独立生命周期注册；当前真实持久化实现为 PostgreSQL，需显式迁移和配置。
 
 ## 本地启动
 
@@ -23,9 +25,11 @@ python -m venv .venv
 npm.cmd --prefix frontend ci
 ```
 
-终端一：
+终端一（明确启用本机开发身份；不要用于生产）：
 
 ```powershell
+$env:PAPERPILOT_ENV = 'development'
+$env:PAPERPILOT_AUTH_MODE = 'development'
 .\.venv\Scripts\python.exe -m uvicorn app.main:create_app --factory --app-dir backend --host 127.0.0.1 --port 8000 --no-access-log
 ```
 
@@ -48,17 +52,18 @@ Linux/macOS 将 `.venv\Scripts\python.exe` 换成 `.venv/bin/python`，将 `npm.
 
 ```powershell
 $env:PAPERPILOT_ENV = 'development'
+$env:PAPERPILOT_AUTH_MODE = 'development'
 $env:PAPERPILOT_A_MODE = 'mock'
 $env:PAPERPILOT_C_MODE = 'mock'
 $env:PAPERPILOT_D_MODE = 'mock'
 ```
 
-- A 设为 `persistent` 或 `real` 而未注册 DataBinding：启动明确失败。C/D 设为 `real` 需分别显式传入 ai_factory/security_factory；未注册或初始化失败即拒绝，无自动加载。
-- A/C/D 可独立注册、与其余 Mock 联调；C 的 opt-in 实现见上方配置，A/D 按各自分支交付进度注册。生产配置始终拒绝，开发身份尚未替换。
-- 数据库连接、初始化、迁移和资源释放由 A 在可信组合入口显式提供，不由 B 默认选定或执行。
+- 使用 `app.dev_composition:create_app` 统一入口时，A/C/D 根据显式模式注册；连接、初始化或健康检查失败即拒绝启动，无自动回退。直接使用 `app.main:create_app` 时真实适配器需显式注入。
+- PostgreSQL 需显式提供连接配置、执行迁移并初始化账户；应用不会自动迁移、创建演示账号或启动 outbox 投递器。
+- `PAPERPILOT_AUTH_MODE=development` 仅供开发，`credentials` 为 PostgreSQL 凭据认证；生产模式仍明确拒绝启动。
 - 没有从真实模式静默回退到 Mock 的路径。
 - 密钥只能通过未来真实适配器的环境配置提供；不得提交本地配置、令牌或真实账户信息。
-- Cookie 使用 HttpOnly、SameSite=Strict；写请求必须携带 `X-PaperPilot-Client: web`，存在 Origin 时必须匹配允许列表。Vite 代理 `/api`，浏览器采用同源 Cookie，不开放跨源 CORS。
+- Cookie 使用 HttpOnly、SameSite=Strict；凭据模式状态变更还要求可信来源和 CSRF 令牌。来源通过 `PAPERPILOT_ALLOWED_ORIGINS` 明确配置，不允许通配符。生产 TLS 和 Secure Cookie 尚未验收。
 
 ## Mock 演示流程
 
@@ -68,6 +73,7 @@ $env:PAPERPILOT_D_MODE = 'mock'
 
 ```powershell
 $env:PAPERPILOT_ENV='development'
+$env:PAPERPILOT_AUTH_MODE='development'
 $env:PAPERPILOT_A_MODE='mock'
 $env:PAPERPILOT_C_MODE='mock'
 $env:PAPERPILOT_D_MODE='mock'
@@ -125,7 +131,7 @@ npm.cmd --prefix frontend run test:e2e -- --config=playwright.demo.config.ts
 $env:PAPERPILOT_A_MODE = 'persistent'
 ```
 
-注册 DataBinding、readiness、共享测试、未知提交对账与 A 待确认事项见 [中立持久化接入](docs/persistence-integration.md)。工厂没有自动迁移、种子数据或 Mock 回退。原 [SQLite 说明](docs/persistence.md) 保留为历史记录，旧启动方式已不适用。
+真实 PostgreSQL 使用 `app.dev_composition:create_app` 组合入口。实际配置、显式迁移、凭据初始化和 outbox 命令见 [开发指南](docs/development-guide.md)；工厂没有自动迁移、种子数据或 Mock 回退。原 [SQLite 说明](docs/persistence.md) 保留为历史记录，旧启动方式已不适用。
 
 ## 测试与契约生成
 
@@ -150,7 +156,11 @@ npm.cmd --prefix frontend run test:e2e
 
 ## 开发部署选项
 
-`docker compose up --build` 提供仅用于 Mock 开发的双容器配置，端口只绑定本机。它使用 Vite 开发服务器，不是生产部署。数据库及生产部署将在 A/D 交付后接入。Docker 验证情况见 `docs/verification.md`。
+`docker compose up --build` 提供仅用于 Mock 和开发身份的双容器配置，端口只绑定本机。它使用 Vite 开发服务器，不提供持久化数据库，也不是生产部署。真实 PostgreSQL、AI 和认证的配置、迁移和运维需参考开发指南；Docker 验证情况见 `docs/verification.md`。
+
+该镜像仅安装基础依赖，不包含 PostgreSQL 驱动或本地嵌入模型，不能通过更改运行模式直接作为真实数据层或生产镜像使用。构建阶段需要容器能够解析并访问 Python 和 npm 包仓库；若宿主机能联网而容器不能，请检查 Docker 的 DNS 和网络配置，勿把临时 IP 固化到源码中。
+
+需要联调时可显式构建独立的开发/测试镜像：`docker build -f Dockerfile.integration -t paperpilot-integration:dev .`。它包含 PostgreSQL 驱动，使用 `app.dev_composition:create_app`，不自动迁移、初始化账户或开启 SQL 执行。要使用本地 FastEmbed，额外指定 `--build-arg PAPERPILOT_LOCAL_EMBEDDING=1` 并以只读方式挂载事先准备好的模型目录；该可选构建目前未验收，其传递依赖并未锁定。此镜像仍须通过环境变量显式配置测试身份、数据库和模型，密钥从安全配置注入，不用于生产。
 
 ## 文档入口
 

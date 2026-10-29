@@ -2,15 +2,16 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { api, type Models } from '../api/client'
-import { health, passwordAuth, projects, projectsError, projectsLoaded, projectsLoading, refreshProjects, setIdentity, user } from '../state'
+import { health, intendedRoute, projects, projectsError, projectsLoaded, projectsLoading, refreshProjects, setIdentity, user } from '../state'
 import { useAction } from '../composables/useAction'
 import { useResource } from '../composables/useResource'
 import Feedback from '../components/Feedback.vue'
 import AppIcon from '../components/AppIcon.vue'
 const router = useRouter(), { busy, error, run } = useAction()
-const username = ref('alice'), name = ref(''), selected = ref<Models['Project'] | null>(null), newMember = ref('bob')
-const password = ref('')
-watch(passwordAuth, enabled => { if (enabled) username.value = ''; password.value = '' }, { immediate: true })
+const username = ref('alice'), password = ref(''), loginTouched = ref(false), name = ref(''), selected = ref<Models['Project'] | null>(null), newMember = ref('bob')
+const credentialMode = computed(() => health.value?.limitations.includes('authentication_credentials') === true)
+const demoIdentity = computed(() => health.value?.limitations.includes('development_identity_only') === true)
+watch(credentialMode, value => { username.value = value ? '' : 'alice'; password.value = ''; loginTouched.value = false }, { immediate: true })
 const memberResource = useResource<Models['Member'][]>([], async () => selected.value ? (await api.members(selected.value.project_id)).items : [])
 const members = memberResource.data
 const nameTouched = ref(false)
@@ -26,7 +27,21 @@ const welcomeModeHint = computed(() => !health.value ? '运行模式尚未确认
   : Object.values(health.value.modes).every(mode => mode === 'mock') ? 'Mock 数据与合成结果用于体验，重启后丢失。'
   : '已注册适配器；数据、AI 与安全能力仍需实际验收。')
 const nameError = computed(() => nameTouched.value && !name.value.trim() ? '请输入项目名称。' : '')
-async function login() { try { await run(async () => { setIdentity((await api.login(username.value, passwordAuth.value ? password.value : undefined)).user); await refreshProjects() }) } finally { password.value = '' } }
+async function login() {
+  loginTouched.value = true
+  if (!username.value.trim() || (credentialMode.value && !password.value)) return
+  loginTouched.value = false
+  await run(async () => {
+    try { await api.login(username.value.trim(), credentialMode.value ? password.value : undefined) }
+    finally { password.value = '' }
+    setIdentity((await api.me()).user)
+    await refreshProjects()
+    const target = intendedRoute.value
+    intendedRoute.value = ''
+    const projectId = /^\/projects\/([^/]+)\/(?:papers|research|security)(?:[?#]|$)/.exec(target)?.[1]
+    if (projectId && projects.value.some(project => project.project_id === projectId)) await router.push(target)
+  })
+}
 async function create() { nameTouched.value = true; if (!name.value.trim()) return; await run(async () => { const p = await api.createProject(name.value); name.value = ''; nameTouched.value = false; await refreshProjects(); await router.push(`/projects/${p.project_id}/papers`) }) }
 async function showMembers(p: Models['Project']) { selected.value = p; await memberResource.load() }
 function closeMembers() { selected.value = null; memberResource.reset() }
@@ -65,16 +80,20 @@ async function remove(id: string) { const project = selected.value; if (project)
     <section class="welcome-entry">
       <div class="entry-content">
         <span class="entry-kicker">开始你的研究工作</span>
-        <h2>{{ passwordAuth ? '账户登录' : '开发演示登录' }}</h2>
-        <p class="entry-description">{{ passwordAuth ? '使用管理员开通的账户和密码登录。' : '选择一个身份，探索文献到研究报告的完整流程。' }}</p>
+        <h2>{{ credentialMode ? '登录' : demoIdentity ? '开发演示登录' : '连接服务' }}</h2>
+        <p class="entry-description">{{ credentialMode ? '使用预置账号和密码登录研究工作空间。' : demoIdentity ? '选择一个身份，探索文献到研究报告的完整流程。' : '请先连接服务以确认身份认证方式。' }}</p>
         <Feedback :busy="busy" :error="error" />
-        <el-form label-position="top" class="identity-form" @submit.prevent="login">
-          <template v-if="passwordAuth"><el-form-item label="账户名"><el-input v-model="username" aria-label="账户名" autocomplete="username" maxlength="64" /></el-form-item><el-form-item label="密码"><el-input v-model="password" aria-label="密码" type="password" autocomplete="current-password" maxlength="128" show-password /></el-form-item></template>
-          <el-form-item v-else label="演示身份"><el-select v-model="username" aria-label="演示身份" size="large"><el-option v-for="u in ['alice','bob','eve']" :key="u" :label="u" :value="u" /></el-select></el-form-item>
-          <div v-if="!passwordAuth" class="identity-preview"><span class="identity-avatar">{{ identity.name.slice(0, 1) }}</span><div><strong>{{ identity.name }}<span>{{ identity.role }}</span></strong><p>{{ identity.description }}</p></div></div>
-          <el-button type="primary" native-type="submit" size="large" class="enter-workspace" :loading="busy">{{ passwordAuth ? '登录' : '进入演示' }}<AppIcon name="arrow" :size="18" /></el-button>
+        <el-form v-if="demoIdentity" label-position="top" class="identity-form" @submit.prevent="login">
+          <el-form-item label="演示身份"><el-select v-model="username" aria-label="演示身份" size="large"><el-option v-for="u in ['alice','bob','eve']" :key="u" :label="u" :value="u" /></el-select></el-form-item>
+          <div class="identity-preview"><span class="identity-avatar">{{ identity.name.slice(0, 1) }}</span><div><strong>{{ identity.name }}<span>{{ identity.role }}</span></strong><p>{{ identity.description }}</p></div></div>
+          <el-button type="primary" native-type="submit" size="large" class="enter-workspace" :loading="busy">进入演示<AppIcon name="arrow" :size="18" /></el-button>
         </el-form>
-        <div class="login-disclosure"><AppIcon name="info" :size="17" /><p>{{ passwordAuth ? '使用个人账户登录；生成内容仍需核验。' : '仅切换演示身份，不验证真实密码。' }}<br>{{ welcomeModeHint }}</p></div>
+        <el-form v-else-if="credentialMode" label-position="top" class="identity-form" @submit.prevent="login">
+          <el-form-item label="账号" :error="loginTouched && !username.trim() ? '请输入账号。' : ''"><el-input v-model="username" aria-label="账号" autocomplete="username" size="large" /></el-form-item>
+          <el-form-item label="密码" :error="loginTouched && !password && !busy ? '请输入密码。' : ''"><el-input v-model="password" aria-label="密码" type="password" show-password autocomplete="current-password" size="large" /></el-form-item>
+          <el-button type="primary" native-type="submit" size="large" class="enter-workspace" :loading="busy" :disabled="busy">登录<AppIcon name="arrow" :size="18" /></el-button>
+        </el-form>
+        <div v-if="demoIdentity" class="login-disclosure"><AppIcon name="info" :size="17" /><p>仅切换演示身份，不验证真实密码。<br>{{ welcomeModeHint }}</p></div>
       </div>
       <div class="entry-footer"><span class="entry-footer-line" />文献有序 · 引用可溯 · 研究留痕</div>
     </section>

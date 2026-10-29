@@ -1,5 +1,9 @@
 # 成员 D 当前进度
 
+> 2026-10-29 对照 PRD 第 9.5 节：D 不能标记为全部完成。下文旧任务完成状态仅指原开发分解及对应快照。三组安全对照实验、提示词注入 C/D 回归、网关 P95 及统一版本交付仍待完成，详见 [PRD 核对](member-d-prd-check-20261029.md)。
+>
+> 当前按用户要求对齐 B 的 main@dd3a312：统一 credentials/Argon2/CSRF 与 schema 7，保留 D 执行及审计门槛。旧 790/31 报告不能替代整合后的验收；真实模型与生产启用仍未完成。
+
 更新于 2026-10-29。用户授权依次推进并自动本地提交；不推送、不修改远程 PR。公开五方法 AIPort、26 方法 DataPort、两方法 SecurityPort 数量不变。本轮登录请求新增可选 password，Identity.authentication 增加 password；默认开发登录保留。
 
 ## 本轮只读核对并合入的团队快照

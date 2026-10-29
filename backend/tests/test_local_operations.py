@@ -20,7 +20,12 @@ def test_runtime_environment_does_not_inherit_admin_demo_or_model_settings(monke
     monkeypatch.setenv("PAPERPILOT_DATA_PASSWORD", "private-administrator")
     monkeypatch.setenv("PAPERPILOT_AI_API_KEY", "unselected-model")
     result = deployment.runtime_environment(
-        {"environment": {"PAPERPILOT_DATA_PASSWORD_FILE": "/explicit/runtime"}}
+        {
+            "environment": {
+                "PAPERPILOT_AUTH_MODE": "credentials",
+                "PAPERPILOT_DATA_PASSWORD_FILE": "/explicit/runtime",
+            }
+        }
     )
     assert "PAPERPILOT_DATA_PASSWORD" not in result and "PAPERPILOT_AI_API_KEY" not in result
     assert result["PAPERPILOT_DATA_PASSWORD_FILE"] == "/explicit/runtime"
@@ -115,11 +120,12 @@ def test_production_refuses_demo_auth_and_non_https_origins():
         Settings(
             environment="production", a_mode="persistent", c_mode="real", d_mode="real", auth_mode="password"
         ).validate()
-    Settings(
-        environment="production",
-        a_mode="persistent",
-        c_mode="real",
-        d_mode="real",
-        auth_mode="password",
-        allowed_origins=("https://localhost:8443",),
-    ).validate()
+    with pytest.raises(RuntimeError, match="Production"):
+        Settings(
+            environment="production",
+            a_mode="persistent",
+            c_mode="real",
+            d_mode="real",
+            auth_mode="credentials",
+            allowed_origins=("https://localhost:8443",),
+        ).validate()

@@ -11,7 +11,10 @@ import psycopg
 import pytest
 from fastapi.testclient import TestClient
 
-from app.accounts import AccountAdmin, PasswordSessions
+from app.accounts import AccountAdmin
+from app.data.authentication import PostgresSessions
+from app.data.authentication_boundary import AuthenticationBoundary
+from app.data.database import PostgresDatabase
 from app.adapters.data_binding import DataBinding
 from app.config import Settings
 from app.errors import AppError
@@ -36,7 +39,15 @@ def pg():
             install(admin, existing_views=True)
             install_password_auth(admin)
             create_login(admin, role, password, auth=True)
+        business_role, business_password = "pp_business_" + uuid4().hex, secrets.token_urlsafe(32)
+        with psycopg.connect(**pg.config.conninfo(), autocommit=True) as admin:
+            create_login(admin, business_role, business_password, business=True)
+            owner = admin.execute(
+                "SELECT pg_get_userbyid(proowner) FROM pg_proc WHERE oid='paperpilot_auth.lock_credential(uuid)'::regprocedure"
+            ).fetchone()[0]
+        pg.lock_owner = owner
         pg.auth_config = replace(pg.config, user=role, password=password)
+        pg.business_config = replace(pg.config, user=business_role, password=business_password)
         yield pg
 
 
@@ -45,34 +56,46 @@ def state(pg):
     admin = AccountAdmin(pg.data.database, pg.data.settings)
     username, password = "user_" + uuid4().hex[:12], secrets.token_urlsafe(24)
     user_id = admin.create_account(username, "Password fixture", password)
-    store = PasswordSessions(pg.auth_config)
+    authentication, business = PostgresDatabase(pg.auth_config), PostgresDatabase(pg.business_config)
+    boundary = AuthenticationBoundary(business, authentication, trusted_lock_owner=pg.lock_owner)
+    assert boundary.ready()
+    store = PostgresSessions(boundary)
     try:
         yield SimpleNamespace(
-            pg=pg, admin=admin, username=username, password=password, user_id=user_id, store=store
+            pg=pg,
+            admin=admin,
+            username=username,
+            password=password,
+            user_id=user_id,
+            store=store,
+            boundary=boundary,
+            auth_database=authentication,
+            business_database=business,
         )
     finally:
-        store.close()
+        authentication.close()
+        business.close()
 
 
 def credential(state):
-    return state.store.authenticate(state.username, state.password, uuid4().hex)
+    return state.store.authenticate(state.username, state.password)
 
 
 def test_password_hash_and_hashed_persistent_session(state):
     auth = credential(state)
-    assert auth and auth.user_id == state.user_id
-    token = state.store.create_authenticated(auth)
+    assert auth and auth == state.user_id
+    token = state.store.create(auth, state.password, uuid4())
     with state.pg.data.database.transaction() as conn:
         encoded = conn.execute(
-            "SELECT password_hash FROM paperpilot_auth.accounts WHERE user_id=%s", (state.user_id,)
+            "SELECT password_hash FROM public.users WHERE user_id=%s", (state.user_id,)
         ).fetchone()["password_hash"]
-        assert encoded.startswith("scrypt-v1$") and state.password not in encoded
+        assert encoded.startswith("$argon2id$") and state.password not in encoded
         saved = conn.execute(
-            "SELECT token_hash FROM paperpilot_auth.sessions WHERE user_id=%s", (state.user_id,)
+            "SELECT token_hash FROM public.auth_sessions WHERE user_id=%s AND revoked_at IS NULL",
+            (state.user_id,),
         ).fetchone()["token_hash"]
-        assert saved == hashlib.sha256(token.encode()).hexdigest() and token not in saved
-    state.store.close()
-    reopened = PasswordSessions(state.pg.auth_config)
+        assert saved == hashlib.sha256(token.encode()).digest() and token.encode() not in saved
+    reopened = PostgresSessions(state.boundary)
     try:
         assert reopened.current(token).user_id == state.user_id
         reopened.revoke(token)
@@ -80,7 +103,7 @@ def test_password_hash_and_hashed_persistent_session(state):
             reopened.current(token)
         assert ended.value.status == 401
     finally:
-        reopened.close()
+        pass
 
 
 def test_wrong_unknown_and_missing_password_never_authenticate(state):
@@ -89,24 +112,24 @@ def test_wrong_unknown_and_missing_password_never_authenticate(state):
         ("unknown_" + uuid4().hex, "wrong"),
         (state.username, ""),
     ):
-        assert state.store.authenticate(username, password, uuid4().hex) is None
+        assert state.store.authenticate(username, password) is None
 
 
 def test_password_rotation_invalidates_sessions_and_inflight_credentials(state):
     auth = credential(state)
-    token = state.store.create_authenticated(auth)
+    token = state.store.create(auth, state.password, uuid4())
     new_password = secrets.token_urlsafe(24)
     state.admin.change_password(state.user_id, new_password)
     with pytest.raises(AppError):
         state.store.current(token)
     with pytest.raises(AppError):
-        state.store.create_authenticated(auth)
-    assert state.store.authenticate(state.username, state.password, uuid4().hex) is None
-    assert state.store.authenticate(state.username, new_password, uuid4().hex)
+        state.store.create(auth, state.password, uuid4())
+    assert state.store.authenticate(state.username, state.password) is None
+    assert state.store.authenticate(state.username, new_password)
 
 
 def test_disabling_account_revokes_existing_sessions(state):
-    token = state.store.create_authenticated(credential(state))
+    token = state.store.create(credential(state), state.password, uuid4())
     state.admin.disable_account(state.user_id)
     assert credential(state) is None
     with pytest.raises(AppError):
@@ -115,16 +138,16 @@ def test_disabling_account_revokes_existing_sessions(state):
 
 @pytest.mark.parametrize("expired", ["idle", "absolute"])
 def test_idle_and_absolute_expiration(state, expired):
-    token = state.store.create_authenticated(credential(state))
+    token = state.store.create(credential(state), state.password, uuid4())
     with state.pg.data.database.transaction(write=True) as conn:
         if expired == "idle":
             conn.execute(
-                "UPDATE paperpilot_auth.sessions SET last_seen_at=now()-interval '31 minutes' WHERE user_id=%s",
+                "UPDATE public.auth_sessions SET last_seen_at=now()-interval '31 minutes' WHERE user_id=%s",
                 (state.user_id,),
             )
         else:
             conn.execute(
-                "UPDATE paperpilot_auth.sessions SET created_at=now()-interval '10 hours',expires_at=now()-interval '1 hour' WHERE user_id=%s",
+                "UPDATE public.auth_sessions SET created_at=now()-interval '10 hours',expires_at=now()-interval '1 hour' WHERE user_id=%s",
                 (state.user_id,),
             )
     with pytest.raises(AppError):
@@ -134,9 +157,9 @@ def test_idle_and_absolute_expiration(state, expired):
 def test_login_rate_budget_is_persistent(state):
     address = uuid4().hex
     for _ in range(10):
-        assert state.store.authenticate(state.username, "bad", address) is None
+        state.store.check_login_rate(address, uuid4())
     with pytest.raises(AppError) as limited:
-        state.store.authenticate(state.username, state.password, address)
+        state.store.check_login_rate(address, uuid4())
     assert limited.value.status == 429
 
 
@@ -145,7 +168,7 @@ def test_login_rate_budget_is_persistent(state):
     [
         "SELECT * FROM public.chunks",
         "SELECT * FROM public.audit_events",
-        "UPDATE paperpilot_auth.accounts SET disabled=false",
+        "UPDATE public.users SET disabled=false",
         "DELETE FROM public.audit_events",
         "CREATE TABLE public.auth_unsafe(x int)",
     ],
@@ -160,12 +183,12 @@ def test_auth_login_cannot_read_business_or_reset_credentials(state, statement):
 def test_authentication_rechecks_acl_drift_before_session_lookup(state, drift):
     from psycopg import sql
 
-    token = state.store.create_authenticated(credential(state))
+    token = state.store.create(credential(state), state.password, uuid4())
     with psycopg.connect(**state.pg.config.conninfo(), autocommit=True) as admin:
         role = sql.Identifier(state.pg.auth_config.user)
         if drift == "column":
-            grant = sql.SQL("GRANT UPDATE(disabled) ON paperpilot_auth.accounts TO {}").format(role)
-            undo = sql.SQL("REVOKE UPDATE(disabled) ON paperpilot_auth.accounts FROM {}").format(role)
+            grant = sql.SQL("GRANT UPDATE(disabled) ON public.users TO {}").format(role)
+            undo = sql.SQL("REVOKE UPDATE(disabled) ON public.users FROM {}").format(role)
         elif drift == "sequence":
             admin.execute("CREATE SEQUENCE public.auth_acl_sequence")
             grant = sql.SQL("GRANT USAGE ON public.auth_acl_sequence TO {}").format(role)
@@ -177,7 +200,7 @@ def test_authentication_rechecks_acl_drift_before_session_lookup(state, drift):
             undo = sql.SQL("DROP FUNCTION public.auth_acl_routine()")
         try:
             admin.execute(grant)
-            with pytest.raises(RuntimeError):
+            with pytest.raises(AppError):
                 state.store.current(token)
         finally:
             admin.execute(undo)
@@ -202,37 +225,55 @@ def test_operator_account_creation_and_audit_are_atomic(state, monkeypatch):
 def test_secure_http_login_logout_and_fail_closed_audit(state, tmp_path, monkeypatch):
     pg = state.pg
     app = create_app(
-        Settings(environment="test", a_mode="persistent", auth_mode="password", storage_dir=tmp_path),
-        data_binding=DataBinding(data=pg.data, ready=pg.data.database.ready),
-        auth_sessions=state.store,
+        Settings(
+            environment="test",
+            a_mode="persistent",
+            auth_mode="credentials",
+            auth_database="isolated",
+            auth_lock_owner=pg.lock_owner,
+            storage_dir=tmp_path,
+            allowed_origins=("https://testserver",),
+        ),
+        data_binding=DataBinding(
+            data=__import__("app.data.adapter", fromlist=["PostgresData"]).PostgresData(
+                state.business_database, pg.data.settings
+            ),
+            ready=state.business_database.ready,
+        ),
+        auth_database=state.auth_database,
     )
-    with TestClient(app, base_url="https://testserver", headers={"X-PaperPilot-Client": "web"}) as client:
+    with TestClient(
+        app,
+        base_url="https://testserver",
+        headers={"X-PaperPilot-Client": "web", "Origin": "https://testserver"},
+    ) as client:
+        client.headers["X-CSRF-Token"] = client.get("/api/v1/auth/csrf").json()["csrf_token"]
         body = {"username": state.username, "password": state.password}
         assert client.post("/api/v1/auth/login", json={"username": state.username}).status_code == 401
-        original = pg.data.append_audit
+        original = app.state.service.adapters.data.append_audit
 
         def fail(event):
             if event.action == "auth.login":
                 raise RuntimeError("PRIVATE_PASSWORD")
             return original(event)
 
-        monkeypatch.setattr(pg.data, "append_audit", fail)
+        monkeypatch.setattr(app.state.service.adapters.data, "append_audit", fail)
         denied = client.post("/api/v1/auth/login", json=body)
         assert (
             denied.status_code == 503
             and "set-cookie" not in denied.headers
             and state.password not in denied.text
         )
-        monkeypatch.setattr(pg.data, "append_audit", original)
+        monkeypatch.setattr(app.state.service.adapters.data, "append_audit", original)
         result = client.post("/api/v1/auth/login", json=body)
         assert (
             result.status_code == 200
-            and result.json()["authentication"] == "password"
+            and result.json()["authentication"] == "authentication_credentials"
             and not result.json()["mock"]
         )
         assert "Secure" in result.headers["set-cookie"] and "HttpOnly" in result.headers["set-cookie"]
         assert client.get("/api/v1/auth/me").status_code == 200
         assert client.post("/api/v1/auth/logout").status_code == 200
         assert client.get("/api/v1/auth/me").status_code == 401
-    with TestClient(app, base_url="http://testserver", headers={"X-PaperPilot-Client": "web"}) as insecure:
-        assert insecure.post("/api/v1/auth/login", json=body).status_code == 403
+    insecure = TestClient(app, base_url="http://testserver", headers={"Origin": "http://testserver"})
+    assert insecure.post("/api/v1/auth/login", json=body).status_code == 403

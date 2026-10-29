@@ -96,6 +96,17 @@ class ModelClient:
         return vectors
 
     async def generate(self, shape, *, instruction, payload):
+        schema = shape.model_json_schema()
+        if self.settings.response_format == "json_object":
+            instruction += "\nReturn a JSON object matching this JSON Schema exactly: " + json.dumps(
+                schema, ensure_ascii=False
+            )
+            response_format = {"type": "json_object"}
+        else:
+            response_format = {
+                "type": "json_schema",
+                "json_schema": {"name": shape.__name__, "strict": True, "schema": schema},
+            }
         response = await self._post(
             "/chat/completions",
             {
@@ -104,14 +115,7 @@ class ModelClient:
                     {"role": "system", "content": instruction},
                     {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
                 ],
-                "response_format": {
-                    "type": "json_schema",
-                    "json_schema": {
-                        "name": shape.__name__,
-                        "strict": True,
-                        "schema": shape.model_json_schema(),
-                    },
-                },
+                "response_format": response_format,
                 self.settings.token_limit_parameter: 4000,
             },
         )

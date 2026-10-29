@@ -87,9 +87,7 @@ def task_payload(raw):
     payload = {"paper_ids": [UUID(value) for value in raw["paper_ids"]]}
     if "file" in raw:
         data = raw["file"]
-        payload["file"] = FileReference(
-            data["storage_key"], UUID(data["paper_id"]), UUID(data["project_id"])
-        )
+        payload["file"] = FileReference(data["storage_key"], UUID(data["paper_id"]), UUID(data["project_id"]))
     if "question" in raw:
         payload["question"] = QuestionRequest.model_validate(raw["question"])
     return payload

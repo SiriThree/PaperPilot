@@ -75,6 +75,15 @@ def private_directory(path):
         path.chmod(0o700)
 
 
+def private_file(path):
+    if os.name == "nt":
+        row = next(csv.reader(run(["whoami", "/user", "/fo", "csv", "/nh"], text=True).stdout.splitlines()))
+        run(["icacls", str(path), "/setowner", f"*{row[-1]}"])
+        run(["icacls", str(path), "/inheritance:r", "/grant:r", f"*{row[-1]}:F"])
+    else:
+        path.chmod(0o600)
+
+
 def write_json(path, value):
     temporary = path.with_suffix(".tmp")
     temporary.write_text(json.dumps(value, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -83,7 +92,7 @@ def write_json(path, value):
 
 def configuration():
     value = json.loads(CONFIG.read_text(encoding="utf-8"))
-    if value.get("format") != 1 or value.get("root") != str(ROOT):
+    if value.get("format") not in {1, 2} or value.get("root") != str(ROOT):
         raise ValueError("Unknown deployment; explicit operator migration required")
     return value
 
@@ -97,6 +106,8 @@ def admin_config(port=54327):
 
 
 def runtime_environment(config):
+    if config["environment"].get("PAPERPILOT_AUTH_MODE") != "credentials":
+        raise ValueError("Legacy deployment requires the explicit upgrade command")
     environment = dict(os.environ)
     # No inherited demo/administrator/model setting may silently alter this deployment.
     for name in list(environment):
@@ -178,6 +189,7 @@ def init():
         (STATE / name).mkdir()
     for name in ("postgres", "business", "audit", "reader", "auth", "owner-password"):
         (STATE / "secrets" / name).write_text(secrets.token_urlsafe(32), encoding="utf-8")
+        private_file(STATE / "secrets" / name)
     run(
         [
             openssl,
@@ -211,7 +223,7 @@ def init():
         database.migrate()
         with psycopg.connect(**admin_config().conninfo(), autocommit=True) as admin:
             install(admin)
-            install_password_auth(admin)
+            lock_owner = install_password_auth(admin)
         accounts = AccountAdmin(database, DataSettings())
         owner_id = accounts.create_account(
             "owner", "本机项目负责人", (STATE / "secrets/owner-password").read_text()
@@ -248,17 +260,23 @@ def init():
         }
         write_json(STATE / "security.json", security)
         environment = {
-            "PAPERPILOT_ENV": "development",
+            "PAPERPILOT_ENV": "test",
             "PAPERPILOT_A_MODE": "persistent",
             "PAPERPILOT_C_MODE": "mock",
             "PAPERPILOT_D_MODE": "real",
-            "PAPERPILOT_AUTH_MODE": "password",
+            "PAPERPILOT_AUTH_MODE": "credentials",
+            "PAPERPILOT_AUTH_DATABASE": "isolated",
+            "PAPERPILOT_AUTH_DB_ISOLATED_TEST": "1",
+            "PAPERPILOT_AUTH_LOCK_OWNER": lock_owner,
+            "PAPERPILOT_AUTH_DB_HOST": "127.0.0.1",
+            "PAPERPILOT_AUTH_DB_PORT": "54327",
+            "PAPERPILOT_AUTH_DB_DBNAME": "paperpilot_local",
             "PAPERPILOT_ALLOWED_ORIGINS": "https://localhost:8443,https://127.0.0.1:8443",
             "PAPERPILOT_DATA_HOST": "127.0.0.1",
             "PAPERPILOT_DATA_PORT": "54327",
             "PAPERPILOT_DATA_DBNAME": "paperpilot_local",
             "PAPERPILOT_DATA_USER": roles["business"],
-            "PAPERPILOT_AUTH_USER": roles["auth"],
+            "PAPERPILOT_AUTH_DB_USER": roles["auth"],
             "PAPERPILOT_SECURITY_CONFIG": str(STATE / "security.json"),
             "PAPERPILOT_STORAGE_DIR": str(STATE / "uploads"),
             "PAPERPILOT_FRONTEND_DIR": str(ROOT / "frontend/dist"),
@@ -267,13 +285,13 @@ def init():
             ("PAPERPILOT_DATA_PASSWORD", "business"),
             ("PAPERPILOT_LOCAL_AUDIT", "audit"),
             ("PAPERPILOT_LOCAL_READER", "reader"),
-            ("PAPERPILOT_AUTH_PASSWORD", "auth"),
+            ("PAPERPILOT_AUTH_DB_PASSWORD", "auth"),
         ):
             environment[reference + "_FILE"] = str(STATE / "secrets" / filename)
         write_json(
             CONFIG,
             {
-                "format": 1,
+                "format": 2,
                 "root": str(ROOT),
                 "created_at": datetime.now(UTC).isoformat(),
                 "owner_id": str(owner_id),
@@ -400,6 +418,7 @@ def add_reader(project_id):
     suffix = uuid4().hex[:16]
     path = STATE / "secrets" / ("reader-" + suffix)
     path.write_text(secrets.token_urlsafe(32))
+    private_file(path)
     reference = "PAPERPILOT_READER_" + suffix.upper()
     with psycopg.connect(**admin_config().conninfo(), autocommit=True) as admin:
         create_login(admin, "pp_reader_" + suffix, path.read_text(), project_id=project_id)
@@ -412,11 +431,116 @@ def add_reader(project_id):
     print("Reader provisioned; restart the web app to load its explicit binding.")
 
 
+def upgrade_database(config, owner_id, owner_password):
+    """Only legacy D accounts with known passwords; refuse unknown accounts before migration."""
+    from app.data.database import PostgresDatabase
+    from app.passwords import verify_password
+    from app.accounts import _password_hash
+    import psycopg
+
+    with psycopg.connect(**config.conninfo()) as admin:
+        rows = admin.execute("SELECT user_id,password_hash,disabled FROM paperpilot_auth.accounts").fetchall()
+        if len(rows) != 1 or rows[0][0] != owner_id or not verify_password(owner_password, rows[0][1]):
+            raise ValueError("Unknown legacy accounts or invalid operator password; no migration performed")
+        disabled = rows[0][2]
+    database = PostgresDatabase(config)
+    try:
+        database.migrate()
+        with database.transaction(write=True) as admin:
+            if (
+                admin.execute(
+                    "UPDATE public.users SET password_hash=%s,disabled=%s WHERE user_id=%s AND password_hash IS NULL",
+                    (_password_hash(owner_password), disabled, owner_id),
+                ).rowcount
+                != 1
+            ):
+                raise ValueError("Credential migration target already initialized; inspect before retry")
+            admin.execute("DELETE FROM paperpilot_auth.sessions")
+            from app.data.authentication import PostgresSessions
+
+            PostgresSessions._audit_completed(admin, owner_id, uuid4(), "auth.credential.migrated")
+    finally:
+        database.close()
+
+
+def upgrade():
+    from app.security.provision import create_login, install_password_auth, revoke_login
+    import psycopg
+
+    config = configuration()
+    if config["format"] != 1:
+        raise ValueError("Only the owned legacy deployment can be upgraded once")
+    # Backup must be created by the running legacy version before replacing code.
+    backups = list((STATE / "backups").glob("*/manifest.json"))
+    if not backups:
+        raise ValueError("A verified maintenance backup is required")
+    from local_operations import verify_backup
+
+    manifest = verify_backup(max(backups, key=lambda p: p.stat().st_mtime).parent)
+    if (datetime.now(UTC) - datetime.fromisoformat(manifest["created_at"])).total_seconds() > 3600:
+        raise ValueError("Create a fresh backup before upgrading")
+    stop()
+    upgrade_database(
+        admin_config(), UUID(config["owner_id"]), (STATE / "secrets/owner-password").read_text().strip()
+    )
+    environment = config["environment"]
+    new_roles = {}
+    with psycopg.connect(**admin_config().conninfo(), autocommit=True) as admin:
+        lock_owner = install_password_auth(admin)
+        for kind in ("business", "auth"):
+            role = "pp_" + kind + "_b_" + uuid4().hex[:16]
+            path = STATE / "secrets" / (kind + "-b2")
+            with path.open("x", encoding="utf-8") as stream:
+                stream.write(secrets.token_urlsafe(32))
+            private_file(path)
+            create_login(admin, role, path.read_text(), business=kind == "business", auth=kind == "auth")
+            new_roles[kind] = role
+        revoke_login(admin, environment["PAPERPILOT_DATA_USER"])
+        revoke_login(admin, environment["PAPERPILOT_AUTH_USER"])
+    environment["PAPERPILOT_DATA_USER"] = new_roles["business"]
+    environment["PAPERPILOT_DATA_PASSWORD_FILE"] = str(STATE / "secrets/business-b2")
+    for key in ("PAPERPILOT_AUTH_USER", "PAPERPILOT_AUTH_PASSWORD_FILE"):
+        environment.pop(key, None)
+    environment.update(
+        {
+            "PAPERPILOT_ENV": "test",
+            "PAPERPILOT_AUTH_MODE": "credentials",
+            "PAPERPILOT_AUTH_DATABASE": "isolated",
+            "PAPERPILOT_AUTH_DB_ISOLATED_TEST": "1",
+            "PAPERPILOT_AUTH_LOCK_OWNER": lock_owner,
+            "PAPERPILOT_AUTH_DB_HOST": "127.0.0.1",
+            "PAPERPILOT_AUTH_DB_PORT": "54327",
+            "PAPERPILOT_AUTH_DB_DBNAME": "paperpilot_local",
+            "PAPERPILOT_AUTH_DB_USER": new_roles["auth"],
+            "PAPERPILOT_AUTH_DB_PASSWORD_FILE": str(STATE / "secrets/auth-b2"),
+        }
+    )
+    for path in (STATE / "secrets").iterdir():
+        if path.is_file():
+            private_file(path)
+    config["format"] = 2
+    write_json(CONFIG, config)
+    start()
+    print(
+        "Upgraded to B credentials and schema 7; old sessions invalidated. Local candidate only, not production acceptance."
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "command",
-        choices=["init", "start", "stop", "restart", "serve", "status", "reader-add", "model-configure"],
+        choices=[
+            "init",
+            "start",
+            "stop",
+            "restart",
+            "serve",
+            "status",
+            "reader-add",
+            "model-configure",
+            "upgrade",
+        ],
     )
     parser.add_argument("--project", type=UUID)
     parser.add_argument("--file", type=Path)
@@ -437,6 +561,8 @@ def dispatch(args):
             init()
         elif args.command == "serve":
             serve()
+        elif args.command == "upgrade":
+            upgrade()
         elif args.command == "start":
             start()
         elif args.command == "stop":

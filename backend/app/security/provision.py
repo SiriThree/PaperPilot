@@ -69,16 +69,52 @@ def upgrade_business_registry(connection):
         )
 
 
-BUSINESS_READ_TABLES = "users,projects,project_members,papers,project_papers,topics,paper_topics,chunks,embedding_models,chunk_embeddings,process_indexes,tasks,task_papers,task_attempts,task_results,result_sources,evidence_fields,reports,report_versions,report_version_sources,audit_events,outbox_events,idempotency_records,schema_migrations"
+BUSINESS_READ_TABLES = "projects,project_members,papers,project_papers,topics,paper_topics,chunks,embedding_models,chunk_embeddings,process_indexes,tasks,task_papers,task_attempts,task_results,result_sources,evidence_fields,reports,report_versions,report_version_sources,outbox_events,idempotency_records,schema_migrations"
 BUSINESS_INSERT_TABLES = "projects,project_members,papers,project_papers,chunks,embedding_models,chunk_embeddings,process_indexes,tasks,task_papers,task_attempts,task_results,result_sources,evidence_fields,reports,report_versions,report_version_sources,audit_events,outbox_events,idempotency_records"
 
 
 def install_password_auth(connection):
+    """Explicit B credential lock installation; no alternate account/session tables."""
+    from psycopg import sql
+    import hashlib
+
     _idle_admin(connection)
+    database = connection.execute("SELECT current_database()").fetchone()[0]
+    owner = "pp_auth_lock_" + hashlib.sha256(database.encode()).hexdigest()[:16]
     with connection.transaction():
         connection.execute(
-            files("app.security").joinpath("migrations/004_password_auth.sql").read_text(encoding="utf-8")
+            files("app.security")
+            .joinpath("migrations/004_auth_lock_candidate.sql")
+            .read_text(encoding="utf-8")
         )
+        connection.execute(
+            sql.SQL(
+                "CREATE ROLE {} NOLOGIN NOSUPERUSER NOBYPASSRLS NOINHERIT NOCREATEDB NOCREATEROLE NOREPLICATION"
+            ).format(sql.Identifier(owner))
+        )
+        connection.execute(sql.SQL("GRANT USAGE ON SCHEMA public TO {}").format(sql.Identifier(owner)))
+        connection.execute(
+            sql.SQL("GRANT USAGE,CREATE ON SCHEMA paperpilot_auth TO {}").format(sql.Identifier(owner))
+        )
+        connection.execute(
+            sql.SQL(
+                "GRANT SELECT(user_id,password_hash,disabled),UPDATE(password_hash) ON public.users TO {}"
+            ).format(sql.Identifier(owner))
+        )
+        connection.execute(
+            sql.SQL("ALTER FUNCTION paperpilot_auth.lock_credential(uuid) OWNER TO {}").format(
+                sql.Identifier(owner)
+            )
+        )
+        connection.execute(
+            sql.SQL("REVOKE CREATE ON SCHEMA paperpilot_auth FROM {}").format(sql.Identifier(owner))
+        )
+        connection.execute(
+            files("app.security")
+            .joinpath("migrations/005_credentials_registry.sql")
+            .read_text(encoding="utf-8")
+        )
+    return owner
 
 
 def create_login(connection, role, password, *, project_id=None, business=False, auth=False):
@@ -125,11 +161,10 @@ def create_login(connection, role, password, *, project_id=None, business=False,
         elif kind == "auth":
             grants = [
                 "GRANT USAGE ON SCHEMA public,paperpilot_auth TO {}",
-                "GRANT SELECT(user_id,username) ON public.users TO {}",
-                "GRANT SELECT ON paperpilot_auth.accounts,paperpilot_auth.schema_version TO {}",
-                "GRANT UPDATE(last_authenticated_at) ON paperpilot_auth.accounts TO {}",
-                "GRANT SELECT,INSERT,UPDATE,DELETE ON paperpilot_auth.sessions TO {}",
-                "GRANT SELECT,INSERT,UPDATE ON paperpilot_auth.throttle TO {}",
+                "GRANT SELECT(user_id,username,password_hash,disabled) ON public.users TO {}",
+                "GRANT SELECT,INSERT,UPDATE ON public.auth_sessions,public.auth_login_limits TO {}",
+                "GRANT INSERT ON public.audit_events TO {}",
+                "GRANT EXECUTE ON FUNCTION paperpilot_auth.lock_credential(uuid) TO {}",
             ]
         else:
             grants = [
@@ -142,6 +177,10 @@ def create_login(connection, role, password, *, project_id=None, business=False,
                 + " TO {}",
                 "GRANT UPDATE ON public.project_papers,public.tasks,public.task_attempts,public.reports,public.outbox_events TO {}",
                 "GRANT DELETE ON public.project_members TO {}",
+                "GRANT SELECT(user_id,username,display_name) ON public.users TO {}",
+                "GRANT USAGE ON SCHEMA paperpilot_audit TO {}",
+                "GRANT SELECT ON paperpilot_audit.project_events TO {}",
+                "GRANT EXECUTE ON FUNCTION paperpilot_audit.event_fingerprint(uuid) TO {}",
             ]
         for statement in grants:
             connection.execute(sql.SQL(statement).format(sql.Identifier(role)))
@@ -210,9 +249,9 @@ def revoke_login(connection, role):
             ]
         elif kind == "auth":
             statements = [
-                "REVOKE ALL ON ALL TABLES IN SCHEMA paperpilot_auth FROM {}",
-                "REVOKE UPDATE(last_authenticated_at) ON paperpilot_auth.accounts FROM {}",
-                "REVOKE SELECT(user_id,username) ON public.users FROM {}",
+                "REVOKE ALL ON public.auth_sessions,public.auth_login_limits,public.audit_events FROM {}",
+                "REVOKE SELECT(user_id,username,password_hash,disabled) ON public.users FROM {}",
+                "REVOKE EXECUTE ON FUNCTION paperpilot_auth.lock_credential(uuid) FROM {}",
                 "REVOKE ALL ON SCHEMA paperpilot_auth FROM {}",
             ]
         else:

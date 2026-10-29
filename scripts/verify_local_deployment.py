@@ -23,11 +23,12 @@ def main():
         response = client.get("/api/v1/health")
         assert response.status_code == 200
         report["modes"] = response.json()["modes"]
-        assert "password_authentication" in response.json()["limitations"]
+        assert "authentication_credentials" in response.json()["limitations"]
+        client.headers["X-CSRF-Token"] = client.get("/api/v1/auth/csrf").json()["csrf_token"]
         assert client.post("/api/v1/auth/login", json={"username": "alice"}).status_code == 401
         body = {"username": "owner", "password": (STATE / "secrets/owner-password").read_text().strip()}
         login = client.post("/api/v1/auth/login", json=body)
-        assert login.status_code == 200 and login.json()["authentication"] == "password"
+        assert login.status_code == 200 and login.json()["authentication"] == "authentication_credentials"
         assert "Secure" in login.headers["set-cookie"] and "HttpOnly" in login.headers["set-cookie"]
         body.clear()
         report["password_cookie"] = True

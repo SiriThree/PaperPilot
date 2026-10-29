@@ -149,6 +149,149 @@
         ]
       }
     },
+    "/api/v1/auth/csrf": {
+      "get": {
+        "tags": [
+          "identity"
+        ],
+        "summary": "Csrf",
+        "operationId": "csrf_api_v1_auth_csrf_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CSRFToken"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Login required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role or CSRF check failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource missing or inaccessible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Upload too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Schema validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Adapter contract error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Required module unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Request-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Optional correlation only; never an authorization credential. Invalid values are replaced."
+          }
+        ]
+      }
+    },
     "/api/v1/auth/login": {
       "post": {
         "tags": [
@@ -286,6 +429,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Login rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "parameters": [
@@ -302,12 +455,21 @@
           {
             "name": "X-PaperPilot-Client",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string",
               "const": "web"
             },
-            "description": "Custom header required by same-origin browser request policy."
+            "description": "Development mode request header; not authentication or CSRF protection."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Required for state changes in credential mode, together with a trusted Origin and matching cookie."
           }
         ]
       }
@@ -603,12 +765,21 @@
           {
             "name": "X-PaperPilot-Client",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string",
               "const": "web"
             },
-            "description": "Custom header required by same-origin browser request policy."
+            "description": "Development mode request header; not authentication or CSRF protection."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Required for state changes in credential mode, together with a trusted Origin and matching cookie."
           }
         ],
         "security": [
@@ -917,12 +1088,21 @@
           {
             "name": "X-PaperPilot-Client",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string",
               "const": "web"
             },
-            "description": "Custom header required by same-origin browser request policy."
+            "description": "Development mode request header; not authentication or CSRF protection."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Required for state changes in credential mode, together with a trusted Origin and matching cookie."
           }
         ],
         "security": [
@@ -1119,12 +1299,21 @@
           {
             "name": "X-PaperPilot-Client",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string",
               "const": "web"
             },
-            "description": "Custom header required by same-origin browser request policy."
+            "description": "Development mode request header; not authentication or CSRF protection."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Required for state changes in credential mode, together with a trusted Origin and matching cookie."
           }
         ],
         "requestBody": {
@@ -1307,12 +1496,21 @@
           {
             "name": "X-PaperPilot-Client",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string",
               "const": "web"
             },
-            "description": "Custom header required by same-origin browser request policy."
+            "description": "Development mode request header; not authentication or CSRF protection."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Required for state changes in credential mode, together with a trusted Origin and matching cookie."
           }
         ],
         "responses": {
@@ -1663,12 +1861,21 @@
           {
             "name": "X-PaperPilot-Client",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string",
               "const": "web"
             },
-            "description": "Custom header required by same-origin browser request policy."
+            "description": "Development mode request header; not authentication or CSRF protection."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Required for state changes in credential mode, together with a trusted Origin and matching cookie."
           },
           {
             "name": "Idempotency-Key",
@@ -2037,12 +2244,21 @@
           {
             "name": "X-PaperPilot-Client",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string",
               "const": "web"
             },
-            "description": "Custom header required by same-origin browser request policy."
+            "description": "Development mode request header; not authentication or CSRF protection."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Required for state changes in credential mode, together with a trusted Origin and matching cookie."
           }
         ],
         "responses": {
@@ -2383,12 +2599,21 @@
           {
             "name": "X-PaperPilot-Client",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string",
               "const": "web"
             },
-            "description": "Custom header required by same-origin browser request policy."
+            "description": "Development mode request header; not authentication or CSRF protection."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Required for state changes in credential mode, together with a trusted Origin and matching cookie."
           }
         ],
         "responses": {
@@ -2551,12 +2776,21 @@
           {
             "name": "X-PaperPilot-Client",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string",
               "const": "web"
             },
-            "description": "Custom header required by same-origin browser request policy."
+            "description": "Development mode request header; not authentication or CSRF protection."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Required for state changes in credential mode, together with a trusted Origin and matching cookie."
           }
         ],
         "requestBody": {
@@ -2729,12 +2963,21 @@
           {
             "name": "X-PaperPilot-Client",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string",
               "const": "web"
             },
-            "description": "Custom header required by same-origin browser request policy."
+            "description": "Development mode request header; not authentication or CSRF protection."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Required for state changes in credential mode, together with a trusted Origin and matching cookie."
           },
           {
             "name": "Idempotency-Key",
@@ -2927,12 +3170,21 @@
           {
             "name": "X-PaperPilot-Client",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string",
               "const": "web"
             },
-            "description": "Custom header required by same-origin browser request policy."
+            "description": "Development mode request header; not authentication or CSRF protection."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Required for state changes in credential mode, together with a trusted Origin and matching cookie."
           },
           {
             "name": "Idempotency-Key",
@@ -3271,12 +3523,21 @@
           {
             "name": "X-PaperPilot-Client",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string",
               "const": "web"
             },
-            "description": "Custom header required by same-origin browser request policy."
+            "description": "Development mode request header; not authentication or CSRF protection."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Required for state changes in credential mode, together with a trusted Origin and matching cookie."
           },
           {
             "name": "Idempotency-Key",
@@ -3459,12 +3720,21 @@
           {
             "name": "X-PaperPilot-Client",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string",
               "const": "web"
             },
-            "description": "Custom header required by same-origin browser request policy."
+            "description": "Development mode request header; not authentication or CSRF protection."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Required for state changes in credential mode, together with a trusted Origin and matching cookie."
           },
           {
             "name": "Idempotency-Key",
@@ -4149,12 +4419,21 @@
           {
             "name": "X-PaperPilot-Client",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string",
               "const": "web"
             },
-            "description": "Custom header required by same-origin browser request policy."
+            "description": "Development mode request header; not authentication or CSRF protection."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Required for state changes in credential mode, together with a trusted Origin and matching cookie."
           }
         ],
         "requestBody": {
@@ -4794,6 +5073,20 @@
         ],
         "title": "Body_upload_paper_api_v1_projects__project_id__papers_post"
       },
+      "CSRFToken": {
+        "properties": {
+          "csrf_token": {
+            "type": "string",
+            "title": "Csrf Token"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "csrf_token"
+        ],
+        "title": "CSRFToken"
+      },
       "DraftResult": {
         "properties": {
           "kind": {
@@ -5029,7 +5322,7 @@
             "type": "string",
             "enum": [
               "development_identity_only",
-              "password"
+              "authentication_credentials"
             ],
             "title": "Authentication",
             "default": "development_identity_only"
@@ -5054,10 +5347,8 @@
             "anyOf": [
               {
                 "type": "string",
-                "maxLength": 128,
-                "minLength": 1,
-                "format": "password",
-                "writeOnly": true
+                "maxLength": 1024,
+                "minLength": 1
               },
               {
                 "type": "null"
@@ -6052,7 +6343,7 @@
         "type": "apiKey",
         "in": "cookie",
         "name": "pp_session",
-        "description": "Ephemeral development identity session; not real password authentication."
+        "description": "Session cookie. Authentication mode is reported by the health endpoint; development sessions are not credential authentication."
       }
     }
   }

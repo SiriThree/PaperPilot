@@ -26,6 +26,9 @@ def main():
         environment = dict(
             os.environ,
             PAPERPILOT_SECURITY_POSTGRES_TESTS="1",
+            PAPERPILOT_AUTH_MODE="development",
+            PAPERPILOT_E2E_PYTHON=sys.executable,
+            PAPERPILOT_PHASE5A_ISOLATED="1",
             PAPERPILOT_SECURITY_TEAM_TESTS="1",
             PAPERPILOT_SECURITY_TEST_A_SOURCE=str(ROOT),
             PAPERPILOT_SECURITY_TEST_C_SOURCE=str(ROOT),

@@ -27,6 +27,43 @@ def pending(data):
     )
 
 
+def test_worker_limits_total_task_time_without_starting_another_task(app, monkeypatch):
+    import asyncio
+    import time
+
+    task = pending(app.state.adapters.data)
+    app.state.service.job_timeout_seconds = 0.05
+    calls = []
+
+    async def stalled_search(*args):
+        calls.append("started")
+        await asyncio.sleep(5)
+
+    monkeypatch.setattr(app.state.adapters.ai, "search", stalled_search)
+    monkeypatch.setattr(app.state.adapters.ai, "search_scoped", stalled_search)
+    with TestClient(app, headers={"X-PaperPilot-Client": "web"}) as client:
+        assert client.post("/api/v1/auth/login", json={"username": "alice"}).status_code == 200
+        for _ in range(100):
+            result = client.get(base() + f"/tasks/{task.task_id}").json()
+            if result["status"] == "failed":
+                break
+            time.sleep(0.02)
+        assert result["status"] == "failed"
+        assert result["error"]["code"] == "TASK_TIMEOUT"
+        assert calls == ["started"]
+        assert result["task_id"] == str(task.task_id)
+
+
+def test_health_reports_known_worker_failure_and_recovers(app):
+    client = TestClient(app)
+    app.state.service.worker_claim_unavailable = True
+    failed = client.get("/api/v1/health")
+    assert failed.status_code == 503 and failed.json()["code"] == "WORKER_UNAVAILABLE"
+    app.state.service.worker_claim_unavailable = False
+    assert client.get("/api/v1/health").status_code == 200
+    client.close()
+
+
 def signed_client(app, name="alice"):
     # Deliberately no lifespan: a GET must not start or claim work itself.
     client = TestClient(app, headers={"X-PaperPilot-Client": "web"})

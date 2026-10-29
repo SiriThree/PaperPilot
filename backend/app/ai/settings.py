@@ -23,6 +23,7 @@ class AISettings:
     embedding_api_key: str | None = field(default=None, repr=False)
     local_model_dir: Path | None = None
     token_limit_parameter: str = "max_tokens"
+    response_format: str = "json_schema"
     embedding_revision: str | None = None
 
     def __post_init__(self):
@@ -71,6 +72,8 @@ class AISettings:
             raise ValueError("Invalid embedding credentials")
         if self.token_limit_parameter not in {"max_tokens", "max_completion_tokens"}:
             raise ValueError("Unsupported token limit parameter")
+        if self.response_format not in {"json_schema", "json_object"}:
+            raise ValueError("Unsupported model response format")
 
     @classmethod
     def from_env(cls):
@@ -96,6 +99,7 @@ class AISettings:
                 if os.getenv("PAPERPILOT_AI_LOCAL_MODEL_DIR")
                 else None,
                 token_limit_parameter=os.getenv("PAPERPILOT_AI_TOKEN_LIMIT_PARAMETER", "max_tokens"),
+                response_format=os.getenv("PAPERPILOT_AI_RESPONSE_FORMAT", "json_schema"),
             )
         except (KeyError, ValueError):
             raise RuntimeError("Invalid or missing PAPERPILOT_AI configuration; startup refused") from None

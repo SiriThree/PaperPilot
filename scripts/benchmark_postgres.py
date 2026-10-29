@@ -170,34 +170,79 @@ class Seeder:
                     (metadata, project, f"基准论文 {pindex}-{paper_index}", 2020 + paper_index % 5),
                 )
                 project_papers.append(
-                    (paper, project, metadata, owner, f"{pindex * 1000 + paper_index:064x}",
-                     f"bench/{paper}.pdf", task)
+                    (
+                        paper,
+                        project,
+                        metadata,
+                        owner,
+                        f"{pindex * 1000 + paper_index:064x}",
+                        f"bench/{paper}.pdf",
+                        task,
+                    )
                 )
                 tasks.append(
-                    (task, project, owner, uuid4(), "process", "succeeded", 1,
-                     json.dumps({"paper_ids": [str(paper)]}), SIXTY_FOUR)
+                    (
+                        task,
+                        project,
+                        owner,
+                        uuid4(),
+                        "process",
+                        "succeeded",
+                        1,
+                        json.dumps({"paper_ids": [str(paper)]}),
+                        SIXTY_FOUR,
+                    )
                 )
                 attempts.append((task, project, owner))
                 results.append((task, project, "process", 1, paper, None))
                 task_papers.append((task, paper, project))
                 for chunk_index in range(CHUNKS_PER_PAPER):
                     chunk_rows.append(
-                        (chunk_id if chunk_index == 0 else uuid4(), project, paper, chunk_index + 1,
-                         f"基准片段 {pindex}-{paper_index}-{chunk_index}", chunk_index % 2 == 0)
+                        (
+                            chunk_id if chunk_index == 0 else uuid4(),
+                            project,
+                            paper,
+                            chunk_index + 1,
+                            f"基准片段 {pindex}-{paper_index}-{chunk_index}",
+                            chunk_index % 2 == 0,
+                        )
                     )
                 if paper_index % EVIDENCE_SHARE == 0:
                     evidence_task = uuid4()
                     tasks.append(
-                        (evidence_task, project, users[1], uuid4(), "evidence", "succeeded", 1,
-                         json.dumps({"paper_ids": [str(paper)]}), SIXTY_FOUR)
+                        (
+                            evidence_task,
+                            project,
+                            users[1],
+                            uuid4(),
+                            "evidence",
+                            "succeeded",
+                            1,
+                            json.dumps({"paper_ids": [str(paper)]}),
+                            SIXTY_FOUR,
+                        )
                     )
                     attempts.append((evidence_task, project, users[1]))
                     results.append((evidence_task, project, "evidence", 1, paper, uuid4()))
                     task_papers.append((evidence_task, paper, project))
                     for field in ("research_question", "method", "results", "conclusion", "limitations"):
-                        evidence_fields.append((evidence_task, field, project, "基准证据", "pending_verification"))
+                        evidence_fields.append(
+                            (evidence_task, field, project, "基准证据", "pending_verification")
+                        )
                         source_rows.append(
-                            (evidence_task, field, "1", project, field, 1, paper, chunk_id, 1, "基准片段", False)
+                            (
+                                evidence_task,
+                                field,
+                                "1",
+                                project,
+                                field,
+                                1,
+                                paper,
+                                chunk_id,
+                                1,
+                                "基准片段",
+                                False,
+                            )
                         )
                 source_rows.append(
                     (task, "root", "1", project, None, 1, paper, chunk_id, 1, "基准片段", False)
@@ -208,18 +253,27 @@ class Seeder:
             version_rows.append((first_version, project, report, 1, None, "基准报告 1", "基准问题", "正文一"))
             for number in range(2, REPORT_VERSIONS + 1):
                 version = uuid4()
-                version_rows.append((version, project, report, number, previous, f"基准报告 {number}", "基准问题", "正文"))
+                version_rows.append(
+                    (version, project, report, number, previous, f"基准报告 {number}", "基准问题", "正文")
+                )
                 previous = version
             report_rows.append((report, project, users[2], previous))
             for citation in (1, 2):
                 report_source_rows.append(
-                    (previous, str(citation), project, citation, project_first_paper, project_first_chunk,
-                     1, "报告来源", False)
+                    (
+                        previous,
+                        str(citation),
+                        project,
+                        citation,
+                        project_first_paper,
+                        project_first_chunk,
+                        1,
+                        "报告来源",
+                        False,
+                    )
                 )
 
-        self.many(
-            "INSERT INTO project_members(project_id, user_id, role) VALUES(%s,%s,%s)", member_rows
-        )
+        self.many("INSERT INTO project_members(project_id, user_id, role) VALUES(%s,%s,%s)", member_rows)
         self.many(
             "INSERT INTO project_papers(paper_id, project_id, metadata_id, imported_by, digest, storage_key,"
             " status, index_state, active_process_task_id) VALUES(%s,%s,%s,%s,%s,%s,'searchable','mock_only',%s)",
@@ -238,12 +292,16 @@ class Seeder:
         self.many(
             "INSERT INTO task_results(task_id, project_id, kind, committed_attempt, paper_id, evidence_id,"
             " payload, result_fingerprint) VALUES(%s,%s,%s,%s,%s,%s,%s::jsonb,%s)",
-            [(task, project, kind, attempt, paper, evidence, '{"paper_ids": []}', SIXTY_FOUR)
-             for task, project, kind, attempt, paper, evidence in results],
+            [
+                (task, project, kind, attempt, paper, evidence, '{"paper_ids": []}', SIXTY_FOUR)
+                for task, project, kind, attempt, paper, evidence in results
+            ],
         )
         self.many("INSERT INTO task_papers(task_id, paper_id, project_id) VALUES(%s,%s,%s)", task_papers)
         self.copy_rows(
-            "chunks", ["chunk_id", "project_id", "paper_id", "page_number", "excerpt", "synthetic"], chunk_rows
+            "chunks",
+            ["chunk_id", "project_id", "paper_id", "page_number", "excerpt", "synthetic"],
+            chunk_rows,
         )
         self.many(
             "INSERT INTO evidence_fields(task_id, field_name, project_id, text, status) VALUES(%s,%s,%s,%s,%s)",
@@ -285,26 +343,70 @@ class Seeder:
         base_time = datetime.now(UTC)
         self.copy_rows(
             "audit_events",
-            ["event_id", "timestamp", "request_id", "actor_id", "project_id", "action", "resource_type",
-             "decision", "execution_status", "duration_ms", "mock", "event_fingerprint"],
+            [
+                "event_id",
+                "timestamp",
+                "request_id",
+                "actor_id",
+                "project_id",
+                "action",
+                "resource_type",
+                "decision",
+                "execution_status",
+                "duration_ms",
+                "mock",
+                "event_fingerprint",
+            ],
             (
-                (uuid4(), base_time - timedelta(seconds=index), uuid4(), users[index % len(users)],
-                 self.sample_project, f"action.{index % 8}", "project", "allowed", "completed",
-                 index % 100, False, SIXTY_FOUR)
+                (
+                    uuid4(),
+                    base_time - timedelta(seconds=index),
+                    uuid4(),
+                    users[index % len(users)],
+                    self.sample_project,
+                    f"action.{index % 8}",
+                    "project",
+                    "allowed",
+                    "completed",
+                    index % 100,
+                    False,
+                    SIXTY_FOUR,
+                )
                 for index in range(AUDIT_EVENTS)
             ),
         )
         payload = json.dumps(
-            {"action": "bench.event", "resource_type": "project", "resource_id": "x",
-             "decision": "allowed", "execution_status": "succeeded", "duration_ms": 0, "mock": False}
+            {
+                "action": "bench.event",
+                "resource_type": "project",
+                "resource_id": "x",
+                "decision": "allowed",
+                "execution_status": "succeeded",
+                "duration_ms": 0,
+                "mock": False,
+            }
         )
         self.copy_rows(
             "outbox_events",
-            ["event_id", "project_id", "actor_id", "request_id", "payload", "next_attempt_at", "published_at"],
+            [
+                "event_id",
+                "project_id",
+                "actor_id",
+                "request_id",
+                "payload",
+                "next_attempt_at",
+                "published_at",
+            ],
             (
-                (uuid4(), self.sample_project, users[0], uuid4(), payload,
-                 base_time - timedelta(seconds=index % 3600),
-                 base_time if index < OUTBOX_PUBLISHED else None)
+                (
+                    uuid4(),
+                    self.sample_project,
+                    users[0],
+                    uuid4(),
+                    payload,
+                    base_time - timedelta(seconds=index % 3600),
+                    base_time if index < OUTBOX_PUBLISHED else None,
+                )
                 for index in range(OUTBOX_UNDELIVERED + OUTBOX_PUBLISHED)
             ),
         )
@@ -356,10 +458,11 @@ def explain(conn, ids, name):
         "EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) " + query, resolve_params(ids, spec)
     ).fetchone()[0]
     plan = data[0]["Plan"]
+
     def describe(node):
         label = node["Node Type"]
         if node.get("Index Name"):
-            label += f' on {node["Index Name"]}'
+            label += f" on {node['Index Name']}"
         return label
 
     node = plan

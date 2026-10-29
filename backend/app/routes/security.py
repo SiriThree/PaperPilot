@@ -2,6 +2,7 @@ from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Query, Request
+from fastapi.responses import JSONResponse
 
 from app.auth import project_context
 from app.errors import AppError
@@ -13,7 +14,21 @@ router = APIRouter(prefix="/api/v1/projects/{project_id}", tags=["security"], re
 
 @router.post("/secure-queries", response_model=SecureQueryResult)
 async def secure_query(project_id: UUID, data: SecureQueryRequest, request: Request):
-    return await request.app.state.service.secure_query(project_context(request, project_id), data.question)
+    try:
+        ctx = project_context(request, project_id)
+    except AppError as error:
+        if error.status in (401, 403, 404):
+            request.app.state.service.secure_query_access_denied(
+                request.state.request_id,
+                getattr(request.state, "authenticated_actor_id", None),
+                mock=request.app.state.settings.a_mode == "mock",
+            )
+        raise
+    result = await request.app.state.service.secure_query(ctx, data.question)
+    response = JSONResponse(content=result.model_dump(mode="json"))
+    if len(response.body) > 256 * 1024:
+        raise AppError(503, "QUERY_RESPONSE_TOO_LARGE", "查询结果超过响应大小限制")
+    return response
 
 
 @router.get("/audit-events", response_model=AuditList)
@@ -35,7 +50,10 @@ def audit(
         or (since and until and since > until)
     ):
         raise AppError(422, "VALIDATION_ERROR", "时间筛选须带时区且起止顺序正确")
-    return request.app.state.adapters.data.audit(
+    audit_reader = request.app.state.scoped_audit_reader
+    if audit_reader is None:
+        audit_reader = request.app.state.adapters.data
+    return audit_reader.audit(
         ctx,
         action=action,
         decision=decision,

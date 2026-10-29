@@ -53,10 +53,10 @@ def database_snapshot(config):
     with psycopg.connect(**config.conninfo()) as connection:
         connection.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY")
         tables = connection.execute(
-            "SELECT schemaname,tablename FROM pg_tables WHERE schemaname IN ('public','paperpilot_security','paperpilot_auth') ORDER BY 1,2"
+            "SELECT schemaname,tablename FROM pg_tables WHERE schemaname !~ '^pg_' AND schemaname<>'information_schema' ORDER BY 1,2"
         ).fetchall()
         for schema, table in tables:
-            if (schema, table) == ("paperpilot_auth", "sessions"):
+            if (schema, table) in {("paperpilot_auth", "sessions"), ("public", "auth_sessions")}:
                 continue  # Restore intentionally invalidates every session instead of reviving old cookies.
             records = connection.execute(
                 sql.SQL("SELECT row_to_json(t) FROM {}.{} t").format(
@@ -247,12 +247,14 @@ def restore_drill(directory):
             ).rowcount
             if rebound != count:
                 raise RuntimeError("A backed-up identity is missing; restore refused")
-            admin.execute("DELETE FROM paperpilot_auth.sessions")
+            admin.execute("DELETE FROM public.auth_sessions")
+            if admin.execute("SELECT to_regclass('paperpilot_auth.sessions')").fetchone()[0]:
+                admin.execute("DELETE FROM paperpilot_auth.sessions")
         if database_snapshot(config) != manifest["snapshot"]:
             raise RuntimeError("Restored database differs from the complete source snapshot")
-        from app.accounts import PasswordSessions
+        from app.data.authentication_boundary import AuthenticationBoundary
         from app.data.database import PostgresDatabase
-        from app.passwords import verify_password
+        from argon2 import PasswordHasher
         from app.security.audit import verify_writer
         from app.security.executor import verify_reader
 
@@ -264,14 +266,29 @@ def restore_drill(directory):
             database.close()
         deployment = json.loads((directory / "deployment.json").read_text(encoding="utf-8"))
         environment = deployment["environment"]
-        auth = PasswordSessions(
+        auth_path = Path(environment["PAPERPILOT_AUTH_DB_PASSWORD_FILE"]).name
+        business_path = Path(environment["PAPERPILOT_DATA_PASSWORD_FILE"]).name
+        authentication = PostgresDatabase(
             replace(
                 config,
-                user=environment["PAPERPILOT_AUTH_USER"],
-                password=(directory / "secrets/auth").read_text().strip(),
+                user=environment["PAPERPILOT_AUTH_DB_USER"],
+                password=(directory / "secrets" / auth_path).read_text().strip(),
             )
         )
-        auth.close()
+        business = PostgresDatabase(
+            replace(
+                config,
+                user=environment["PAPERPILOT_DATA_USER"],
+                password=(directory / "secrets" / business_path).read_text().strip(),
+            )
+        )
+        try:
+            assert AuthenticationBoundary(
+                business, authentication, trusted_lock_owner=environment["PAPERPILOT_AUTH_LOCK_OWNER"]
+            ).ready()
+        finally:
+            authentication.close()
+            business.close()
         security = json.loads((directory / "security.json").read_text(encoding="utf-8"))
         with psycopg.connect(
             **replace(
@@ -300,11 +317,13 @@ def restore_drill(directory):
                     raise RuntimeError("Restored reader has unsafe base-table access")
         with psycopg.connect(**config.conninfo()) as admin:
             encoded = admin.execute(
-                "SELECT password_hash FROM paperpilot_auth.accounts WHERE user_id=%s",
+                "SELECT password_hash FROM public.users WHERE user_id=%s",
                 (UUID(deployment["owner_id"]),),
             ).fetchone()[0]
-            assert verify_password((directory / "secrets/owner-password").read_text().strip(), encoded)
-            assert admin.execute("SELECT count(*) FROM paperpilot_auth.sessions").fetchone()[0] == 0
+            assert PasswordHasher().verify(
+                encoded, (directory / "secrets/owner-password").read_text().strip()
+            )
+            assert admin.execute("SELECT count(*) FROM public.auth_sessions").fetchone()[0] == 0
         report = {
             "backup": directory.name,
             "confirmed_at": datetime.now(UTC).isoformat(),
@@ -381,7 +400,7 @@ def monitor():
                 "SELECT count(*) FROM public.task_attempts WHERE status='processing' AND lease_expires_at<now()-interval '1 minute'"
             ).fetchone()[0]
             metrics["expired_deliveries"] = admin.execute(
-                "SELECT count(*) FROM public.outbox_events WHERE published_at IS NULL AND dead_lettered_at IS NULL AND delivery_lease_until<now()-interval '1 minute'"
+                "SELECT count(*) FROM public.outbox_events WHERE published_at IS NULL AND dead_lettered_at IS NULL AND last_attempt_at IS NOT NULL AND delivery_attempts>retry_base_attempts AND next_attempt_at<now()-interval '1 minute'"
             ).fetchone()[0]
     except Exception:
         metrics["database_ready"] = False
@@ -415,10 +434,10 @@ def prune_auth_metadata():
 
     with psycopg.connect(**admin_config().conninfo()) as admin:
         sessions = admin.execute(
-            "DELETE FROM paperpilot_auth.sessions WHERE expires_at<now() OR last_seen_at<now()-interval '30 minutes'"
+            "DELETE FROM public.auth_sessions WHERE revoked_at IS NOT NULL OR expires_at<now() OR last_seen_at<now()-interval '30 minutes'"
         ).rowcount
         throttle = admin.execute(
-            "DELETE FROM paperpilot_auth.throttle WHERE window_started_at<now()-interval '24 hours'"
+            "DELETE FROM public.auth_login_limits WHERE window_start<now()-interval '24 hours'"
         ).rowcount
     print(
         json.dumps(

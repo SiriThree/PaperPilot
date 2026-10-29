@@ -43,7 +43,7 @@ def export(check=False):
                 assert response.status_code < 300, (method, template, response.status_code, response.text)
                 failure_kwargs = dict(kwargs)
                 failure_kwargs.pop("headers", None)
-                if template == "/api/v1/health":
+                if template in {"/api/v1/health", "/api/v1/auth/csrf"}:
                     failure_kwargs["headers"] = {"Content-Length": "invalid"}
                 elif template == "/api/v1/auth/login":
                     failure_kwargs["json"] = {"username": "unknown"}
@@ -61,12 +61,15 @@ def export(check=False):
                             **request_kwargs.get("data", {}),
                             "file": "<PDF binary; not embedded>",
                         }
+                    body = r.json() if content_type == "application/json" else r.text
+                    if template == "/api/v1/auth/csrf" and r.status_code == 200:
+                        body = {"csrf_token": "synthetic-example-token"}
                     return {
                         "request": request,
                         "response": {
                             "status": r.status_code,
                             "content_type": content_type,
-                            "body": r.json() if content_type == "application/json" else r.text,
+                            "body": body,
                         },
                     }
 
@@ -91,6 +94,7 @@ def export(check=False):
                 raise RuntimeError("Mock task timed out")
 
             capture("get", "/api/v1/health")
+            capture("get", "/api/v1/auth/csrf")
             capture("post", "/api/v1/auth/login", json={"username": "alice"})
             capture("get", "/api/v1/auth/me")
             project = capture("get", "/api/v1/projects").json()["items"][0]["project_id"]

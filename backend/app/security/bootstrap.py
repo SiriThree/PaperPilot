@@ -37,27 +37,22 @@ def create_app():
 
         data_config = ConnectionConfig.from_env()
         audit_config, readers = configuration.resolve(data_config)
-        if settings.auth_mode == "password":
-            from dataclasses import replace
+        if settings.auth_database == "isolated":
             import os
-            from app.accounts import PasswordSessions
-            from app.secrets import read_secret
+            from app.data.authentication_boundary import auth_config_from_env
+            from app.data.database import PostgresDatabase
 
-            auth_user, auth_password = (
-                os.environ["PAPERPILOT_AUTH_USER"],
-                read_secret("PAPERPILOT_AUTH_PASSWORD"),
-            )
-            if auth_user in {
-                data_config.user,
+            auth_config = auth_config_from_env(os.environ, data_config)
+            if auth_config.user in {
                 audit_config.user,
                 *(r.user for r in readers.values()),
-            } or auth_password in {
+            } or auth_config.password in {
                 data_config.password,
                 audit_config.password,
                 *(r.password for r in readers.values()),
             }:
                 raise ValueError("Authentication identity must be independent")
-            auth_sessions = PasswordSessions(replace(data_config, user=auth_user, password=auth_password))
+            auth_sessions = PostgresDatabase(auth_config)
         data_binding = compose_data_binding(data_config, DataSettings.from_env())
         audit_binding = compose_audit(audit_config)
         # Readiness checks inspect identity/ACL metadata, never run an unaudited statistics query.
@@ -80,10 +75,10 @@ def create_app():
             from app.ai.bootstrap import create_app as create_real_c_app
 
             return create_real_c_app(
-                settings, data_binding=binding, security_factory=security_factory, auth_sessions=auth_sessions
+                settings, data_binding=binding, security_factory=security_factory, auth_database=auth_sessions
             )
         return create_business_app(
-            settings, data_binding=binding, security_factory=security_factory, auth_sessions=auth_sessions
+            settings, data_binding=binding, security_factory=security_factory, auth_database=auth_sessions
         )
     except Exception:
         try:

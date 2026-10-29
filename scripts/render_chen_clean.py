@@ -22,6 +22,7 @@ Design rules used by every view:
 Run with ``--check`` to fail on crossings, shape overlaps, or text that does not
 fit its ellipse. PNG previews are produced separately with a browser.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -205,7 +206,14 @@ def render(d: Diagram) -> tuple[str, list[dict]]:
             end = diamond_near_point(rel, start)
             rel_segs.append((start, end, rel.hop))
             segments.append(
-                {"a": start, "b": end, "kind": "rel", "label": rel.label, "ignore": {ent_id, rid}, "hop": rel.hop}
+                {
+                    "a": start,
+                    "b": end,
+                    "kind": "rel",
+                    "label": rel.label,
+                    "ignore": {ent_id, rid},
+                    "hop": rel.hop,
+                }
             )
             if card:
                 # 22% along the line, offset perpendicular to it
@@ -232,7 +240,9 @@ def render(d: Diagram) -> tuple[str, list[dict]]:
                 if other_hop:
                     continue
                 p = seg_intersection(start, end, other_start, other_end)
-                if p and not (close(p, start) or close(p, end) or close(p, other_start) or close(p, other_end)):
+                if p and not (
+                    close(p, start) or close(p, end) or close(p, other_start) or close(p, other_end)
+                ):
                     crossings.append(p)
         if not crossings:
             rel_lines.append(
@@ -262,7 +272,13 @@ def render(d: Diagram) -> tuple[str, list[dict]]:
                 f'<line x1="{start[0]:.1f}" y1="{start[1]:.1f}" x2="{end[0]:.1f}" y2="{end[1]:.1f}"/>'
             )
             segments.append(
-                {"a": start, "b": end, "kind": "relattr", "label": a.label, "ignore": {rid, f"relattr:{ri}:{a.label}"}}
+                {
+                    "a": start,
+                    "b": end,
+                    "kind": "relattr",
+                    "label": a.label,
+                    "ignore": {rid, f"relattr:{ri}:{a.label}"},
+                }
             )
 
     # entity attribute connectors
@@ -274,7 +290,13 @@ def render(d: Diagram) -> tuple[str, list[dict]]:
                 f'<line x1="{start[0]:.1f}" y1="{start[1]:.1f}" x2="{end[0]:.1f}" y2="{end[1]:.1f}"/>'
             )
             segments.append(
-                {"a": start, "b": end, "kind": "attr", "label": a.label, "ignore": {e.ident, f"attr:{e.ident}:{a.label}"}}
+                {
+                    "a": start,
+                    "b": end,
+                    "kind": "attr",
+                    "label": a.label,
+                    "ignore": {e.ident, f"attr:{e.ident}:{a.label}"},
+                }
             )
 
     # shapes
@@ -289,10 +311,14 @@ def render(d: Diagram) -> tuple[str, list[dict]]:
         )
     for e in d.entities:
         for a in e.attrs:
-            shapes.append(f'<ellipse cx="{a.x:.1f}" cy="{a.y:.1f}" rx="{a.rx:.1f}" ry="{a.ry:.1f}" class="attr"/>')
+            shapes.append(
+                f'<ellipse cx="{a.x:.1f}" cy="{a.y:.1f}" rx="{a.rx:.1f}" ry="{a.ry:.1f}" class="attr"/>'
+            )
     for rel in d.rels:
         for a in rel.attrs:
-            shapes.append(f'<ellipse cx="{a.x:.1f}" cy="{a.y:.1f}" rx="{a.rx:.1f}" ry="{a.ry:.1f}" class="attr"/>')
+            shapes.append(
+                f'<ellipse cx="{a.x:.1f}" cy="{a.y:.1f}" rx="{a.rx:.1f}" ry="{a.ry:.1f}" class="attr"/>'
+            )
 
     # entity labels
     for e in d.entities:
@@ -333,7 +359,9 @@ def render(d: Diagram) -> tuple[str, list[dict]]:
             attr_text(a, a.x, a.y)
 
     # title, note, legend
-    texts.append(f'<text x="{d.width / 2:.0f}" y="52" text-anchor="middle" class="title">{escape(d.title)}</text>')
+    texts.append(
+        f'<text x="{d.width / 2:.0f}" y="52" text-anchor="middle" class="title">{escape(d.title)}</text>'
+    )
     note_svg = ""
     if d.note:
         note_h = 24 + 22 * len(d.note)
@@ -461,7 +489,9 @@ def validate(d: Diagram, segments) -> list[str]:
                     penetrations.add(f"line passes through entity {e.ident}: {s['kind']} {s['label']}")
             for ri, rel in enumerate(d.rels):
                 if f"rel:{ri}" not in s["ignore"] and inside_diamond(p, rel):
-                    penetrations.add(f"line passes through relationship {rel.label}: {s['kind']} {s['label']}")
+                    penetrations.add(
+                        f"line passes through relationship {rel.label}: {s['kind']} {s['label']}"
+                    )
             for e in d.entities:
                 for a in e.attrs:
                     if f"attr:{e.ident}:{a.label}" not in s["ignore"] and inside_ellipse(p, a):
@@ -469,7 +499,9 @@ def validate(d: Diagram, segments) -> list[str]:
             for ri, rel in enumerate(d.rels):
                 for a in rel.attrs:
                     if f"relattr:{ri}:{a.label}" not in s["ignore"] and inside_ellipse(p, a):
-                        penetrations.add(f"line passes through relationship attribute {a.label}: {s['kind']} {s['label']}")
+                        penetrations.add(
+                            f"line passes through relationship attribute {a.label}: {s['kind']} {s['label']}"
+                        )
     problems.extend(sorted(penetrations))
 
     # text fit
@@ -479,7 +511,9 @@ def validate(d: Diagram, segments) -> list[str]:
         for a in e.attrs:
             widest = max(text_width(a.label, 15), text_width(a.name, 10.5))
             if widest > a.rx * 2 - 16:
-                problems.append(f"attribute text may overflow: {a.label} ({widest:.0f} > {a.rx * 2 - 16:.0f})")
+                problems.append(
+                    f"attribute text may overflow: {a.label} ({widest:.0f} > {a.rx * 2 - 16:.0f})"
+                )
     for rel in d.rels:
         if text_width(rel.label, 16) > rel.hw * 2 - 24:
             problems.append(f"relationship text may overflow: {rel.label}")
@@ -797,7 +831,14 @@ def v3() -> Diagram:
     )
     rels = [
         Rel("管理报告", 600, 300, [("PROJECT", "E", 0.5, "1"), ("REPORT", "W", 0.5, "N")], hw=85, hh=45),
-        Rel("保存版本", 1200, 300, [("REPORT", "E", 0.5, "1"), ("REPORT_VERSION", "W", 0.5, "N")], hw=85, hh=45),
+        Rel(
+            "保存版本",
+            1200,
+            300,
+            [("REPORT", "E", 0.5, "1"), ("REPORT_VERSION", "W", 0.5, "N")],
+            hw=85,
+            hh=45,
+        ),
         Rel(
             "保留快照",
             1830,
@@ -806,15 +847,43 @@ def v3() -> Diagram:
             hw=85,
             hh=45,
         ),
-        Rel("基于", 1730, 500, [("REPORT_VERSION", "S", 0.65, "1"), ("REPORT_VERSION", "E", 0.9, "1")], hw=70, hh=42),
+        Rel(
+            "基于",
+            1730,
+            500,
+            [("REPORT_VERSION", "S", 0.65, "1"), ("REPORT_VERSION", "E", 0.9, "1")],
+            hw=70,
+            hh=42,
+        ),
         Rel("保存", 1150, 500, [("USER", "E", 0.3, "1"), ("REPORT_VERSION", "SW", 0.5, "N")], hw=70, hh=42),
         Rel("发起", 450, 712, [("USER", "SW", 0.5, "1"), ("TASK", "NE", 0.5, "N")], hw=70, hh=42),
         Rel("调度", 300, 575, [("PROJECT", "S", 0.5, "1"), ("TASK", "N", 0.5, "N")], hw=70, hh=42),
         Rel("选定范围", 300, 1100, [("TASK", "S", 0.5, "N"), ("PAPER", "N", 0.5, "M")], hw=85, hh=45),
         Rel("产生", 600, 850, [("TASK", "E", 0.5, "1"), ("TASK_RESULT", "W", 0.5, "1")], hw=78, hh=45),
-        Rel("提取", 900, 1100, [("TASK_RESULT", "S", 0.5, "1"), ("EVIDENCE_FIELD", "N", 0.5, "N")], hw=78, hh=45),
-        Rel("引用", 1200, 850, [("TASK_RESULT", "E", 0.5, "1"), ("RESULT_SOURCE", "W", 0.5, "N")], hw=78, hh=45),
-        Rel("支撑", 1200, 1100, [("EVIDENCE_FIELD", "NE", 0.5, "1"), ("RESULT_SOURCE", "SW", 0.5, "N")], hw=85, hh=45),
+        Rel(
+            "提取",
+            900,
+            1100,
+            [("TASK_RESULT", "S", 0.5, "1"), ("EVIDENCE_FIELD", "N", 0.5, "N")],
+            hw=78,
+            hh=45,
+        ),
+        Rel(
+            "引用",
+            1200,
+            850,
+            [("TASK_RESULT", "E", 0.5, "1"), ("RESULT_SOURCE", "W", 0.5, "N")],
+            hw=78,
+            hh=45,
+        ),
+        Rel(
+            "支撑",
+            1200,
+            1100,
+            [("EVIDENCE_FIELD", "NE", 0.5, "1"), ("RESULT_SOURCE", "SW", 0.5, "N")],
+            hw=85,
+            hh=45,
+        ),
         Rel("定位", 1800, 850, [("RESULT_SOURCE", "E", 0.5, "N"), ("CHUNK", "W", 0.5, "1")], hw=78, hh=45),
         Rel(
             "快照定位",
@@ -942,13 +1011,41 @@ def v4() -> Diagram:
         ],
     )
     rels = [
-        Rel("提交请求", 600, 300, [("USER", "E", 0.5, "1"), ("IDEMPOTENCY_RECORD", "W", 0.5, "N")], hw=85, hh=45),
-        Rel("幂等归属", 900, 600, [("IDEMPOTENCY_RECORD", "S", 0.5, "N"), ("PROJECT", "N", 0.5, "1")], hw=85, hh=45),
+        Rel(
+            "提交请求",
+            600,
+            300,
+            [("USER", "E", 0.5, "1"), ("IDEMPOTENCY_RECORD", "W", 0.5, "N")],
+            hw=85,
+            hh=45,
+        ),
+        Rel(
+            "幂等归属",
+            900,
+            600,
+            [("IDEMPOTENCY_RECORD", "S", 0.5, "N"), ("PROJECT", "N", 0.5, "1")],
+            hw=85,
+            hh=45,
+        ),
         Rel("审计归属", 600, 900, [("PROJECT", "W", 0.5, "1"), ("AUDIT_EVENT", "E", 0.5, "N")], hw=85, hh=45),
         Rel("执行动作", 300, 600, [("USER", "S", 0.5, "1"), ("AUDIT_EVENT", "N", 0.5, "N")], hw=85, hh=45),
-        Rel("事件归属", 600, 1150, [("PROJECT", "SW", 0.5, "1"), ("OUTBOX_EVENT", "NE", 0.5, "N")], hw=85, hh=45),
+        Rel(
+            "事件归属",
+            600,
+            1150,
+            [("PROJECT", "SW", 0.5, "1"), ("OUTBOX_EVENT", "NE", 0.5, "N")],
+            hw=85,
+            hh=45,
+        ),
         Rel("领取", 1200, 1450, [("TASK", "E", 0.5, "1"), ("TASK_ATTEMPT", "W", 0.5, "N")], hw=78, hh=45),
-        Rel("采纳", 1500, 1680, [("TASK_ATTEMPT", "S", 0.5, "1"), ("TASK_RESULT", "N", 0.5, "1")], hw=70, hh=42),
+        Rel(
+            "采纳",
+            1500,
+            1680,
+            [("TASK_ATTEMPT", "S", 0.5, "1"), ("TASK_RESULT", "N", 0.5, "1")],
+            hw=70,
+            hh=42,
+        ),
     ]
     return Diagram(
         "v4-control-audit",
@@ -1190,46 +1287,154 @@ def total() -> Diagram:
 
     rels = [
         # identity / control (left face)
-        Rel("参与", 1500, 975, [("USER", "N", 0.5, "N"), ("PROJECT", "S", 0.5, "M")], hw=88, hh=48,
+        Rel(
+            "参与",
+            1500,
+            975,
+            [("USER", "N", 0.5, "N"), ("PROJECT", "S", 0.5, "M")],
+            hw=88,
+            hh=48,
             attrs=[
                 Attr("项目角色", "role", 1710, 900, 80, 38, False, (1500, 975)),
                 Attr("加入时间", "joined_at", 1710, 1040, 80, 38, False, (1500, 975)),
-            ]),
-        Rel("幂等归属", 1300, 800, [("PROJECT", "SW", 0.5, "1"), ("IDEMPOTENCY_RECORD", "N", 0.85, "N")], hw=78, hh=45),
-        Rel("提交请求", 1300, 1270, [("IDEMPOTENCY_RECORD", "SE", 0.5, "N"), ("USER", "NW", 0.5, "1")], hw=70, hh=42),
-        Rel("审计归属", 900, 1050, [("PROJECT", "W", 0.8, "1"), ("AUDIT_EVENT", "N", 0.5, "N")], hw=78, hh=45),
+            ],
+        ),
+        Rel(
+            "幂等归属",
+            1300,
+            800,
+            [("PROJECT", "SW", 0.5, "1"), ("IDEMPOTENCY_RECORD", "N", 0.85, "N")],
+            hw=78,
+            hh=45,
+        ),
+        Rel(
+            "提交请求",
+            1300,
+            1270,
+            [("IDEMPOTENCY_RECORD", "SE", 0.5, "N"), ("USER", "NW", 0.5, "1")],
+            hw=70,
+            hh=42,
+        ),
+        Rel(
+            "审计归属", 900, 1050, [("PROJECT", "W", 0.8, "1"), ("AUDIT_EVENT", "N", 0.5, "N")], hw=78, hh=45
+        ),
         Rel("执行动作", 1130, 1480, [("AUDIT_EVENT", "E", 0.5, "N"), ("USER", "W", 0.8, "1")], hw=78, hh=45),
-        Rel("事件归属", 1060, 400, [("OUTBOX_EVENT", "E", 0.5, "N"), ("PROJECT", "NW", 0.5, "1")], hw=85, hh=45),
+        Rel(
+            "事件归属",
+            1060,
+            400,
+            [("OUTBOX_EVENT", "E", 0.5, "N"), ("PROJECT", "NW", 0.5, "1")],
+            hw=85,
+            hh=45,
+        ),
         Rel("调度", 150, 1475, [("PROJECT", "W", 0.3, "1"), ("TASK", "W", 0.5, "N")], hw=78, hh=45),
         # who did it
         Rel("上传", 1900, 1450, [("USER", "E", 0.5, "1"), ("PAPER", "W", 0.5, "N")], hw=78, hh=45),
         Rel("发起", 1500, 1950, [("USER", "S", 0.5, "1"), ("TASK", "N", 0.5, "N")], hw=78, hh=45),
-        Rel("保存", 2250, 1000, [("USER", "NE", 0.5, "1"), ("REPORT_VERSION", "S", 0.3, "N")], hw=78, hh=45, hop=True),
+        Rel(
+            "保存",
+            2250,
+            1000,
+            [("USER", "NE", 0.5, "1"), ("REPORT_VERSION", "S", 0.3, "N")],
+            hw=78,
+            hh=45,
+            hop=True,
+        ),
         # literature
         Rel("导入", 1900, 1000, [("PROJECT", "SE", 0.5, "1"), ("PAPER", "NW", 0.5, "N")], hw=78, hh=45),
-        Rel("撰写", 2560, 1210, [("PAPER", "NE", 0.5, "N"), ("AUTHOR", "SW", 0.5, "M")], hw=78, hh=45,
-            attrs=[Attr("作者顺序", "author_order", 2470, 1080, 78, 38, False, (2560, 1210))]),
+        Rel(
+            "撰写",
+            2560,
+            1210,
+            [("PAPER", "NE", 0.5, "N"), ("AUTHOR", "SW", 0.5, "M")],
+            hw=78,
+            hh=45,
+            attrs=[Attr("作者顺序", "author_order", 2470, 1080, 78, 38, False, (2560, 1210))],
+        ),
         Rel("归类", 2600, 1700, [("PAPER", "SE", 0.5, "N"), ("TOPIC", "N", 0.5, "M")], hw=78, hh=45),
         Rel("切分", 2600, 1450, [("PAPER", "E", 0.5, "1"), ("CHUNK", "W", 0.5, "N")], hw=78, hh=45),
-        Rel("向量化", 3200, 1450, [("CHUNK", "E", 0.5, "N"), ("EMBEDDING_MODEL", "W", 0.5, "M")], hw=85, hh=45,
+        Rel(
+            "向量化",
+            3200,
+            1450,
+            [("CHUNK", "E", 0.5, "N"), ("EMBEDDING_MODEL", "W", 0.5, "M")],
+            hw=85,
+            hh=45,
             attrs=[
                 Attr("向量值", "embedding", 3200, 1260, 75, 38, False, (3200, 1450)),
                 Attr("创建时间", "created_at", 3230, 1660, 75, 38, False, (3200, 1450)),
-            ]),
+            ],
+        ),
         # reports
         Rel("管理报告", 1800, 500, [("PROJECT", "E", 0.5, "1"), ("REPORT", "W", 0.5, "N")], hw=85, hh=45),
-        Rel("保存版本", 2400, 500, [("REPORT", "E", 0.5, "1"), ("REPORT_VERSION", "W", 0.5, "N")], hw=85, hh=45),
-        Rel("基于", 2960, 730, [("REPORT_VERSION", "S", 0.65, "1"), ("REPORT_VERSION", "E", 0.9, "1")], hw=70, hh=42),
-        Rel("保留快照", 3030, 500, [("REPORT_VERSION", "E", 0.5, "1"), ("VERSION_SOURCE", "W", 0.5, "N")], hw=85, hh=45),
-        Rel("快照定位", 3150, 950, [("VERSION_SOURCE", "S", 0.5, "N"), ("CHUNK", "NE", 0.5, "1")], hw=85, hh=45),
+        Rel(
+            "保存版本",
+            2400,
+            500,
+            [("REPORT", "E", 0.5, "1"), ("REPORT_VERSION", "W", 0.5, "N")],
+            hw=85,
+            hh=45,
+        ),
+        Rel(
+            "基于",
+            2960,
+            730,
+            [("REPORT_VERSION", "S", 0.65, "1"), ("REPORT_VERSION", "E", 0.9, "1")],
+            hw=70,
+            hh=42,
+        ),
+        Rel(
+            "保留快照",
+            3030,
+            500,
+            [("REPORT_VERSION", "E", 0.5, "1"), ("VERSION_SOURCE", "W", 0.5, "N")],
+            hw=85,
+            hh=45,
+        ),
+        Rel(
+            "快照定位",
+            3150,
+            950,
+            [("VERSION_SOURCE", "S", 0.5, "N"), ("CHUNK", "NE", 0.5, "1")],
+            hw=85,
+            hh=45,
+        ),
         # research tasks
         Rel("选定范围", 1900, 1950, [("TASK", "NE", 0.5, "N"), ("PAPER", "SW", 0.5, "M")], hw=85, hh=45),
         Rel("领取", 1700, 2680, [("TASK", "SE", 0.5, "1"), ("TASK_ATTEMPT", "NW", 0.5, "N")], hw=70, hh=42),
         Rel("产生", 1900, 2450, [("TASK", "E", 0.5, "1"), ("TASK_RESULT", "W", 0.5, "1")], hw=78, hh=45),
-        Rel("采纳", 2120, 2680, [("TASK_ATTEMPT", "NE", 0.5, "1"), ("TASK_RESULT", "SW", 0.5, "1")], hw=70, hh=42),
-        Rel("提取", 2480, 2680, [("TASK_RESULT", "SE", 0.5, "1"), ("EVIDENCE_FIELD", "NW", 0.5, "N")], hw=70, hh=42),
-        Rel("引用", 2650, 2450, [("TASK_RESULT", "E", 0.5, "1"), ("RESULT_SOURCE", "W", 0.5, "N")], hw=70, hh=42),
-        Rel("支撑", 2800, 2680, [("EVIDENCE_FIELD", "NE", 0.5, "1"), ("RESULT_SOURCE", "SW", 0.5, "N")], hw=70, hh=42),
+        Rel(
+            "采纳",
+            2120,
+            2680,
+            [("TASK_ATTEMPT", "NE", 0.5, "1"), ("TASK_RESULT", "SW", 0.5, "1")],
+            hw=70,
+            hh=42,
+        ),
+        Rel(
+            "提取",
+            2480,
+            2680,
+            [("TASK_RESULT", "SE", 0.5, "1"), ("EVIDENCE_FIELD", "NW", 0.5, "N")],
+            hw=70,
+            hh=42,
+        ),
+        Rel(
+            "引用",
+            2650,
+            2450,
+            [("TASK_RESULT", "E", 0.5, "1"), ("RESULT_SOURCE", "W", 0.5, "N")],
+            hw=70,
+            hh=42,
+        ),
+        Rel(
+            "支撑",
+            2800,
+            2680,
+            [("EVIDENCE_FIELD", "NE", 0.5, "1"), ("RESULT_SOURCE", "SW", 0.5, "N")],
+            hw=70,
+            hh=42,
+        ),
         Rel("定位", 2900, 1975, [("RESULT_SOURCE", "N", 0.5, "N"), ("CHUNK", "S", 0.5, "1")], hw=78, hh=45),
     ]
     return Diagram(
@@ -1237,7 +1442,26 @@ def total() -> Diagram:
         "PaperPilot 概念总 E-R 图",
         3750,
         3400,
-        [project, outbox, user, idem, audit, paper, author, topic, chunk, model, task, attempt, result, evidence, source, report, version, version_source],
+        [
+            project,
+            outbox,
+            user,
+            idem,
+            audit,
+            paper,
+            author,
+            topic,
+            chunk,
+            model,
+            task,
+            attempt,
+            result,
+            evidence,
+            source,
+            report,
+            version,
+            version_source,
+        ],
         rels,
         note=[
             "概念整合：项目成员、论文作者、论文主题、任务论文范围、片段向量等关联表折叠为菱形联系；外键一律画成联系：上传(imported_by)、发起(tasks.actor_id)、保存(report_versions.created_by)、采纳(committed_attempt)、基于(base_version_id)。",

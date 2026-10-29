@@ -20,7 +20,9 @@ def test_invalid_password_lengths(password):
 
 def test_secret_file_is_explicit_and_cannot_conflict(tmp_path):
     path = tmp_path / "secret"
-    path.write_text("fixture-secret\n", encoding="utf-8")
+    from test_authentication_boundary_postgres import protect_test_secret
+
+    protect_test_secret(path, "fixture-secret\n")
     assert read_secret("PW", {"PW_FILE": str(path)}) == "fixture-secret"
     with pytest.raises(ValueError):
         read_secret("PW", {"PW": "other", "PW_FILE": str(path)})
