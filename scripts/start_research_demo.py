@@ -41,7 +41,12 @@ def main():
     parser.add_argument("--chat-model", default="deepseek-chat")
     parser.add_argument("--api-port", type=int, default=18801)
     parser.add_argument("--web-port", type=int, default=15174)
+    parser.add_argument(
+        "--api-workers", type=int, default=1, help="Temporary import workers; use one for UI demos"
+    )
     args = parser.parse_args()
+    if not 1 <= args.api_workers <= 8:
+        parser.error("Use between one and eight API workers")
     state = args.state_dir.resolve(strict=True)
     database = json.loads((state / "database.json").read_text())
     model = json.loads(args.model_manifest.read_text())
@@ -103,6 +108,8 @@ def main():
                 "127.0.0.1",
                 "--port",
                 str(args.api_port),
+                "--workers",
+                str(args.api_workers),
                 "--no-access-log",
             ],
             ROOT,
@@ -147,6 +154,7 @@ def main():
             "outbox_pid": children[1].pid,
             "frontend_pid": children[2].pid,
             "stop_file": str(stop),
+            "api_workers": args.api_workers,
         }
         (state / "preview.json").write_text(json.dumps(preview, indent=2) + "\n")
         print(json.dumps(preview), flush=True)

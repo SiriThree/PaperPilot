@@ -1,0 +1,254 @@
+{
+  "version": "rag300-workload-v1",
+  "corpus_version": "rag300-v1",
+  "purpose": "Fixed retrieval inputs for later latency, throughput and error-rate comparisons",
+  "relevance_labels": null,
+  "notes": [
+    "These are manually authored research questions, not measured results or relevance judgments.",
+    "Use each input unchanged across implementations and corpus subsets.",
+    "Record failures separately from successful latency and throughput; AI_CORPUS_LIMIT is not a search success.",
+    "BGE-small-zh-v1.5 is the current local model; this English-paper corpus does not establish its cross-language retrieval quality."
+  ],
+  "queries": [
+    {
+      "id": "q01",
+      "mode": "keyword",
+      "query": "retrieval augmented generation",
+      "limit": 10
+    },
+    {
+      "id": "q02",
+      "mode": "keyword",
+      "query": "dense passage retrieval",
+      "limit": 10
+    },
+    {
+      "id": "q03",
+      "mode": "keyword",
+      "query": "hallucination factual consistency",
+      "limit": 10
+    },
+    {
+      "id": "q04",
+      "mode": "keyword",
+      "query": "multi hop question answering",
+      "limit": 10
+    },
+    {
+      "id": "q05",
+      "mode": "keyword",
+      "query": "knowledge graph retrieval",
+      "limit": 10
+    },
+    {
+      "id": "q06",
+      "mode": "keyword",
+      "query": "query rewriting expansion",
+      "limit": 10
+    },
+    {
+      "id": "q07",
+      "mode": "keyword",
+      "query": "reranking cross encoder",
+      "limit": 10
+    },
+    {
+      "id": "q08",
+      "mode": "keyword",
+      "query": "long context evidence",
+      "limit": 10
+    },
+    {
+      "id": "q09",
+      "mode": "keyword",
+      "query": "retrieval evaluation benchmark",
+      "limit": 10
+    },
+    {
+      "id": "q10",
+      "mode": "keyword",
+      "query": "chunk size overlap",
+      "limit": 10
+    },
+    {
+      "id": "q11",
+      "mode": "semantic",
+      "query": "How can a language model decide whether it needs to retrieve external knowledge?",
+      "limit": 10
+    },
+    {
+      "id": "q12",
+      "mode": "semantic",
+      "query": "Which methods reduce unsupported claims in retrieval augmented answers?",
+      "limit": 10
+    },
+    {
+      "id": "q13",
+      "mode": "semantic",
+      "query": "How do systems combine information from several documents for multi-hop reasoning?",
+      "limit": 10
+    },
+    {
+      "id": "q14",
+      "mode": "semantic",
+      "query": "What happens when retrieved passages contain irrelevant or contradictory information?",
+      "limit": 10
+    },
+    {
+      "id": "q15",
+      "mode": "semantic",
+      "query": "How is retriever training coordinated with the answer generator?",
+      "limit": 10
+    },
+    {
+      "id": "q16",
+      "mode": "semantic",
+      "query": "如何判断检索到的证据足不足以回答用户问题？",
+      "limit": 10
+    },
+    {
+      "id": "q17",
+      "mode": "semantic",
+      "query": "有哪些方法可以在检索增强生成中减少幻觉？",
+      "limit": 10
+    },
+    {
+      "id": "q18",
+      "mode": "semantic",
+      "query": "当知识库包含互相矛盾的内容时，系统如何处理？",
+      "limit": 10
+    },
+    {
+      "id": "q19",
+      "mode": "semantic",
+      "query": "多轮检索如何帮助回答需要跨文档推理的问题？",
+      "limit": 10
+    },
+    {
+      "id": "q20",
+      "mode": "semantic",
+      "query": "怎样评估回答是否忠实于检索文档？",
+      "limit": 10
+    },
+    {
+      "id": "q21",
+      "mode": "hybrid",
+      "query": "retrieval augmented generation citation attribution evidence",
+      "limit": 10
+    },
+    {
+      "id": "q22",
+      "mode": "hybrid",
+      "query": "adaptive retrieval when to retrieve",
+      "limit": 10
+    },
+    {
+      "id": "q23",
+      "mode": "hybrid",
+      "query": "RAG fine tuning domain adaptation",
+      "limit": 10
+    },
+    {
+      "id": "q24",
+      "mode": "hybrid",
+      "query": "retrieval augmented generation biomedical question answering",
+      "limit": 10
+    },
+    {
+      "id": "q25",
+      "mode": "hybrid",
+      "query": "RAG scientific literature evidence synthesis",
+      "limit": 10
+    },
+    {
+      "id": "q26",
+      "mode": "hybrid",
+      "query": "retrieval augmented generation privacy security attacks",
+      "limit": 10
+    },
+    {
+      "id": "q27",
+      "mode": "hybrid",
+      "query": "RAG retrieval latency efficiency cost",
+      "limit": 10
+    },
+    {
+      "id": "q28",
+      "mode": "hybrid",
+      "query": "retrieval augmented generation multilingual cross lingual",
+      "limit": 10
+    },
+    {
+      "id": "q29",
+      "mode": "hybrid",
+      "query": "RAG passage compression context selection",
+      "limit": 10
+    },
+    {
+      "id": "q30",
+      "mode": "hybrid",
+      "query": "retrieval augmented generation vs long context language models",
+      "limit": 10
+    },
+    {
+      "id": "q31",
+      "mode": "hybrid",
+      "query": "检索增强生成中的查询改写和查询扩展有什么作用？",
+      "limit": 10
+    },
+    {
+      "id": "q32",
+      "mode": "hybrid",
+      "query": "知识图谱如何帮助检索增强生成进行多跳推理？",
+      "limit": 10
+    },
+    {
+      "id": "q33",
+      "mode": "hybrid",
+      "query": "RAG 系统怎样处理检索噪声和无关文档？",
+      "limit": 10
+    },
+    {
+      "id": "q34",
+      "mode": "hybrid",
+      "query": "如何比较端到端回答质量和检索器本身的效果？",
+      "limit": 10
+    },
+    {
+      "id": "q35",
+      "mode": "hybrid",
+      "query": "RAG 的外部知识更新如何影响答案准确性？",
+      "limit": 10
+    },
+    {
+      "id": "q36",
+      "mode": "hybrid",
+      "query": "文档切块大小对检索召回率有什么影响？",
+      "limit": 10
+    },
+    {
+      "id": "q37",
+      "mode": "hybrid",
+      "query": "RAG 如何避免错误引用和无法追溯的答案？",
+      "limit": 10
+    },
+    {
+      "id": "q38",
+      "mode": "hybrid",
+      "query": "检索器与重排序模型如何配合选择上下文？",
+      "limit": 10
+    },
+    {
+      "id": "q39",
+      "mode": "hybrid",
+      "query": "RAG 中有哪些利用反馈进行自我修正的方法？",
+      "limit": 10
+    },
+    {
+      "id": "q40",
+      "mode": "hybrid",
+      "query": "检索增强生成有哪些常见的评测数据集和指标？",
+      "limit": 10
+    }
+  ]
+}
