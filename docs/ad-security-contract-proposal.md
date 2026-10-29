@@ -1,6 +1,6 @@
 # A/D 统计与受限执行接入约定（D 侧实现）
 
-日期：2026-10-28。用户要求依据 A 的实现完成第二步后，D 侧已落地以下双视图、PostgreSQL/psycopg 参数和独立项目登录绑定，并在一次性 PostgreSQL 16 中与 A 的真实实现对照验证。文件名保留以兼容已有链接。本记录不冒充 A 的人工签字，不自动修改业务库或正式角色，也不启用应用 SQL 执行。
+日期：2026-10-28。D 侧已落地双视图、PostgreSQL/psycopg 参数和独立项目登录绑定，并完成关键审计、受限执行器和隔离验证。文件名保留以兼容已有链接。本记录不冒充 A 的人工签字，不自动修改业务库或正式角色；默认保持执行关闭，可信组合可显式注入项目读取配置启用。
 
 ## 依据与边界
 
@@ -43,12 +43,16 @@ A 的业务 outbox 为独立异步投递，B 的 requested/finished 为业务日
 
 2026-10-28 已在 SecurityAdapter 落地上述门槛，事件为 security.query.prepared 与 security.query.finished；拒绝、默认关闭、故障和取消也有对应完成状态。审计确认失败返回脱敏 AUDIT_UNAVAILABLE，不执行或不返回结果，不自动重跑 SQL。A 的真实 append_audit 提交、回滚和 event_id 幂等已有独立 PostgreSQL 验证；正式最小权限审计写身份仍待部署。内部可控执行依赖仅用于验证，默认工厂没有 SQL 执行器。事件语义、复现和限制见 [任务 6 说明](member-d-audit.md)。
 
-## 4．后续结果与资源限制建议（尚未实现）
+## 4．结果与资源限制（已实现并在隔离库验证）
 
-- 已约定目标：数据库端 SQL 超时不超过 3 秒、最多 100 行。应用端同时处理超时/取消并清理数据库操作，不能仅超时返回而留下后台查询。
-- 建议响应序列化大小上限为 256 KiB，作为待确认的执行器配置；超过上限返回安全失败，不返回部分结果，不擅改公开 Schema。
+- 已实现数据库端 statement_timeout=3 秒、SQL LIMIT 100 与应用 3 秒等待预算；超时/取消发送数据库取消请求并等待工作线程关闭连接，不遗留供后续请求复用的会话。清理和审计耗时不等于 3 秒内响应保证。
+- 已实施完整响应序列化 UTF-8 大小硬上限 256 KiB，包含元数据；超过上限安全失败，不返回部分结果，不擅改公开 Schema。
 - columns/rows 只含批准字段与公开 Schema 的基础类型；UUID 等驱动对象在 D 边界转换，内部 SQL、异常正文与连接对象不得返回。
 - 只有执行完成且关键审计已确认才返回 allowed/executed；拒绝为 rejected/not_executed，真实执行故障为 undetermined/failed，网关不可用为脱敏 AppError。未接入时继续 not_executed，不降级 Mock。
+
+可信组合使用 build_security(data, readers=...) 启用 PostgresQueryExecutor，未配置时保持校验模式。身份/权限运行时检查、只读事务、驱动类型及错误代码见[执行器说明](member-d-executor.md)；共享 Provider、44+21 攻防与 A+D/A+C+D HTTP 组合见[验证记录](member-d-security-validation.md)。正式业务库安装、角色与审计写身份仍未部署。
+
+后续已补充可部署的身份/角色管理实现：独立审计绑定通过 A append_audit 追加并在提交前检查 ACL，管理工具负责登记身份开通/轮换/撤销；严格可信配置由 app.security.bootstrap 组合 A+D/A+C+D。见[身份说明](member-d-identities.md)和[启动说明](member-d-startup.md)。这些实现已在独立库验证，但仍未操作正式库。
 
 ## 5．隔离验证与复现
 
@@ -74,4 +78,4 @@ $env:PAPERPILOT_SECURITY_TEST_A_SOURCE=(Resolve-Path '.runtime/member-a-step2-re
 
 第二步的 D 侧统计/驱动/隔离约定已有代码与真实 PostgreSQL 对照证据，不再因没有 A 的人工评论而阻塞独立实现。正式部署时仍需 A/D 共同核对角色生命周期、视图所有者、审计写入身份和业务库安装窗口；未改 A 的原始迁移，未替团队批准生产部署。
 
-关键审计门槛已按顺序完成，见 [任务 6 说明](member-d-audit.md)。后续进入受限执行器和结果映射（配套 SecurityHarness）→ 真实受限身份 40+20 攻防 → A+D 再 A+C+D 联调。默认网关仍返回 allowed/not_executed；隔离测试中的执行依赖不代表应用受限执行器或资源限制验收完成。
+关键审计、受限执行器/结果映射、真实 SecurityHarness、44+21 攻防以及 A+D 再 A+C+D 本地 HTTP 组合已按顺序完成。默认不配置读取身份仍为 allowed/not_executed；显式可信配置后可以执行。实际验证边界和剩余联合部署事项见[验证记录](member-d-security-validation.md)，不将本地通过当成生产验收。

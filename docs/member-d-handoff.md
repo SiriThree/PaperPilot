@@ -1,12 +1,14 @@
 # 成员 D 开工交接
 
-2026-10-28 已根据团队 PR 更新[当前进度与下一阶段顺序](member-d-progress.md)：A 已提交正式 PostgreSQL DataPort 与 outbox，B 的 PR #3/#5 已合入 D，C 已提交真实 AI 与可组合入口。D 已依据 A 实现并验证双视图、独立项目登录及[关键审计门槛](member-d-audit.md)，下一步完成受限执行器/结果映射和 SecurityHarness；联合安全能力尚未验收。
+2026-10-28：A/B/C 与远程 D 的已合并基线已同步到本地，后续 D 执行器、独立身份、持久化索引、恢复及真实报告的开发与隔离验证已完成；见[当前进度](member-d-progress.md)和[合并集成记录](member-d-merged-integration.md)。模型端点为本地可控替身，正式业务库部署与生产认证仍未验收。
 
-任务 1 已提供非 Mock `SecurityAdapter`、`build_security` 和 `app.security.main:create_app` 开发入口，详见 [任务 1 接入说明](member-d-task1.md)。尚无真实 SQL 执行能力；下文真实执行、审计与数据库验收要求仍有效。
+独立审计及 reader 生命周期、严格启动配置继续有效；新增[业务连接降权](business-login.md)、[版本化持久索引与明确重建](persistent-index.md)、[任务/outbox 有界恢复](runtime-recovery.md)。真实 A/C/D 浏览器流程及报告失败边界已通过 6 项，既有 Mock 阅读/证据流程 11 项通过。所有角色操作均在一次性数据库完成；未推送或修改远程 PR。最终后端计数及报告来源以当前进度和静态报告为准，下文接口示例仍保留 Mock 标识。
+
+任务 1 已提供非 Mock `SecurityAdapter`、`build_security` 和 `app.security.main:create_app` 开发入口，见[任务 1 历史接入说明](member-d-task1.md)。该阶段未启用 SQL；当前真实执行能力与可信配置见[执行器说明](member-d-executor.md)。
 
 任务 2 已补齐应用层项目授权：按可信 Context 重新查询当前角色、核对 B 的角色快照、未知动作默认拒绝、撤权与查询故障拒绝授权。权限矩阵、验证及数据库边界见 [授权策略说明](member-d-authorization.md)。
 
-任务 3 已接通三条自然语言统计的候选生成、完整 AST 允许清单与项目参数绑定；2026-10-28 已依据 A 的实现落地双视图和 PostgreSQL/psycopg3 适配，并在独立真实库对照验证，见[现行接入约定](ad-security-contract-proposal.md)和[网关校验说明](member-d-gateway.md)。任务 6 审计门槛已接入；受限执行器尚未实现，默认策略通过仍返回 allowed/not_executed，不能计为应用真实执行完成。
+三条正式统计、完整 AST 允许清单、项目参数绑定、双视图、关键审计与[受限执行器](member-d-executor.md)已实现。默认 build_security(data) 保持 allowed/not_executed；可信入口传入 readers 后真实执行，带只读事务、3 秒预算、100 行、256 KiB 及取消清理。真实 SecurityHarness、44+21 攻防和 A+D/A+C+D 本地 HTTP 验证已完成。
 
 ## 1. 职责范围
 
@@ -16,7 +18,7 @@
 
 - `backend/app/adapters/ports.py:SecurityPort`、`schemas.py:SecureQueryResult/AuditEvent`。
 - 参考：`adapters/mock_security.py`；身份和基础项目授权：`auth.py:project_context`；调用：`services.py:secure_query`、`routes/security.py`。
-- `backend/app/security/adapter.py` 已提供端口、授权、网关校验与关键审计门槛，`sql_policy.py` 提供封闭 AST 允许清单；受限执行器仍需后续交付。共享测试：`backend/tests/security_contracts/`。
+- `backend/app/security/adapter.py` 提供授权、网关和关键审计，`sql_policy.py` 提供封闭 AST，`executor.py` 提供独立受限连接与资源控制；真实共享 provider 为 `security_contracts.postgres_provider:build_harness`。
 - 正常/拒绝/故障及审计的可执行合成样例：`contracts/module-port-examples.json`；HTTP 示例沿用 `contracts/examples/` 和 `scenarios/`。
 
 ## 3. 完整接口（2 个方法）
@@ -77,7 +79,7 @@ event_id 唯一、timestamp 带时区、duration_ms非负。业务请求共用�
 
 ## 6. 注册、启动及测试
 
-交付 `build_security(data:DataPort) -> SecurityPort`，在可信组合入口注入 D 的配置、受限执行器和审计；不在 B 中持有通用 SQL 执行接口。
+交付 `build_security(data:DataPort, *, readers=None) -> SecurityPort`，readers 是可信项目 UUID 到 ReaderConfig 的映射；用 partial(build_security, readers=...) 注册工厂。代码示例及角色部署要求见[执行器说明](member-d-executor.md)，不在 B 中持有通用 SQL 执行接口。
 
 ```python
 from app.config import Settings
@@ -85,7 +87,7 @@ from app.main import create_app as create_business_app
 from app.security import build_security
 
 def create_app():
-    # 当前 build_security 提供 AST 校验，受限执行器未接入时始终 not_executed。
+    # 此示例未配置 readers，保持 not_executed；启用方式见执行器说明。
     # 启动前设置 PAPERPILOT_D_MODE=real，保留统一环境配置。
     return create_business_app(Settings.from_env(), security_factory=build_security)
 ```
@@ -98,14 +100,14 @@ factory 参数已接通；D=real 未注册、构造失败或返回不完整端�
 # 另一终端运行下列测试，无需依赖上述服务
 .\.venv\Scripts\python.exe -m pytest backend/tests/security_contracts -q
 .\.venv\Scripts\python.exe scripts/export_module_examples.py --check
-# D 提供隔离库/执行器 provider 后替换模块名
-.\.venv\Scripts\python.exe -m pytest backend/tests/security_contracts --security-contract-provider your_package:build_harness -q
+# 先按执行器说明准备 Docker、可选依赖和 A 固定参考路径
+.\.runtime\venv312\Scripts\python.exe -m pytest backend/tests/security_contracts --security-contract-provider security_contracts.postgres_provider:build_harness -q
 .\.venv\Scripts\python.exe -m pytest backend/tests/test_api.py -q
 ```
 
 provider 为 `build_harness(*,tmp_path)` context manager，返回 `security_contracts.harness.SecurityHarness`。配置 security、failing_security、unavailable_security、DataPort、合法 owner/member Context、正常/拒绝/故障问题和 is_mock=False。普通/失败/不可达可以是不同配置实例，故障必须来自被测模块的可控依赖，不能用测试外壳伪造安全成功。
 
-8 项共享测试只验证角色拒绝、结构化成功/拒绝/失败/不可达及请求关联。真实 SQL AST、40攻击+20正常用例、项目隔离、绕过执行器、受限角色/适用行级安全、审计故障拒绝和限时限量仍需 D/A 在专用测试库实际验证，不能把 Mock 用例算作攻防通过。统一启动/前端代理见 [开发指南](development-guide.md)。
+8 项共享契约已用真实 provider 通过；独立专用库还完成了 44 攻击 + 21 正常、直接绕过、权限变化、项目隔离、审计故障及资源清理测试，见[验证记录](member-d-security-validation.md)。没有把默认 Mock 契约算作真实攻防。统一启动/前端代理见[开发指南](development-guide.md)。
 
 ## 7. 需要交付
 
@@ -123,4 +125,4 @@ SecurityPort 实现和构造入口、策略及标识、SQL 允许/拒绝规则�
 
 已知基线：A 的 PR #1 已实现 PostgreSQL 16/psycopg3、正式 DataPort、一次性数据库 provider 与 outbox 投递器；B 的 PR #3 已合并；C 的 PR #4 已提供五方法真实 AI 和接受 security_factory 的组合入口。D 已固定 SQLGlot 校验实现。
 
-双视图、PostgreSQL 参数、多主题/空值语义与执行级审计门槛已有 D 侧实现和隔离验证；正式受限身份/视图所有者、适用的 RLS、审计写身份、限时限量与连接状态复位、outbox 保留/死信及资源关闭仍待联合落实。当前 AIPort 仍无 SQL 生成方法，C/D NL2SQL 私有协作是可选项。D 下一步实现受限执行器/结果映射及 SecurityHarness，按[最新进度](member-d-progress.md)推进。
+D 的执行器、结果映射、SecurityHarness、攻防与固定 A/C 本地组合已完成。剩余为正式库安装、视图所有者、项目/审计身份与凭据生命周期、outbox 保留/死信及生产认证；实际合并版本还需最终团队验收。AIPort 没有 SQL 生成方法，C/D NL2SQL 仍为可选项，不能把本地可控模型端当外部模型服务验收。

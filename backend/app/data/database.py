@@ -18,7 +18,7 @@ from psycopg.rows import dict_row
 from app.errors import AppError
 
 MIGRATIONS = Path(__file__).parent / "migrations"
-EXPECTED_VERSION = 1
+EXPECTED_VERSION = 3
 
 
 @dataclass(frozen=True)
@@ -121,6 +121,7 @@ class PostgresDatabase:
                     connection.close()
                 except psycopg.Error:
                     pass
+
     @contextmanager
     def transaction(self, write=False):
         connection = self._acquire()

@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test'
 import path from 'node:path'
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-const python = path.resolve('..', '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python')
+const python = process.env.PAPERPILOT_E2E_PYTHON || path.resolve('..', '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python')
 const apiPort = Number(process.env.PAPERPILOT_E2E_API_PORT || 8000)
 const webPort = Number(process.env.PAPERPILOT_E2E_WEB_PORT || 5173)
 const dataMode = process.env.PAPERPILOT_E2E_DATA_MODE || 'mock'

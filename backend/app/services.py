@@ -112,11 +112,20 @@ class ResearchService:
             ):
                 raise AppError(502, "INVALID_CITATION", "引用不属于本次检索结果")
 
-    async def search(self, ctx, query):
+    async def search(self, ctx, query, *, paper_ids=None):
         try:
-            result = SearchResult.model_validate(await self.adapters.ai.search(ctx, query))
+            if paper_ids is None:
+                raw = await self.adapters.ai.search(ctx, query)
+            else:
+                scoped = getattr(self.adapters.ai, "search_scoped", None)
+                if not callable(scoped):
+                    raise AppError(503, "AI_SCOPE_UNAVAILABLE", "检索模块尚不支持指定论文范围")
+                raw = await scoped(ctx, query, paper_ids)
+            result = SearchResult.model_validate(raw)
             if result.mode != query.mode or len(result.items) > query.limit:
                 raise ValueError("invalid search metadata")
+            if paper_ids is not None and any(h.paper.paper_id not in paper_ids for h in result.items):
+                raise ValueError("invalid search scope")
             self.validate_sources(ctx, [hit.source for hit in result.items])
             papers = {}
             for hit in result.items:
@@ -155,15 +164,19 @@ class ResearchService:
         ctx, task = job.context, job.task
         committed = False
         completing = False
+        index = None
         try:
             if self.adapters.data.role(ctx.user_id, ctx.project_id) is None:
                 raise AppError(404, "RESOURCE_NOT_FOUND", "资源不存在或不可访问")
             for pid in job.payload.get("paper_ids", []):
                 self.adapters.data.paper(ctx, pid)
             if task.kind == "process":
-                result = ProcessResult.model_validate(
-                    await self.adapters.ai.process(ctx, task.task_id, job.payload["file"])
-                )
+                indexed = getattr(self.adapters.ai, "process_indexed", None)
+                if callable(indexed) and callable(getattr(self.adapters.data, "complete_indexed_job", None)):
+                    raw, index = await indexed(ctx, task.task_id, job.payload["file"])
+                else:
+                    raw = await self.adapters.ai.process(ctx, task.task_id, job.payload["file"])
+                result = ProcessResult.model_validate(raw)
                 if (
                     result.paper_id != job.payload["file"].paper_id
                     or any(s.paper_id != result.paper_id for s in result.sources)
@@ -174,7 +187,9 @@ class ResearchService:
             else:
                 question = job.payload.get("question", QuestionRequest(question="证据提取"))
                 search = await self.search(
-                    ctx, SearchRequest(query=question.question, mode="hybrid", limit=50)
+                    ctx,
+                    SearchRequest(query=question.question, mode="hybrid", limit=50),
+                    paper_ids=job.payload["paper_ids"],
                 )
                 sources = [h.source for h in search.items if h.paper.paper_id in job.payload["paper_ids"]]
                 sources = [s.model_copy(update={"citation_id": str(i + 1)}) for i, s in enumerate(sources)]
@@ -203,7 +218,10 @@ class ResearchService:
                         if field.status == "pending_verification" and (not field.text or not field.sources):
                             raise ValueError("evidence requires support")
             completing = True
-            self.adapters.data.complete_job(job, result)
+            if index is None:
+                self.adapters.data.complete_job(job, result)
+            else:
+                self.adapters.data.complete_indexed_job(job, result, index)
             committed = True
             self.audit(ctx, f"{task.kind}.completed", task.kind)
         except AppError as exc:
@@ -250,9 +268,36 @@ class ResearchService:
                 continue
             if job:
                 await asyncio.sleep(0.08)
-                await self.run_job(job)
+                await self._run_leased(job)
             else:
                 await asyncio.sleep(0.04)
+
+    async def _run_leased(self, job):
+        renew = getattr(self.adapters.data, "renew_job", None)
+        if not callable(renew):
+            await self.run_job(job)
+            return
+
+        async def heartbeat():
+            while True:
+                await asyncio.sleep(self.adapters.data.settings.lease_seconds / 3)
+                await asyncio.to_thread(renew, job)
+
+        work = asyncio.create_task(self.run_job(job))
+        pulse = asyncio.create_task(heartbeat())
+        try:
+            done, _ = await asyncio.wait({work, pulse}, return_when=asyncio.FIRST_COMPLETED)
+            if work in done:
+                await work
+            else:
+                try:
+                    pulse.result()
+                except Exception:
+                    logging.getLogger("paperpilot").warning("task_lease_lost task_id=%s", job.task.task_id)
+        finally:
+            work.cancel()
+            pulse.cancel()
+            await asyncio.gather(work, pulse, return_exceptions=True)
 
     async def secure_query(self, ctx, question):
         self.audit(ctx, "secure_query.requested", "secure_query", execution_status="pending")

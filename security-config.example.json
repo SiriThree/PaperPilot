@@ -1,0 +1,11 @@
+{
+  "database": {"host": "127.0.0.1", "port": 54326, "dbname": "paperpilot"},
+  "audit": {"user": "pp_audit_gateway", "password_env": "PAPERPILOT_AUDIT_PASSWORD"},
+  "readers": [
+    {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "user": "pp_reader_project_one",
+      "password_env": "PAPERPILOT_PROJECT_ONE_PASSWORD"
+    }
+  ]
+}

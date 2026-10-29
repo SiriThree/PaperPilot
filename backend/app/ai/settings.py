@@ -23,8 +23,13 @@ class AISettings:
     embedding_api_key: str | None = field(default=None, repr=False)
     local_model_dir: Path | None = None
     token_limit_parameter: str = "max_tokens"
+    embedding_revision: str | None = None
 
     def __post_init__(self):
+        if self.embedding_revision is not None and (
+            not self.embedding_revision.strip() or len(self.embedding_revision) > 200
+        ):
+            raise ValueError("Invalid embedding revision")
         for address in (self.base_url, self.embedding_base_url):
             if address is None:
                 continue
@@ -76,6 +81,7 @@ class AISettings:
                 chat_model=os.environ["PAPERPILOT_AI_CHAT_MODEL"],
                 embedding_model=os.environ["PAPERPILOT_AI_EMBEDDING_MODEL"],
                 embedding_dimensions=int(os.environ["PAPERPILOT_AI_EMBEDDING_DIMENSIONS"]),
+                embedding_revision=os.getenv("PAPERPILOT_AI_EMBEDDING_REVISION") or None,
                 timeout_seconds=float(os.getenv("PAPERPILOT_AI_TIMEOUT_SECONDS", "45")),
                 min_similarity=float(os.getenv("PAPERPILOT_AI_MIN_SIMILARITY", "0.2")),
                 embedding_backend=os.getenv("PAPERPILOT_AI_EMBEDDING_BACKEND", "remote"),
