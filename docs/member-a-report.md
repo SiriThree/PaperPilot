@@ -105,3 +105,7 @@
 - 需 B 关注的两件小事：① 演示 e2e 断言冲突（见上）；② `playwright.demo.config.ts` 的 AUTH_MODE 补丁随本轮提交，请复核。
 
 提交：合并 `3a16c65` + 本轮 `9fa9d98`（种子/概览统计/文档/测试）与 e2e 配置修复（见后续提交）。
+
+### 补充：前端数据字典页（2026-10-29，应用户要求）
+
+新增"数据字典"页面（项目内侧边栏入口）：按域分组的表名按钮 + 每表字段/类型/可空/默认值、主外键/唯一/CHECK 约束与索引；数据来自 `scripts/export_data_dictionary.py` 从开发库 pg_catalog/information_schema 导出的静态快照（`frontend/src/data/data-dictionary.json`，29 张表、schema v7、行数为导出时刻值），页面本身不发任何数据库请求。迁移变化后重跑导出脚本即可刷新，`--check` 校验快照是否过期。共享文件改动仅 4 处小接入（router、侧边栏、App 标题映射与移动端 tab），请 B 复核；typecheck、build 与壳相关 e2e（23 项）已验证通过。
