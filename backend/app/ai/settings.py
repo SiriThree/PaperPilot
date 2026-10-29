@@ -24,6 +24,7 @@ class AISettings:
     local_model_dir: Path | None = None
     token_limit_parameter: str = "max_tokens"
     response_format: str = "json_schema"
+    embedding_revision: str | None = None
 
     def __post_init__(self):
         if self.embedding_revision is not None and (

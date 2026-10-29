@@ -104,7 +104,7 @@ def test_cli_readiness_failure_closes_resources_without_polling(monkeypatch):
 
     fake = SimpleNamespace(database=Database(), run_once=lambda: calls.append("polled"))
     monkeypatch.setattr("app.data.database.ConnectionConfig.from_env", lambda: object())
-    monkeypatch.setattr(module, "build_deliverer", lambda _config: fake)
+    monkeypatch.setattr(module, "build_deliverer", lambda _config, **_tuning: fake)
     with pytest.raises(AppError, match="unavailable"):
         module.main(["--once"])
     assert calls == ["closed"]
@@ -149,7 +149,7 @@ def test_version_one_database_upgrades_and_rechecks(harness):
             database.migrate()  # Checksums and already applied versions must remain valid.
             with database.transaction() as conn:
                 versions = conn.execute("SELECT version FROM schema_migrations ORDER BY version").fetchall()
-                assert [row["version"] for row in versions] == [1, 2, 3, 4, 5, 6]
+                assert [row["version"] for row in versions] == [1, 2, 3, 4, 5, 6, 7]
         finally:
             database.close()
 

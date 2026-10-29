@@ -228,6 +228,8 @@ Phase 2A 已补充 [完整 A/B 契约 AB-1](ab-data-contract.md)：26 个方法�
 
 准备好明确指定的开发 PostgreSQL 后，设置 A 文档中的 `PAPERPILOT_DATA_HOST/PORT/USER/PASSWORD/DBNAME`，只对已确认的目标执行 `python scripts/manage_postgres.py migrate`、`python scripts/manage_postgres.py seed-demo` 和 `python scripts/manage_postgres.py check`。迁移拒绝无法识别的非空库；上线数据库和受限角色须由 A/D 决定。本入口只做 readiness，不执行这些命令。
 
+迁移 007 汇合了两个曾分别使用 002/003 版本号的历史分支。迁移器保留并校验原账本的历史校验值，再补齐缺失结构；不重写已有迁移文件或已有数据。升级前仍须备份并确认目标，无法识别的校验值会拒绝迁移。使用持久化数据层和真实 C 时，`PAPERPILOT_AI_EMBEDDING_REVISION` 必须明确标识不可变的模型及权重版本；改变模型或权重时应使用新版本并重新建立索引，不能为已有向量随意更换版本标签。
+
 在仓库根目录设置各模块模式及 `PAPERPILOT_STORAGE_DIR` 后启动：
 
 ```powershell
