@@ -71,7 +71,7 @@ PDF 使用 pypdf 独立子进程解析，不跨页分片。默认 1200 字符、
 
 检索每次从 `DataPort.papers(ctx, year_from, year_to)` 和 `sources(ctx, paper_id)` 建立当前项目的候选集，仅接受 searchable 论文，并在调用模型前完成项目、年份过滤。关键词为中英文 BM25；语义为真实嵌入余弦排序；混合为两路 RRF（常数 60）。结果编号重新分配、原始摘录/页码/合成标记不变。调用模型后再检查成员、论文和来源，删除/撤权后不能返回旧缓存结果。
 
-当前无持久化向量索引，也无跨项目索引缓存；remote 每次重新嵌入，local 每次在子进程加载已准备模型。默认最多 1000 候选片段，超出返回 `AI_CORPUS_LIMIT`，需缩小年份范围。此实现面向小项目，成本/延迟随语料增长；不声称具有大库性能。
+合并后的持久化 A+C 使用 PostgreSQL 版本化文档向量，检索只嵌入问题；无持久化扩展的隔离 DataPort 仍每次嵌入文档，local 每次在子进程加载已准备模型。默认最多 1000 候选片段，超出返回 `AI_CORPUS_LIMIT`。指定论文任务先按论文范围过滤再排序/截取，避免全项目前 50 条截断。仍面向小项目，不声称具有 ANN 大库性能。
 
 ## 来源、生成与不足
 
@@ -83,11 +83,11 @@ PDF 使用 pypdf 独立子进程解析，不跨页分片。默认 1200 字符、
 
 ## A/B 交付边界
 
-A 继续通过 `complete_job(process)` 原子提交 Source 与 searchable。C 不改迁移、不调用任务领取/完成/失败，不直接持久化正文、索引或报告。当前检索只需 canonical excerpts，故不依赖 A 分支的占位 `EMBEDDING_DIM=3` 或 `index_state=mock_only`；这些字段不构成本实现的索引就绪证明。
+A 继续拥有任务及结果提交。合并后 B 在真实 A/C 均支持时调用私有 `process_indexed` / `complete_indexed_job`，在一个 process attempt 内原子提交完整文本块、模型、向量、来源和 ready；五方法 AIPort/26 方法 DataPort/HTTP Schema 不变。C 不直接写数据库、领取或完成任务；历史 `EMBEDDING_DIM=3` 不控制实际向量。
 
-将来持久化向量时，需 A/C 私有提交面：project_id、paper_id、chunk_id、模型 ID/版本、分词及解析版本、实际维度、向量、原文 hash、索引状态，按同一 process attempt 原子提交/弃用。不得把 A 的占位三维向量与本次 BGE 512 维混用；切模型需新版本并重新嵌入。正文 content 可使用完整片段，但公开 Source.excerpt 保持当前上限。不在公共 DataPort 擅加方法。
+持久化组合必须显式配置 `PAPERPILOT_AI_EMBEDDING_REVISION`，同模型版本不能改变维度，切模型需明确重建；不能混用占位三维向量与 BGE 512 维。历史无对应版本索引的论文返回 `INDEX_NOT_READY`，关键词检索仍可用；单篇明确重建及完整约束见[持久化索引说明](persistent-index.md)。
 
-A 的 PR 合并后，可在团队组合模块中显式组合：
+合并后可在团队组合模块中显式组合（持久化配置还须设置模型 revision）：
 
 ```python
 from app.ai.bootstrap import create_app as create_c_app
@@ -105,7 +105,7 @@ def create_app():
         raise
 ```
 
-需先按 A 文档准备数据库，设 A=persistent、C=real。正常关闭由 B 的生命周期清理 DataBinding；C 的 HTTP/PDF/本地嵌入资源在每次调用完成或取消时释放。这里是经当前 A 分支签名核对的组合示例，不代表本机已运行 PostgreSQL 联调。
+需先按 A 文档准备数据库，设 A=persistent、C=real。正常关闭由 B 的生命周期清理 DataBinding；C 的 HTTP/PDF/本地嵌入资源在每次调用完成或取消时释放。合并后的 PostgreSQL/浏览器联调记录见[集成记录](member-d-merged-integration.md)，模型端点使用本地可控替身，不代表外部模型效果验收。
 
 B 当前为研究任务在整个项目检索最多 50 条后按 paper_ids 筛选；指定论文可能不在全项目 top-50 中。C 遇到空来源会正确返回不足，但无法仅凭现有 AIPort 修复 B 的选源策略；团队后续应在 B 调用 extract 前直接获取该论文来源，或商定检索的私有范围参数。当前不改公开契约或 B 服务。
 

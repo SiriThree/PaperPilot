@@ -1,6 +1,6 @@
 # 成员 D 任务 3：自然语言统计网关的 AST 校验
 
-2026-10-28 已依据 A 的正式模型完成双视图、PostgreSQL/psycopg 参数与独立项目登录适配，见[接入约定与复现](ad-security-contract-proposal.md)。其后已完成[任务 6 关键审计门槛](member-d-audit.md)；默认入口仍无 SQL 执行器，应用真实 SQL 继续关闭。下文保留任务 3 阶段说明，最新进度见[成员 D 当前进度](member-d-progress.md)。
+2026-10-28 已依据 A 的正式模型完成双视图、PostgreSQL/psycopg 参数与独立项目登录适配，见[接入约定与复现](ad-security-contract-proposal.md)。其后已完成[关键审计](member-d-audit.md)、[受限执行器](member-d-executor.md)和[攻防/组合验证](member-d-security-validation.md)。默认不配置读取身份仍关闭执行；可信组合显式配置后可真实执行。下文保留任务 3 阶段说明，最新进度见[成员 D 当前进度](member-d-progress.md)。
 
 本阶段交付自然语言路由、D 私有候选生成入口、严格 SQL AST 允许清单、可信项目参数绑定和公开结果状态。复用任务 1/2 的 SecurityPort、授权与注册；不修改 AIPort、DataPort、HTTP Schema 或前端。受限数据库执行器属于下一项任务，本阶段不执行数据库查询。
 
@@ -37,7 +37,7 @@
 
 | 场景 | decision / execution_status | reason 或安全错误 |
 |---|---|---|
-| 允许清单通过 | allowed / not_executed | QUERY_EXECUTION_DISABLED：受限执行器尚未接入 |
+| 允许清单通过、未配置执行 | allowed / not_executed | QUERY_EXECUTION_DISABLED：当前环境未启用执行 |
 | 自然语言问题不支持 | rejected / not_executed | UNSUPPORTED_QUERY |
 | SQL 候选不符合策略 | rejected / not_executed | SQL_POLICY_REJECTED |
 | 输入不符合现有 Schema | 无业务结果，HTTP 422 | VALIDATION_ERROR |

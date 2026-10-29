@@ -40,6 +40,13 @@ class OutboxDeliverer:
             or max_attempts < 1
         ):
             raise ValueError("invalid deliverer tuning parameters")
+        if (
+            type(max_attempts) is not int
+            or not 1 <= max_attempts <= 100
+            or type(lease_seconds) is not int
+            or not 1 <= lease_seconds <= 3600
+        ):
+            raise ValueError("invalid delivery retry/lease budget")
         self.database = database
         self.data = data
         self.batch_size = batch_size
@@ -190,16 +197,16 @@ class OutboxDeliverer:
         if attempts is None:
             return False
         try:
-            self.data.append_audit(self._event(row))
-        except AppError as exc:
-            self._record_failure(row["event_id"], attempts, exc.code)
+            self.data.append_audit(self._event(claimed))
+        except AppError:
+            self._record_failure(row["event_id"], token, attempts, "AUDIT_UNAVAILABLE")
             return False
         except (ValidationError, KeyError, TypeError):
             # A malformed payload can never become a valid audit event; not a transient fault.
-            self._record_failure(row["event_id"], attempts, "ADAPTER_CONTRACT_ERROR")
+            self._record_failure(row["event_id"], token, attempts, "ADAPTER_CONTRACT_ERROR")
             return False
         except Exception:
-            self._record_failure(row["event_id"], attempts, "DATA_UNAVAILABLE")
+            self._record_failure(row["event_id"], token, attempts, "DATA_UNAVAILABLE")
             return False
         return self._confirm(row["event_id"], attempts)
 
@@ -247,7 +254,7 @@ def main(argv=None):
         "--confirm-unknown-reconciled", action="store_true", help="Confirm unknown delivery was reconciled"
     )
     options = parser.parse_args(argv)
-    deliverer = build_deliverer(ConnectionConfig.from_env())
+    deliverer = build_deliverer(ConnectionConfig.from_env(), max_attempts=options.max_attempts)
     try:
         # Fail visibly before polling when the configured database is unavailable or outdated.
         deliverer.database.ready()

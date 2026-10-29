@@ -336,7 +336,11 @@ def test_operation_timeout_and_cancellation(real):
     closed = []
 
     class SlowClient:
+        entered = None
+
         async def generate(self, *args, **kwargs):
+            if self.entered is not None:
+                self.entered.set()
             try:
                 await asyncio.sleep(10)
             finally:
@@ -346,7 +350,25 @@ def test_operation_timeout_and_cancellation(real):
     real.ai.settings = configuration(timeout_seconds=0.02)
     with pytest.raises(AppError) as exc:
         run(real.ai.answer(real.ctx, QuestionRequest(question="证据"), [real.source]))
-    assert exc.value.code == "AI_TIMEOUT" and closed
+    assert exc.value.code == "AI_TIMEOUT"
+    # The overall budget may expire during authorization, before a model call exists to cancel.
+    real.ai.settings = configuration()
+    closed.clear()
+
+    async def cancel_after_model_starts():
+        real.ai.client.entered = asyncio.Event()
+        task = asyncio.create_task(real.ai.answer(real.ctx, QuestionRequest(question="证据"), [real.source]))
+        try:
+            await asyncio.wait_for(real.ai.client.entered.wait(), timeout=5)
+            task.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await task
+        finally:
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+
+    run(cancel_after_model_starts())
+    assert closed == [True]
 
 
 def test_local_inference_process_is_reaped_on_timeout(real, tmp_path, monkeypatch):
