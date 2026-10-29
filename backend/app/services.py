@@ -22,8 +22,14 @@ from app.schemas import (
 
 
 class ResearchService:
-    def __init__(self, adapters: Adapters):
+    def __init__(self, adapters: Adapters, *, job_timeout_seconds=90.0, audit_ready=None, system_audit=None):
         self.adapters = adapters
+        if job_timeout_seconds <= 0:
+            raise ValueError("Job timeout must be positive")
+        self.job_timeout_seconds = job_timeout_seconds
+        self.audit_ready = audit_ready
+        self.system_audit = system_audit
+        self.worker_claim_unavailable = False
 
     def audit(
         self,
@@ -54,9 +60,9 @@ class ResearchService:
         except Exception:
             raise AppError(503, "AUDIT_UNAVAILABLE", "审计暂不可用，请求未返回执行结果") from None
 
-    def identity_audit(self, user_id, request_id, decision):
+    def identity_audit(self, user_id, request_id, decision, *, mock=True):
         try:
-            self.adapters.data.append_audit(
+            (self.system_audit or self.adapters.data.append_audit)(
                 AuditEvent(
                     event_id=uuid4(),
                     timestamp=datetime.now(UTC),
@@ -66,15 +72,60 @@ class ResearchService:
                     action="auth.login",
                     resource_type="session",
                     decision=decision,
-                    execution_status="completed",
+                    # This is the pre-session audit gate: an allowed identity
+                    # check does not prove that session creation has committed.
+                    execution_status="pending" if decision == "allowed" else "completed",
                     duration_ms=0,
+                    mock=mock,
                 )
             )
         except Exception:
             raise AppError(503, "AUDIT_UNAVAILABLE", "审计暂不可用，未创建登录会话") from None
 
-    def validate_sources(self, ctx, sources, allowed=None):
+    def session_logout_audit(self, user_id, request_id):
+        try:
+            (self.system_audit or self.adapters.data.append_audit)(
+                AuditEvent(
+                    event_id=uuid4(),
+                    timestamp=datetime.now(UTC),
+                    request_id=request_id,
+                    actor_id=user_id,
+                    project_id=None,
+                    action="auth.logout",
+                    resource_type="session",
+                    decision="allowed",
+                    execution_status="pending",
+                    duration_ms=0,
+                    mock=False,
+                )
+            )
+        except Exception:
+            raise AppError(503, "AUDIT_UNAVAILABLE", "审计暂不可用，退出状态未确认") from None
+
+    def secure_query_access_denied(self, request_id, actor_id, *, mock):
+        """Record an early rejection without asserting an untrusted project exists."""
+        try:
+            (self.system_audit or self.adapters.data.append_audit)(
+                AuditEvent(
+                    event_id=uuid4(),
+                    timestamp=datetime.now(UTC),
+                    request_id=request_id,
+                    actor_id=actor_id,
+                    project_id=None,
+                    action="secure_query.access_denied",
+                    resource_type="secure_query",
+                    decision="rejected",
+                    execution_status="not_executed",
+                    duration_ms=0,
+                    mock=mock,
+                )
+            )
+        except Exception:
+            raise AppError(503, "AUDIT_UNAVAILABLE", "审计暂不可用，未执行查询") from None
+
+    def validate_sources(self, ctx, sources, allowed=None, *, source_data=None):
         seen = set()
+        source_data = self.adapters.data if source_data is None else source_data
         # Only this validation call: never retain data/authorization across requests.
         actual_by_paper = {}
         allowed_keys = (
@@ -92,7 +143,7 @@ class ResearchService:
             if source.paper_id not in actual_by_paper:
                 actual_by_paper[source.paper_id] = {
                     (s.chunk_id, s.page_number, s.excerpt, s.synthetic)
-                    for s in self.adapters.data.sources(ctx, source.paper_id)
+                    for s in source_data.sources(ctx, source.paper_id)
                 }
             if (source.chunk_id, source.page_number, source.excerpt, source.synthetic) not in actual_by_paper[
                 source.paper_id
@@ -186,12 +237,26 @@ class ResearchService:
                 # A must commit chunks and searchable status atomically; Mock only demonstrates this boundary.
             else:
                 question = job.payload.get("question", QuestionRequest(question="证据提取"))
-                search = await self.search(
-                    ctx,
-                    SearchRequest(query=question.question, mode="hybrid", limit=50),
-                    paper_ids=job.payload["paper_ids"],
-                )
-                sources = [h.source for h in search.items if h.paper.paper_id in job.payload["paper_ids"]]
+                if task.kind == "evidence":
+                    pid = job.payload["paper_ids"][0]
+                    candidates = sorted(
+                        self.adapters.data.sources(ctx, pid),
+                        key=lambda source: (source.page_number, source.chunk_id),
+                    )
+                    sources = []
+                    chars = 0
+                    for source in candidates:
+                        if source.paper_id != pid:
+                            raise ValueError("invalid evidence source paper")
+                        if len(sources) >= 50 or chars + len(source.excerpt) > 60000:
+                            break
+                        sources.append(source)
+                        chars += len(source.excerpt)
+                else:
+                    search = await self.search(
+                        ctx, SearchRequest(query=question.question, mode="hybrid", limit=50)
+                    )
+                    sources = [h.source for h in search.items if h.paper.paper_id in job.payload["paper_ids"]]
                 sources = [s.model_copy(update={"citation_id": str(i + 1)}) for i, s in enumerate(sources)]
                 if task.kind == "answer":
                     result = AnswerResult.model_validate(
@@ -217,6 +282,21 @@ class ResearchService:
                         self.validate_sources(ctx, field.sources, allowed=sources)
                         if field.status == "pending_verification" and (not field.text or not field.sources):
                             raise ValueError("evidence requires support")
+                    if not sources:
+                        result = result.model_copy(
+                            update={
+                                name: getattr(result, name).model_copy(
+                                    update={"text": None, "status": "insufficient_evidence", "sources": []}
+                                )
+                                for name in (
+                                    "research_question",
+                                    "method",
+                                    "results",
+                                    "conclusion",
+                                    "limitations",
+                                )
+                            }
+                        )
             completing = True
             if index is None:
                 self.adapters.data.complete_job(job, result)
@@ -263,12 +343,19 @@ class ResearchService:
             try:
                 job = self.adapters.data.claim_job()
             except Exception:
+                self.worker_claim_unavailable = True
                 logging.getLogger("paperpilot").warning("task_claim_unavailable")
                 await asyncio.sleep(1)
                 continue
+            self.worker_claim_unavailable = False
             if job:
                 await asyncio.sleep(0.08)
-                await self._run_leased(job)
+                try:
+                    async with asyncio.timeout(self.job_timeout_seconds):
+                        await self.run_job(job)
+                except TimeoutError:
+                    # Cancellation cannot prove whether a remote model received the request.
+                    self._fail_job(job, "TASK_TIMEOUT", "任务处理超时，请核对后重试")
             else:
                 await asyncio.sleep(0.04)
 
@@ -300,6 +387,14 @@ class ResearchService:
             await asyncio.gather(work, pulse, return_exceptions=True)
 
     async def secure_query(self, ctx, question):
+        # Privilege/definition drift must stop the gateway before any SQL executes.
+        # This is a separate database transaction, not a guarantee against concurrent DDL.
+        if self.audit_ready is not None:
+            try:
+                if await asyncio.to_thread(self.audit_ready, ctx) is False:
+                    raise RuntimeError("audit boundary unavailable")
+            except Exception:
+                raise AppError(503, "AUDIT_UNAVAILABLE", "审计安全配置不可用，未执行查询") from None
         self.audit(ctx, "secure_query.requested", "secure_query", execution_status="pending")
         start = perf_counter()
         try:

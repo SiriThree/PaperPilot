@@ -216,6 +216,32 @@ Phase 2A 已补充 [完整 A/B 契约 AB-1](ab-data-contract.md)：26 个方法�
 
 ## 验证与变更
 
+### Phase 5A：统一开发组合
+
+统一入口为 `app.dev_composition:create_app`，按 `PAPERPILOT_A_MODE`（`mock` / `persistent` / `real`）、`PAPERPILOT_C_MODE` 和 `PAPERPILOT_D_MODE`（`mock` / `real`）显式装配现有 DataBinding、RealAI 与 SecurityAdapter。`persistent` 和 A 的 `real` 均使用 A 当前 PostgreSQL 实现；默认均为 Mock。生产模式仍由现有配置拒绝。D 的默认策略适配器没有执行器，允许的 SQL 查询仍为 `allowed/not_executed`。入口不接受客户端指定的适配器或连接，不自动迁移、建立身份或启动 outbox 投递器。
+
+审计边界可以显式设为 `PAPERPILOT_AUDIT_PREFLIGHT=required`，并用 `PAPERPILOT_AUDIT_TRUSTED_OWNER` 指定经过独立审查的审计视图 NOLOGIN 所有者；这要求 A 使用提供 `database.transaction()` 的 PostgreSQL 绑定及专用受限业务身份。共同业务入口在启动、健康检查和每次安全查询前使用该业务身份重新核验审计边界，失败则拒绝启动或以 `AUDIT_UNAVAILABLE` 拒绝查询，不回退 Mock。健康接口的 `limitations` 会标明检查是 `required` 还是 `disabled`。默认的 `disabled` 只适用于开发或隔离测试，不能作为正式安全验收；生产模式仍被拒绝启动。
+
+此检查与后续查询使用不同事务，不能消除两者之间并发权限或 DDL 变更的时间窗口，也不能独立证明项目隔离。正式部署仍需约束谁能更改角色、视图和绑定，并通过数据库角色及项目隔离的独立验收。运维手动只读预检命令是 `python scripts/check_audit_boundary.py --trusted-owner <已审查的角色名>`；数据库连接由安全环境注入，禁止在命令或文档中写入凭据。
+
+开发环境按需安装仓库现有锁定依赖：`.\.venv\Scripts\python.exe -m pip install -r requirements.lock -r requirements-day0.lock`；C 的本地嵌入可选依赖与模型准备见 [C 配置](ai-adapter.md)。不要把凭据写入源码或日志。
+
+准备好明确指定的开发 PostgreSQL 后，设置 A 文档中的 `PAPERPILOT_DATA_HOST/PORT/USER/PASSWORD/DBNAME`，只对已确认的目标执行 `python scripts/manage_postgres.py migrate`、`python scripts/manage_postgres.py seed-demo` 和 `python scripts/manage_postgres.py check`。迁移拒绝无法识别的非空库；上线数据库和受限角色须由 A/D 决定。本入口只做 readiness，不执行这些命令。
+
+在仓库根目录设置各模块模式及 `PAPERPILOT_STORAGE_DIR` 后启动：
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn app.dev_composition:create_app --factory --app-dir backend --host 127.0.0.1 --port 8000
+```
+
+例如：A 持久化且 C/D 模拟使用 `PAPERPILOT_A_MODE=persistent`、`PAPERPILOT_C_MODE=mock`、`PAPERPILOT_D_MODE=mock`；若设 C 为 `real`，还需显式配置 [C 模型与嵌入设置](ai-adapter.md)，并让 C 和 B 共用同一受控上传目录；单次 AI 操作期限必须小于 A 的任务租约，否则启动拒绝。任务 worker 的总等待时间取 90 秒与租约的 80% 中较小值；过期租约无法提交结果，取消等待不代表远程模型未收到请求。若设 D 为 `real`，仅启用策略，不会启用真实 SQL 执行。`GET /api/v1/health` 会检查 A readiness、已知 worker 领取故障及模式；不能证明远程模型或 SQL 能力已验收。
+
+A 的领域事件需独立运行 outbox 投递器，例如在配置相同的可信环境设置 `PYTHONPATH=backend` 后运行 `.\.venv\Scripts\python.exe -m app.data.deliverer --once`；持续运行时省略 `--once`。业务服务启动不会自动启动投递器，也不监控独立进程。迁移 `002_outbox_dead_letter.sql` 必须由运维对明确指定的数据库显式执行，应用启动不会自动迁移；迁移前备份并核对目标，版本不符拒绝就绪。回退需要维护窗口和备份：旧版本不理解死信状态，不可直接回退并继续运行旧投递器。
+
+投递器领取时以数据库时间设置 30 秒租约并递增尝试次数，超时后可重新领取；旧尝试不能确认或改变新尝试的状态。投递为至少一次，审计通过稳定 event_id 去重；其他下游必须自行提供幂等。默认失败达到 5 次进入死信；`OutboxDeliverer.dead_letters()` 仅供受控运维进程读取元数据，不提供面向用户的管理接口。迁移 004 后，已授权运维人员可显式运行 `python -m app.data.deliverer --requeue-event <事件UUID>`；结果未知时必须先按事件 ID 对账，并额外传入 `--confirm-unknown-reconciled`。重投保留事件 ID 和不可变操作记录，但参数只记录操作员的对账声明，不能证明外部系统的副作用已完成。当前无自动清理或告警；独立投递器及运维数据库身份的最小权限尚未完成正式验收。
+
+Windows 隔离回归使用 `powershell -NoProfile -File scripts/test-phase5a-isolated.ps1`；脚本创建自己专用的短生命周期 PostgreSQL 容器和临时数据库，执行 A/B 集成、共享契约、独立浏览器测试，并在结束时关闭该容器。它使用随机的仅测试口令、随机宿主数据库端口和临时上传目录；不会选择现有业务数据库。可通过 `-ApiPort`、`-WebPort` 修改浏览器测试端口；测试结束后临时文件目录由操作系统管理。实际测试结果和平台限制见 [验证记录](verification.md)。
+
 ### 安全展示与关联阅读（本轮修订）
 
 研究页使用现有项目论文列表与详情 API 建立“项目文献 → 来源摘录 → 研究助手”联动。点击问答引用或证据来源，会读取对应论文及 chunk，并保留原来源抽屉；迟到响应不会覆盖后来选择的文献。引用的 chunk 已不存在时明确提示，不替换成其他段落。当前定位只有片段与页码，没有 PDF 坐标定位；公共数据不含作者字段，页面不补造作者。
@@ -243,3 +269,154 @@ Phase 2A 已补充 [完整 A/B 契约 AB-1](ab-data-contract.md)：26 个方法�
 以下仅记录当时实验：`app.persistence.SQLiteData` 曾通过工厂绑定 `persistent`，当前绑定已解除，不能按旧方式启动。SQLite 使用标准库；代码及隔离实验 provider 保留。历史配置、迁移和结果见 [基础持久化](persistence.md)，当前注册以本文及中立接入说明为准。
 
 历史 SQLite provider 曾实际验证数据库门槛和进程重启；这不是 A 正式实现的验收。默认 Mock 仍跳过真实数据库门槛，正式引擎尚未决定。C 的真实内容和 D 的真实网关仍待成员实现。
+### Phase 5D：D 策略模式联调
+
+运行 `./scripts/test-phase5a-isolated.ps1` 可在专用临时 PostgreSQL 容器中验证 A 数据层与 D 真实策略、审计及前端状态。测试使用 Mock C，D 的受限 SQL 执行器尚未注册；`allowed/not_executed` 是策略通过但未执行，不是统计结果。测试会使用自己创建的临时数据库与容器，不得指向开发或未知数据库。实际结果和 A/D 后续交付见 [验证记录](verification.md)。
+
+
+### Phase 5D-4：隔离测试候选执行器
+
+默认 `PAPERPILOT_SECURITY_EXECUTION=disabled`，常规 D 策略模式不执行 SQL。候选只可用于专用隔离测试库，要求 `PAPERPILOT_ENV=test`、`PAPERPILOT_A_MODE=persistent`、`PAPERPILOT_D_MODE=real`、`PAPERPILOT_SECURITY_EXECUTION=candidate`、`PAPERPILOT_SECURITY_ISOLATED_TEST=1`，并从安全环境单独注入 `PAPERPILOT_SECURITY_DB_PROJECT_ID`、`PAPERPILOT_SECURITY_DB_HOST`、`PAPERPILOT_SECURITY_DB_PORT`、`PAPERPILOT_SECURITY_DB_DBNAME`、`PAPERPILOT_SECURITY_DB_USER`、`PAPERPILOT_SECURITY_DB_PASSWORD`、`PAPERPILOT_SECURITY_DB_VIEW_OWNER`、`PAPERPILOT_SECURITY_DB_STATISTICS_SHA256` 和 `PAPERPILOT_SECURITY_DB_TOPICS_SHA256`。主机只接受本地地址，安全账号须与数据层账号不同；凭据不得写入仓库。
+
+两个摘要为 PostgreSQL 16 下各视图 `pg_get_viewdef(oid, false)` 文本的 UTF-8 SHA-256，现须与版本控制中的 `app/security/view_baseline.py` 一致；该基线从隔离环境的仓库迁移生成，**尚待 A/D 审查**。只从被测数据库取值并立即信任无法证明视图安全；PostgreSQL 主版本或视图定义变化需要重新审查和生成。候选需显式安装单独的 `app/security/migrations/002_binding_verifier.sql`，将函数和视图所有者设为同一个不可登录的受限角色，并仅向受限查询登录授予函数执行权限。应用不会自动运行迁移或授予权限。绑定核验函数只判断 `SESSION_USER` 与传入项目是否存在绑定，不向查询登录开放绑定表；其函数体、所有者、搜索路径、公开授权和执行权限被检查。此对象及其所有者权限仍需 A/D 审查。
+
+空项目通过绑定函数区别正确与缺失绑定。预检和查询在只读事务中显式使用 `pg_catalog, public` 搜索路径；仅对匹配受信模板的查询，用固定包装使绑定判断和结果读取共享同一 PostgreSQL 语句快照，并保持原有排序。结果返回前还会再次核验绑定；最后一次核验后仍可能并发变更，这不证明即时撤权。函数执行权限、其他对象和函数、视图所有者对所有依赖的最小权限及生产配置仍需安全审查。此实现只限隔离测试，不能作为正式数据库安全验收。
+
+候选执行器仅为当前三个统计意图显式绑定排序字段；D 将来新增允许模板时，必须同步审查并更新候选映射及测试，否则执行器拒绝该模板。
+
+Phase 6.2-B 的预检还核对实际视图依赖关系、绑定表主键及已验证的项目外键、受限登录和所有者的 NOINHERIT/成员关系、允许视图的列级写权限、序列权限和额外非系统 SECURITY DEFINER 函数授权。这些是限定范围的失败关闭检查：没有对所有 PostgreSQL 内置函数、普通函数、扩展、其他账号授权或并发撤权做完整安全证明。不可登录所有者及数据库外的可信基线仍需 A/D 审核。
+
+安全查询在路由内因未认证或项目授权失败而被拒绝时，会向 DataPort 写入 `secure_query.access_denied`，记录请求编号、已验证的用户（匿名时为空）、拒绝和未执行状态；不记录问题、令牌或未经授权的项目标识。项目字段固定为空，避免将不存在或不可访问的项目写入外键而产生可区分结果；因此这类记录目前不会出现在按项目过滤的审计页面，需要 A/D 确认系统级审计读取和保留方式。审计写入未确认时返回 `AUDIT_UNAVAILABLE`，不调用网关。此覆盖仅针对通过请求格式校验并进入安全查询路由的请求，CSRF 和格式校验等更早的拒绝尚未覆盖。
+
+Windows 下可运行 `powershell -NoProfile -File scripts/test-phase6-security-browser.ps1` 验证候选的隔离浏览器链路。脚本创建并关闭专用临时 PostgreSQL 容器；管理员仅用于准备测试库、视图、账号和绑定，浏览器统计请求使用专用受限登录。它测试真实执行、拒绝、服务中断、重启后审计，以及使用浏览器会话发起的跨项目和撤权请求；C 为 Mock，开发身份不代表正式认证。测试视图摘要在夹具中生成，不能代替 A/D 对正式配置的独立审查。不得用此脚本指向现有业务库。
+
+准备好独立测试库、迁移、项目绑定和受限角色后，设置 `PYTHONPATH=backend` 并运行 `python -m app.selector_server --host 127.0.0.1 --port 8000`。此入口在 Windows 为整个服务器创建 Selector 事件循环，解决 psycopg 异步连接不支持默认 Proactor 的限制；常规 uvicorn Windows 入口没有获得此兼容保证。应用启动时预检受限身份，失败即拒绝启动并关闭数据资源；不可恢复的连接或权限错误令健康检查失败。`/api/v1/health` 的 `limitations` 标明候选启用及就绪；`security_executor_not_managed` 仅表示此生命周期未管理候选，不能证明外部注入的执行器关闭。
+
+完整 JSON 响应正文超过 256 KiB 时返回 `QUERY_RESPONSE_TOO_LARGE`，不返回截断成功结果。检查发生在执行和审计之后；审计显示已执行不等于客户端收到结果。执行器自身另有限制列/行 JSON、数据库超时与行数。`powershell -NoProfile -File scripts/test-phase5a-isolated.ps1` 在专用临时容器测试真实数据库候选和独立服务进程；浏览器仍只覆盖策略未执行模式。正式执行保持关闭，须先完成 A/D 联合审查。
+
+### Phase 6.5：凭据和会话（候选，非生产验收）
+
+应用环境变量必须显式设置 `PAPERPILOT_AUTH_MODE=development` 或 `credentials`。前者仅允许开发及测试环境，是用户名切换演示身份；后者要求 PostgreSQL 数据绑定和迁移 003，凭据或存储不可用时不会回退演示身份。`PAPERPILOT_SESSION_IDLE_SECONDS`（默认 1800）和 `PAPERPILOT_SESSION_ABSOLUTE_SECONDS`（默认 28800）控制空闲与绝对有效期。生产环境仍明确拒绝启动。
+
+只对明确指定的数据库按既有流程显式执行迁移，不自动创建密码。受授权运维人员设置 `PYTHONPATH=backend` 和数据库连接环境后，运行 `python scripts/initialize_auth_password.py --username <已有用户名> --confirm-database <已确认数据库名>`，通过终端交互输入两次密码；已设置密码的用户不会被覆盖。明确使用 `--replace-existing` 才能重设密码，并在同一事务撤销该用户已有会话。不要将密码或数据库口令写入脚本、命令行或仓库。
+
+认证使用 Argon2id 密码摘要和随机 Cookie 会话令牌；数据库保存令牌摘要，停用、撤销、空闲及绝对过期在请求时查询数据库。可信浏览器来源必须列入 `PAPERPILOT_ALLOWED_ORIGINS`；凭据模式的写请求必须带可信 Origin、`/api/v1/auth/csrf` 提供的标记及对应 Cookie。凭据登录及退出的终态审计与会话变更同一 PostgreSQL 事务；失败前置审计单独记录，数据库提交结果未知仍需对账。上线还需要审查 TLS、Cookie Secure、会话访问控制、系统级审计读取和正式数据库身份。
+
+迁移 005 增加跨 worker 共享的登录限速表。每个 ASGI 客户端地址对所有账号的尝试共用固定时间窗，默认 `PAPERPILOT_AUTH_LOGIN_LIMIT=10`、`PAPERPILOT_AUTH_LOGIN_WINDOW_SECONDS=300`；成功与失败均计数，超过限额返回 429 并写入不含账户、密码或令牌的拒绝审计。失效、过期或停用的已知会话被请求时记录拒绝事件；未知令牌不会被归属于某个用户。限制依赖 ASGI peer：服务端或可信代理可能改写该地址，若代理设置错误可能被伪造，若多用户共用代理地址则会共用限额。正式部署前必须核实代理信任边界、NAT 可用性和限速表保留策略；该功能不能代替独立认证安全审查。审计不可用时拒绝请求。
+
+运行 `powershell -NoProfile -File scripts/test-phase65-isolated.ps1 -Browser` 可在专用临时 PostgreSQL 容器验证会话存储和真实浏览器；测试仅限隔离数据，实际测试结果见 [验证记录](verification.md)。
+
+### 审计数据库边界候选
+
+显式迁移 006 创建项目审计视图及事件指纹函数；迁移不自动创建数据库身份、授予业务角色权限或设置可信所有者。部署运维须独立审核并配置不可登录的受限所有者和业务身份，再用业务身份的 `PAPERPILOT_DATA_*` 环境配置执行 `python scripts/check_audit_boundary.py --trusted-owner <经审查的所有者角色>`。预检检查范围见 `app/data/audit_boundary.py`；它不输出连接凭据，也不修改数据库。失败或无法确定权限时不得进入生产使用。
+
+该视图排除系统级事件，但共享业务连接仍可通过视图读取多个项目事件；项目成员校验仍由可信服务端执行，视图本身不证明数据库原生跨项目隔离。独立预检可如上显式接入启动，默认关闭；系统级审计授权读取及审计角色完整权限仍未完成。
+
+`app/security/migrations/003_candidate_scoped_audit.sql` 是独立隔离测试候选，不由数据迁移器执行。它用专用登录与 `SESSION_USER` 绑定用户和项目，并核对现有项目负责人权限及账户状态。默认应用仍使用共享业务审计视图；下述测试模式可显式启用候选读取。候选尚需正式凭据管理、完整权限及生产审查。撤权测试仅证明 READ COMMITTED 下新语句的行为，不能保证正在执行或长事务的旧快照立即撤销。
+
+### Phase 6.7：多身份隔离审计接入（仅限测试）
+
+显式设置 `PAPERPILOT_SCOPED_AUDIT=isolated`、`PAPERPILOT_SCOPED_AUDIT_ISOLATED_TEST=1` 和 `PAPERPILOT_AUDIT_PREFLIGHT=required`，并使用测试环境、凭据认证和真实 PostgreSQL 数据绑定，方可从统一组合入口注册独立审计读取。其余 `PAPERPILOT_SCOPED_AUDIT_*` 的字段名见 `.env.example`；凭据通过受保护的进程环境注入，配置及日志中不可写入真实密码。数据库目标必须与业务连接一致，读取身份必须不同，当前仅允许本机隔离数据库。用户和项目 ID 来自可信服务端配置，不接受请求携带的映射。
+
+多用户隔离测试可由受保护的环境变量 `PAPERPILOT_SCOPED_AUDIT_BINDINGS` 注入 JSON 数组；每项仅包含 `db_user`、`db_password`、`user_id` 和 `project_id`，至多 64 项，数据库连接目标、视图所有者和绑定表所有者由单独配置指定。不能同时设置旧的单用户字段；重复账号、重复用户/项目、不同数据库目标、无效 JSON 或缺少字段均拒绝启动。请求只能路由到与服务端会话及项目一致的独立数据库登录，每次使用并关闭自己的连接；数据库再次验证绑定。不要在命令行、终端历史、仓库或日志写入真实数组。环境变量并非完善的生产秘密管理服务，具备进程环境读取权限的主体仍可能看到凭据。
+
+当前配置在进程启动时固定，不提供在线更新：在明确授权的隔离数据库中，由运维先创建并验证新角色/新绑定，再通过受保护渠道向新实例注入更新配置；确认新实例就绪、旧实例排空后，撤销旧绑定或账号。所有实例必须应用相同的受信配置；不能仅更新一个 worker 后声称全局轮换完成。成员撤权和绑定撤销后，新的数据库语句拒绝访问，但无法取消已开始的查询。启动预检和健康检查会检查全部已配置映射；某个映射故障使全局健康检查失败。安全查询仅检查当前项目的映射，其他项目的独立请求不会因该映射被直接路由至错误身份。
+
+启动、健康检查及安全查询前验证读取身份；审计 API 再按会话及实时成员关系授权，并在独立短连接内复核数据库绑定。每次请求关闭连接，不跨用户或项目复用连接。开启 `PAPERPILOT_AUDIT_PREFLIGHT=required` 时，业务身份必须不能读取旧的共享审计视图；缺失配置、权限漂移或绑定不匹配时失败关闭，不回退共享读取。预期视图定义摘要和函数体来自版本控制代码及候选迁移，针对 PostgreSQL 16、固定 `pg_catalog` 搜索路径；改变版本或定义时需重新审查，不能从被检查的部署数据库自行信任生成值。
+
+`powershell -NoProfile -File scripts/test-audit-candidate-isolated.ps1` 自动启动独立临时测试容器，执行审计与浏览器测试；`-ScopedOnly` 只执行新接入组。正式环境不可使用该候选：正式秘密管理和多实例在线轮换、独立安全审查、基表所有者和依赖对象的完整核验、完整最小权限和可靠部署仍未就绪；业务连接的项目访问并未实现数据库原生 RLS。读取采用同一只读事务快照，撤权不能取消已开始的查询，DBA 对授权、DDL 及绑定的并发修改仍须受控。
+
+
+### Phase 6.7 隔离候选：多项目统计与认证连接拆分
+
+仅供显式指定的本地隔离 PostgreSQL 测试，生产模式仍拒绝启动，真实 SQL 默认关闭。多项目统计在原候选所需的公共数据库主机、端口、库名、视图所有者和固定摘要之外，通过受保护的进程环境注入 `PAPERPILOT_SECURITY_DB_BINDINGS` JSON 数组：每个元素严格包含 `project_id`、`user`、`password`，每个项目及数据库登录唯一，最多 64 项。数组与旧的单项目 `PAPERPILOT_SECURITY_DB_PROJECT_ID/USER/PASSWORD` 不得同时配置；原单项目配置保持可用。服务端依据已授权项目上下文路由，独立账号逐次连接并校验数据库绑定；启动和健康检查校验所有项目。凭据轮换需受控重启并逐实例核验；当前没有集中密钥服务、在线热更新或多实例原子轮换。环境变量可能被拥有进程查看权限的用户读取，不是正式密钥管理方案。
+
+认证分离候选需 `PAPERPILOT_ENV=test`、`PAPERPILOT_AUTH_MODE=credentials`、持久数据层和 `PAPERPILOT_AUTH_DATABASE=isolated`，此外显式注入 `PAPERPILOT_AUTH_DB_ISOLATED_TEST=1`、`PAPERPILOT_AUTH_DB_HOST/PORT/DBNAME/USER/PASSWORD`。认证与业务必须指向同一隔离本地数据库但使用不同登录身份，业务身份不能读取密码摘要或会话表；统计和审计身份不得与认证身份相同。启动、健康检查及每个认证事务前检查隔离与权限，检查失败拒绝访问。配置缺失不回退共享身份。密码通过部署环境的受保护机制注入，勿写入版本控制和日志。
+
+后续候选使用 `backend/app/security/migrations/004_auth_lock_candidate.sql` 中固定定义的锁定函数；由操作员在明确的隔离库中显式应用，配置独立可信的 `PAPERPILOT_AUTH_LOCK_OWNER`。该所有者必须为不可登录、无成员关系的角色，函数只能由认证身份调用；认证身份可以读取密码摘要，但不得直接更新用户字段。启动及每个认证事务检查受版本控制的函数体、签名、所有者和权限。运维密码重置仍必须使用受支持的事务流程，在同一数据库中更新用户行并撤销会话，不能绕开此规则。预检与使用不在同一事务，管理员并发更改 DDL/权限的窗口、所有系统函数与部署身份仍需独立审查。部分旧隔离夹具仍使用宽权限；新联合测试启用表操作权限基线，但不代表正式数据库角色或项目行隔离已获验收。
+
+
+受保护文件输入支持 POSIX 与严格受限的 Windows 本地文件：`PAPERPILOT_DATA_PASSWORD_FILE`、`PAPERPILOT_AUTH_DB_PASSWORD_FILE`、`PAPERPILOT_SECURITY_DB_PASSWORD_FILE`、`PAPERPILOT_SECURITY_DB_BINDINGS_FILE`、`PAPERPILOT_SCOPED_AUDIT_PASSWORD_FILE`、`PAPERPILOT_SCOPED_AUDIT_BINDINGS_FILE`。必须为绝对路径、常规文件、当前进程用户拥有且无 group/other 权限，拒绝符号链接和超过 64 KiB 的内容；同名变量与 `_FILE` 同时提供会拒绝启动。Windows 仅接受本地固定磁盘上的普通文件：所有者必须是当前有效用户，DACL 必须关闭继承且只含授予该用户的简单显式允许项；其他账户授权、未知 ACE、可写共享冲突、重解析点和不满足要求的路径均拒绝。Windows 管理员、系统权限与同一账户的其他进程仍属于信任边界，该方式不是安全保险库。按现有流程显式、安全地供应受限文件；进程启动时读取，更新文件不会热更新已有连接，需启动新实例、验收、排空旧实例再撤销旧凭据。该本地文件机制不是生产密钥服务，容器挂载、所有者、备份、轮换和 Windows ACL 仍需具体环境验证。
+
+认证锁候选的隔离环境准备顺序：由隔离数据库管理员显式执行 `backend/app/security/migrations/004_auth_lock_candidate.sql`；创建单独的 NOLOGIN 锁函数所有者，授予 `public.users` 的 `user_id/password_hash/disabled` 三列读取及 `password_hash` 列更新权限，临时授予 `paperpilot_auth` schema CREATE 用于转移函数所有权后立即撤销；只给认证登录 schema USAGE、该函数 EXECUTE，以及原会话、限速和审计写入所需权限。业务登录不能读取密码摘要或访问会话表。`PAPERPILOT_AUTH_LOCK_OWNER` 必须由可信部署配置显式给出；上述 SQL 文件不会由应用自动执行，重复执行会失败，需要操作员先检查对象与版本，不能直接覆盖现有函数。完整隔离示例及拒绝测试见 `backend/tests/test_authentication_boundary_postgres.py` 的 `install_auth_lock`，只应对明确创建的隔离库运行。预检不阻止可信数据库管理员并发 DDL，正式环境需额外审查权限变更流程和运维身份。
+
+
+`PAPERPILOT_BUSINESS_PRIVILEGE_PREFLIGHT=required` 是隔离环境的候选检查：仅允许 `PAPERPILOT_ENV=test` 并要求审计预检开启；业务数据库的每个事务入口（包括后台 worker）、启动、健康及安全查询预检会按 `backend/app/data/business_boundary.py` 中的表操作清单检查有效授权，拒绝意外的 DELETE、TRUNCATE、REFERENCES、TRIGGER、额外列授权和指定危险函数。业务服务及 worker 使用同一业务身份，因此此检查按两者联合需要赋权；outbox 仅插入，单独投递身份的更新权限仍需另行配置。清单校验的是表操作而非逐列最小化或数据库原生项目行隔离，不能代替 RLS、业务身份隔离和生产审查；新增业务 SQL 应同步审查清单。
+
+Windows 测试模式的文件权限必须为当前实际运行身份专属。以该身份使用 Windows PowerShell 为已有秘密文件设置受保护 DACL（`$taskSecretPath` 仅为操作员提供的文件路径；不要把文件内容写入脚本或版本库）：
+
+```powershell
+$taskSecretPath = 'C:\path\to\protected-secret'
+$taskUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
+$taskAcl = [System.Security.AccessControl.FileSecurity]::new()
+$taskAcl.SetOwner($taskUser)
+$taskAcl.SetAccessRuleProtection($true, $false)
+$taskAcl.AddAccessRule([System.Security.AccessControl.FileSystemAccessRule]::new($taskUser, 'FullControl', 'Allow'))
+[System.IO.File]::SetAccessControl($taskSecretPath, $taskAcl)
+```
+
+将对应 `_FILE` 环境变量设置为该文件绝对路径，且不要同时设置对应明文变量。文件应位于可控目录，本地管理员、系统进程、相同运行账户下的其他进程，以及拥有备份/调试特权的主体仍需纳入威胁模型。权限不满足时应用拒绝启动或读取。Windows 隔离测试使用 Windows PowerShell/.NET ACL 创建临时测试文件；本实现尚未经独立 Windows 安全审查。
+
+隔离容器联合验证可在本机已构建的测试镜像上运行 `powershell -NoProfile -File scripts/test-audit-candidate-isolated.ps1 -ScopedOnly -ContainerImage paperpilot-phase67-guard-test`。脚本仅创建本轮独立 PostgreSQL 容器并用它的网络命名空间启动显式本地镜像；管理员身份用于准备测试数据和授权，应用使用分离的业务、认证、统计和审计测试身份。容器测试凭据是临时测试值，通过测试进程环境注入；它不是生产秘密挂载验收。测试会执行真实允许查询并重建应用容器后重读会话与审计，然后只停止本轮创建的容器。
+
+### 业务数据行隔离试验（仅限独立测试库）
+
+`backend/app/security/migrations/005_candidate_business_rls.sql` 是独立候选脚本，不属于现有自动迁移链，也不能用于现有应用或正式数据库。它对 22 张具有项目标识的表启用强制 RLS，以数据库 `SESSION_USER` 在受保护绑定表中映射到唯一用户和项目；成员删除时外键级联撤销绑定。不能用客户端输入或连接会话变量扩大该数据库身份的范围。可信绑定需要由单独的受控运维身份供应，脚本及预检依赖 PostgreSQL 16，必须先审查并确认版本。重新运行候选脚本并非幂等操作，不得在未知数据库执行。
+
+`backend/app/data/scoped_business.py` 不是完整 DataPort：它验证绑定、RLS 策略、函数定义和部分权限，用户表仅允许读取身份展示的三列。`ScopedBusinessRouter` 可在隔离测试中显式传给 `create_app(..., scoped_business_reader=router)`，以经认证的服务端用户和项目选择只读身份；项目论文、来源、任务、报告及版本的 GET 经过该身份，不存在身份时失败关闭。此入口仅允许 `environment=test`，没有接入默认组合入口，也不提供正式部署配置。试验期间禁止其他业务 API 并停用后台 worker；身份和项目授权依然调用既有服务，不代表其本身已经迁移到受限身份。隔离验证在仓库根目录执行 `powershell -NoProfile -File scripts/test-audit-candidate-isolated.ps1 -BusinessOnly`；该命令新建专用临时 PostgreSQL 容器并仅关闭它自己创建的容器。管理员只负责测试准备，读取和越权尝试使用不同的受限测试身份。
+
+当前仍未实现按项目切换的完整读写业务接入、项目创建和全局任务领取的受控数据库身份；对 22 张表的列级授权仍需进一步收紧。部分全局身份表、用户停用时的数据库凭据撤销、所有函数及系统对象授权、生产凭据供应与轮换，以及并发权限变更的安全审查仍未完成。不可将此候选用于证明整个业务 API 已经具备数据库原生项目隔离；真实 SQL 执行仍默认关闭。撤权只保证后续语句重新检查，无法撤销已经执行的语句或结果。
+
+`006_candidate_business_actor_checks.sql` 在仅供隔离测试的 005 基础上，为导入论文、任务、幂等记录和 outbox 的写入增加与登录用户的绑定校验；现有项目范围读取不受该附加检查影响。`ScopedBusinessWriter` 是独立验证用的上传及任务创建候选，预检要求六张表的确切 INSERT 列清单以及受信的操作者检查；禁止 UPDATE、DELETE 和未列出的写权限。测试通过 `-BusinessOnly` 在新建隔离 PostgreSQL 容器中应用 005 和 006 并运行，管理员仅准备环境，写入使用受限身份。两份 SQL 均未接入正式迁移链，不是可直接用于已有数据库的迁移。
+
+该写入候选仍未接入 API，也没有实现项目创建或后台任务结果提交：现有 RLS 在项目建立前缺少可信绑定，全局 worker 的领取仍缺少正式的独立数据库身份和逐项目路由。六张表的 INSERT 列清单不是对所有业务数据的完整最小权限证明；数据库权限、服务端认证与操作者关联、角色供应和撤销仍需完整审查。尤其不能把候选视为完整审计防伪或正式安全验收结果。
+
+在隔离候选中，显式应用 `007_candidate_report_actor_checks.sql` 后，`ScopedReportWriter` 还可保存报告及版本快照：新报告和版本的作者由数据库约束为登录用户，允许同项目其他成员编辑已有报告；仅对报告当前版本指针授予列级 UPDATE。数据库原有版本链约束仍适用。该类尚未接入 API，INSERT 字段仍需进一步审查，不能把测试结果视作完整写入权限验收。
+
+显式应用 `008_candidate_worker_actor_checks.sql` 后，`ScopedClaimWorker` 可在隔离库中按预配置的用户和项目领取任务，采用既有数据库锁和租约机制；它仅包含领取，不具备结果提交或失败处理能力，也尚未接入后台 worker。`PostgresData` 默认保持全局领取行为，只有显式提供服务端可信范围的候选实例才收窄领取条件；不能将该候选作为正式调度器。绑定撤销后新领取失败，已启动的处理不会被自动取消。007/008 与 005/006 一样只供显式隔离测试，不属于应用自动迁移链。
+
+`ScopedFailureWorker` 在隔离测试中增加失败状态及 outbox 写入；`ScopedResultWorker` 另外依赖显式执行的 `009_candidate_worker_result_checks.sql`，通过调用者权限函数和限制性 RLS 在写入结果、证据、来源及片段时检查用户、项目和有效租约。预检核对函数体、所有者、执行权限及策略；无配置或校验失败时拒绝。候选继续使用逐用户/项目身份，没有注册到应用或后台调度器，也未解决用户撤权后尚存任务的托管策略。009 不属于自动迁移链，不应应用于现有数据库。
+
+该候选的列级 UPDATE 授权和 RLS 不等于数据库已完全强制所有状态机约束：例如受限凭据持有者仍可能直接构造项目内的状态更新；需要独立审查并设计受控状态转换入口后，才能考虑正式接入。片段、证据真实性依赖 C 和应用层验证，不能因数据库策略而视为已核验。
+
+`010_candidate_project_bootstrap.sql` 和 `ScopedProjectCreator` 是仅限隔离库的项目创建候选。专用登录与用户通过受保护的 `bootstrap_logins` 绑定，登录自身不能直接访问业务表；固定的 `SECURITY DEFINER` 创建函数归独立 NOLOGIN 角色所有，根据 `SESSION_USER` 和账户停用状态确定创建者，并在同一事务写入项目、负责人关系及 outbox。预检检查身份、函数定义、部分策略及列级权限，错误配置失败关闭。测试通过 `scripts/test-audit-candidate-isolated.ps1 -BusinessOnly` 在新建容器中运行；该候选没有注册到默认组合或正式 API，010 不属于自动迁移链。
+
+创建后的项目用户数据库账号及项目绑定仍须由可信运维/供应流程建立，当前不会自动供应、轮换或撤销凭据；候选新增的 RLS 策略也尚未与所有其他候选联合预检。现有公开项目创建接口的未知提交结果缺少可重放的幂等凭据，不能盲目重试。绑定供应、角色与所有依赖对象、状态转换和正式部署仍需独立审查，不能将测试结果作为完整生产隔离证明。
+
+仅限隔离测试的 `011_candidate_project_replay.sql` 和 `ScopedReplayProjectCreator.create_project_with_key` 为未来接入准备独立操作键：键与用户绑定，重放相同输入返回已有项目，键相同但内容不同时冲突；记录、项目、成员和 outbox 原子提交。请求编号只用于追踪，同一请求编号不会去重，冻结的 `DataPort.create_project` 和现有 API 行为没有改变。该候选依赖 010，不自动迁移、不向 HTTP 暴露；要支持浏览器未知提交恢复，仍需单独审查兼容的操作键传递、前端持久化及失败恢复流程。隔离测试在真实提交后用连接替身模拟确认丢失，并在新实例以原键重放；没有注入真实网络断线或进程崩溃。
+
+数据库写事务在执行 COMMIT 期间发生非完整性约束错误时返回 `DATA_COMMIT_UNKNOWN`，即使后续 rollback 调用成功，也不会据此认定事务未提交；该连接会被丢弃。已确认的约束冲突继续返回 `IDENTIFIER_CONFLICT`。没有支持重放的操作不能根据未知提交结果自动再次创建；使用操作键的候选仍需重新认证和预检。提交故障分类的验证使用连接替身，不代表已在真实网络上注入确认丢失故障。
+
+隔离候选组合时，业务预检允许 010 中三个明确限定到 `paperpilot_bootstrap_executor` 的创建策略，并核对策略表达式、角色不可登录与角色成员关系；缺少任一策略、角色不安全或策略发生变更时拒绝就绪。创建函数所有者还必须获得 `bound_project()` 和 `bound_identity(uuid,uuid)` 执行权限：006 的 outbox 策略可能调用后者。创建候选预检对这两个函数核验独立迁移中的函数体、所有者、安全属性和权限。这些要求只用于隔离候选，不是正式数据库角色供应方案；每个候选仍须分别通过自己的预检和独立安全审查。
+
+隔离测试入口可显式在 `ScopedBusinessRouter` 注册 `ScopedBusinessWriter`，使上传 API 通过用户和项目绑定的受限身份写入论文和任务；缺少对应写身份时拒绝，不回退共享业务连接。仅允许测试环境显式注入，后台 worker 仍停用，其他写入接口继续拒绝。当前认证、项目成员检查和审计调用仍来自原应用依赖，并非完整数据库原生隔离；测试中相关身份和审计可能使用替身，不能据此宣称正式部署或完整认证、审计联测通过。健康接口通过 `scoped_business_upload_pilot` 标记此能力。
+
+同一测试入口可显式注册 `ScopedReportWriter`：报告引用先通过该身份读取和校验，之后通过相同身份写入版本和引用快照；缺少对应身份时拒绝，健康接口标记 `scoped_business_report_pilot`。审计仍使用应用原有审计服务，审计失败时不会向客户端返回成功；写入提交后的审计失败不代表数据库已回滚，应使用原幂等键核对。该候选尚非正式部署。
+
+后台 worker 仍不得直接接入：005 的 `bound_identity` 检查登录与成员绑定，并未检查 `users.disabled`。正式会话停用检查不能代替后台进程的数据库身份撤销；账户停用、任务托管、连接及凭据撤销需建立可验证的统一策略，并在受限身份和独立真实故障测试通过后才能启用。不得凭现有 worker 候选的结果测试声称这些条件已完成。
+
+隔离候选 `012_candidate_business_active_identity.sql` 显式在 005 之后替换两个项目绑定函数，依据 `SESSION_USER`、项目绑定与 `users.disabled` 决定项目访问；候选预检以 012 的版本控制内容核对函数，并要求函数所有者对用户表仅有 `user_id` 与 `disabled` 两列 SELECT，不能读取密码摘要或写入用户表。测试夹具显式创建并授权该 NOLOGIN 所有者，012 不属于自动迁移链，不得自动在未知数据库执行。READ COMMITTED 下停用提交后的新语句不再看到项目数据，后续领取和结果/失败提交也被拒绝；已经开始的语句及更强隔离级别下的旧快照不会因此立即撤销。该方案不撤销 PostgreSQL 登录凭据，也不禁止受限身份直接读取原本允许的非项目用户展示列；身份与密钥的供应、轮换、正式撤销、在途任务托管及应用 worker 接入仍未完成，后台 worker 继续关闭。
+
+隔离组合入口 `app.dev_composition:create_app` 可通过 `PAPERPILOT_SCOPED_BUSINESS_ISOLATED_TEST=1` 显式加载业务身份清单；还需指定 `PAPERPILOT_SCOPED_BUSINESS_BINDINGS_FILE`、`PAPERPILOT_SCOPED_BUSINESS_FUNCTION_OWNER` 和 `PAPERPILOT_SCOPED_BUSINESS_BINDING_OWNER`。必须是 `PAPERPILOT_ENV=test`、持久化数据模式及明确配置的本机隔离数据库，清单只能来自受保护文件，不能使用明文环境变量。Windows 文件必须满足现有当前用户专属 ACL 检查，POSIX 文件必须为当前用户所有且无组/其他用户权限。清单是 JSON 数组，每项必须且只能包含 `db_user`、`db_password`、`user_id`、`project_id`、`profile`；profile 只能为 `read`、`upload` 或 `report`。仅在仓库外的受保护文件填写真实凭据，不将该文件提交或输出到日志。
+
+登录身份和用户/项目对必须分别唯一，且业务、认证、审计和统计身份不能重用；函数所有者、绑定所有者由运维从可信配置指定。该入口不创建角色或绑定，管理员仍需在明确的隔离数据库预先供应符合预检的身份和授权。当前映射在启动时载入；旋转口令应关闭应用和旧连接、由受控运维变更专用角色密码、更新受保护清单并重新启动验证。更改数据库密码本身不会中止已经认证的数据库连接，当前没有自动在线轮换或连接撤销能力。任何身份预检失败时启动或健康检查失败，不回退 Mock；不等于整体系统已具备生产密钥管理。项目创建与身份供应仍不是原子操作，失败或未知提交应先对账，不得盲目重建项目。
+
+`report` 配置目前同时包含上传所需授权，而非纯报告最小权限身份；不同 profile 的完整列级权限和正式供应方式仍需独立审查。受限业务试验依旧停用后台 worker、阻止尚未接入的路由，也不能替代正式身份与审计的全链路验收。
+
+测试代码可显式向 `create_app` 注入 `scoped_workers`（各项必须是独立数据库登录的 `ScopedResultWorker`）和 `scoped_worker_audit` 回调，以试验受限 worker 的启动、领取和关闭。此路径只允许 `environment=test`、已有受限业务路由及 Mock AI，审计回调必须显式提供；没有通过环境清单或默认组合入口自动启用。每个 worker 的用户/项目必须有对应业务路由，数据库角色不得与任何业务路由角色复用；启动前所有 worker 均须通过预检。健康结果标记 `scoped_worker_mock_pilot`，处理出的 Mock 片段是合成数据。没有显式注入时受限业务模式的 worker 仍关闭。
+
+该试验的审计回调可能是测试替身，不代表审计已持久化；真实 C 服务、独立进程崩溃恢复和自动凭据供应未接入此 worker。账户停用或成员撤销后的新数据库操作失败关闭，不保证终止已经执行中的外部 AI 调用。worker 租约到期与任务托管、显式凭据撤销、正式角色最小权限及四方浏览器联合测试仍须验证，不能用于正式部署。
+
+隔离测试也验证了 worker 使用独立测试审计身份写入真实 PostgreSQL，以及审计权限被撤销时的提交后行为：业务结果和 `complete_job` outbox 已提交，后续 `process.completed` 审计写入失败不会回滚业务；审计恢复后，可由另一个项目绑定的测试投递身份将该 outbox 事件投递一次。两种审计 action 不相同，不能把 outbox 投递当作已补齐原 `process.completed` 审计。投递试验只证明测试身份在特定项目和故障场景的行为，未证明生产投递身份的完整最小权限或进程重启恢复。
+
+高风险未决项：上述测试审计身份被直接授予 `audit_events` 的 INSERT，而现有表没有数据库原生的项目与操作者写入策略；从数据库授权设计看，该身份可能直接构造其他有效项目或用户的事件，应用层 worker 转发检查无法约束绕过应用的 SQL。不得将该测试角色用于正式环境。需要实施并独立审查数据库级审计写入绑定、专用角色最小权限、系统级事件通道及预检后才能考虑正式接入。
+
+仅限隔离数据库的 `013_candidate_worker_audit_rls.sql` 是对该风险的候选修复：为审计表强制 RLS，要求项目和操作者均匹配登录身份绑定，并只允许指定的 NOLOGIN 函数所有者读取事件以校验重放。隔离测试实测原策略下跨项目伪造成功（测试事务已回滚），应用 013 后合法同项目写入成功，跨项目和冒充其他操作者写入被拒绝。013 需要运维预先单独供应和审查固定角色及函数所有权；没有项目为空的系统级审计写入通道，并且改变整个审计表的 RLS，可能阻断现有登录等审计。**不得将 013 应用于正式或未知数据库**，也不能把该候选测试描述为正式审计验收通过。
+
+隔离候选 `ScopedWorkerAuditWriter` 使用单独的用户/项目绑定数据库身份，按受版本控制的 012 和 006 函数定义以及 013 策略、角色和权限预期，在每个审计事务前预检；`ready()` 可作为 `create_app` 的 `scoped_worker_audit_ready` 显式回调，以便在启动和健康检查时发现不一致。检查覆盖 PostgreSQL 16、会话身份、角色属性及成员关系、部分库/schema/表/列/序列和特权函数、审计表 RLS、绑定关系与相关函数定义。检查失败返回审计不可用，不回退共享身份。该回调仅用于显式注入的测试候选，默认组合入口不会自动注册或供应它；它不代表已完成所有数据库对象、所有者、系统审计及生产权限审查，也不能阻止可信所有者在预检后更改配置。正式部署前仍需独立审查与受控供应，并完善系统级审计通道及真实联合验收。
+
+`014_candidate_auth_audit_rls.sql` 是仅供隔离测试的认证完成事件候选，依赖 013 和预先创建的专用 `paperpilot_auth_audit_writer` 登录身份。它只允许该身份写入无项目、非 Mock 的已完成会话事件；限制性策略确保该身份即使被错误绑定项目，也不能借 013 的公共策略写入项目事件。worker 审计预检同时核对这两条策略的角色、表达式及限制性属性；两条必须完整存在且不能被改宽。此候选没有为登录前审计门槛、匿名访问拒绝或其他系统事件提供通道，也没有接入正式应用组合或自动角色供应。认证身份本身仍能构造允许范围内的事件，身份可信性、完整权限、函数和数据库所有者均需独立审查；不能据此声称所有审计防伪已完成。**不要在正式或未知数据库应用 014。**
+
+`015_candidate_system_audit_rls.sql` 与 `ScopedSystemAuditWriter` 是仅限本地隔离测试的登录前和匿名安全查询拒绝审计候选：单独的 `paperpilot_system_audit_writer` 登录只能插入白名单内无项目事件，限制性 RLS 阻止误绑定项目后扩大写入范围。预检核对角色、部分数据库和对象权限、绑定函数及其所有者、015 的版本控制函数体和策略；失败时不回退共享写入。测试可通过 `create_app(..., scoped_system_audit=...)` 显式注入，启动与健康检查调用其预检，关停时关闭连接；该入口仅接受 `environment=test`、凭据认证、持久化数据模式及与业务身份不同的本机数据库身份。`CandidateAuthAuditGuard` 另可显式注册在隔离认证连接上，检查认证角色、审计表 RLS、014 策略及身份绑定；它只是附加检查，不能替代 `AuthenticationBoundary` 的完整预检。
+
+上述候选不自动迁移、不自动创建角色、不进入默认组合，也尚无正式角色供应、密钥轮换与连接撤销流程。测试连接中的审计表和函数可信所有者由隔离数据库管理员担任，仅用于功能验证，不能证明正式最小权限。当前认证预检与 `AuthenticationBoundary` 对 013/014 的完整组合仍未接入；系统写入身份能够构造白名单范围内的事件，不能声称事件来源具备密码学防伪。登录前审计在独立事务中提交：后续会话写入失败时，原 `pending` 事件仍会保留，不代表登录完成。禁止把这些候选应用于正式或未知数据库。

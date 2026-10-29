@@ -118,9 +118,7 @@ def claimed_task(conn, ids, paper_id, *, kind="process", attempts=1, status="pro
             (task, attempts),
         )
         conn.execute("UPDATE tasks SET status='succeeded' WHERE task_id=%s", (task,))
-        conn.execute(
-            "UPDATE project_papers SET status='processing' WHERE paper_id=%s", (paper_id,)
-        )
+        conn.execute("UPDATE project_papers SET status='processing' WHERE paper_id=%s", (paper_id,))
     return task
 
 
@@ -156,9 +154,7 @@ def probe(rule, name, positive, setup=None):
 
 @probe("K01", "重复用户名被拒绝", False)
 def k01_duplicate_username(conn, ids):
-    conn.execute(
-        "INSERT INTO users(user_id, username, display_name) VALUES(%s,%s,'X')", (uid(), ids["name"])
-    )
+    conn.execute("INSERT INTO users(user_id, username, display_name) VALUES(%s,%s,'X')", (uid(), ids["name"]))
 
 
 @probe("K01", "合法用户与项目字段可提交", True)
@@ -180,9 +176,7 @@ def k01_valid_user_project(conn, ids):
 
 @probe("K01", "超长用户名/项目名被拒绝", False)
 def k01_overlong_fields(conn, ids):
-    conn.execute(
-        "INSERT INTO users(user_id, username, display_name) VALUES(%s,%s,'X')", (uid(), "u" * 65)
-    )
+    conn.execute("INSERT INTO users(user_id, username, display_name) VALUES(%s,%s,'X')", (uid(), "u" * 65))
 
 
 # ---- K02 owner membership ----------------------------------------------------
@@ -200,9 +194,7 @@ def k02_ownerless_project(conn, ids):
         "INSERT INTO users(user_id, username, display_name) VALUES(%s,%s,'C')",
         (user, "probe-c-" + uid()[:10]),
     )
-    conn.execute(
-        "INSERT INTO projects(project_id, name, owner_id) VALUES(%s,'无负责人',%s)", (uid(), user)
-    )
+    conn.execute("INSERT INTO projects(project_id, name, owner_id) VALUES(%s,'无负责人',%s)", (uid(), user))
     # No project_members row: the deferred composite FK must fail the COMMIT.
 
 
@@ -348,7 +340,8 @@ def k08_consistent_success(conn, ids):
     task = claimed_task(conn, ids, paper, status="succeeded")
     conn.execute(
         "INSERT INTO chunks(chunk_id, project_id, paper_id, page_number, excerpt, synthetic)"
-        " VALUES(%s,%s,%s,1,'成功片段',false)", (uid(), ids["project"], paper)
+        " VALUES(%s,%s,%s,1,'成功片段',false)",
+        (uid(), ids["project"], paper),
     )
     conn.execute(
         "INSERT INTO task_results(task_id, project_id, kind, committed_attempt, paper_id, payload,"
@@ -404,15 +397,19 @@ def k10_valid_evidence(conn, ids):
     conn.cursor().executemany(
         "INSERT INTO evidence_fields(task_id, field_name, project_id, text, status)"
         " VALUES(%s,%s,%s,'证据文本','pending_verification')",
-        [(task, name, ids["project"]) for name in
-         ("research_question", "method", "results", "conclusion", "limitations")],
+        [
+            (task, name, ids["project"])
+            for name in ("research_question", "method", "results", "conclusion", "limitations")
+        ],
     )
     conn.cursor().executemany(
         "INSERT INTO result_sources(task_id, scope, citation_id, project_id, field_name, ordinal,"
         " paper_id, chunk_id, page_number, excerpt, synthetic)"
         " VALUES(%s,%s,%s,%s,%s,1,%s,%s,1,'探针片段',false)",
-        [(task, name, uid()[:8], ids["project"], name, paper, chunk_id)
-         for name in ("research_question", "method", "results", "conclusion", "limitations")],
+        [
+            (task, name, uid()[:8], ids["project"], name, paper, chunk_id)
+            for name in ("research_question", "method", "results", "conclusion", "limitations")
+        ],
     )
 
 
@@ -649,9 +646,7 @@ def k15_model_mutation(conn, ids):
         " distance_metric) VALUES(%s,%s,'probe','model3','v1',3,'cosine')",
         (model, ids["project"]),
     )
-    conn.execute(
-        "UPDATE embedding_models SET dimensions=4 WHERE model_id=%s", (model,)
-    )
+    conn.execute("UPDATE embedding_models SET dimensions=4 WHERE model_id=%s", (model,))
 
 
 # ---- C13 outbox delivery columns vs identity --------------------------------------------------
@@ -733,9 +728,7 @@ def main():
                 record["passed" if ok else "failed"] += 1
                 mark = "PASS" if ok else "FAIL"
                 print(f"[{mark}] {rule} {name}" + ("" if ok else f" :: {detail}"))
-        Path(options.report).write_text(
-            json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        Path(options.report).write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"report -> {options.report} ({record['passed']} passed, {record['failed']} failed)")
         if record["failed"]:
             raise SystemExit(1)

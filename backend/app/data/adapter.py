@@ -68,12 +68,21 @@ def now():
 
 
 class PostgresData:
-    def __init__(self, database: PostgresDatabase, settings: DataSettings, *, before_commit=None):
+    def __init__(
+        self, database: PostgresDatabase, settings: DataSettings, *, before_commit=None, claim_scope=None
+    ):
         if not 1 <= settings.lease_seconds <= 3600:
             raise ValueError("Invalid lease duration")
         self.database = database
         self.settings = settings
         self._before_commit = before_commit
+        if claim_scope is not None and (
+            not isinstance(claim_scope, tuple)
+            or len(claim_scope) != 2
+            or any(not isinstance(value, UUID) for value in claim_scope)
+        ):
+            raise ValueError("Invalid trusted worker claim scope")
+        self._claim_scope = claim_scope
         self._connection = ContextVar(f"pg_connection_{id(self)}")
 
     @property
@@ -276,7 +285,8 @@ class PostgresData:
                 raise AppError(502, "INVALID_CITATION", "来源与授权片段不一致")
 
     def _job_record(self, job):
-        self._db.execute("SELECT task_id FROM tasks WHERE task_id=%s FOR UPDATE", (job.task.task_id,))
+        # Serialize completion/failure with lease recovery on the same task row.
+        self._one("SELECT task_id FROM tasks WHERE task_id=%s FOR UPDATE", (job.task.task_id,))
         row = self._task_full_row(job.task.task_id)
         if row is None:
             raise AppError(404, "RESOURCE_NOT_FOUND", "资源不存在或不可访问")
@@ -294,6 +304,12 @@ class PostgresData:
             or fingerprint(stored.payload) != fingerprint(job.payload)
         ):
             self._state_conflict()
+        if stored.task.status == "processing" and not self._one(
+            "SELECT 1 FROM task_attempts WHERE task_id=%s AND attempt_no=%s"
+            " AND status='processing' AND lease_expires_at > clock_timestamp()",
+            (job.task.task_id, job.task.attempts),
+        ):
+            self._state_conflict()
         return stored
 
     @staticmethod
@@ -304,11 +320,15 @@ class PostgresData:
 
     @operation()
     def user_by_name(self, username):
-        return mapping.user(self._one("SELECT * FROM users WHERE username=%s", (username,)))
+        return mapping.user(
+            self._one("SELECT user_id, username, display_name FROM users WHERE username=%s", (username,))
+        )
 
     @operation()
     def user_by_id(self, user_id):
-        return mapping.user(self._one("SELECT * FROM users WHERE user_id=%s", (user_id,)))
+        return mapping.user(
+            self._one("SELECT user_id, username, display_name FROM users WHERE user_id=%s", (user_id,))
+        )
 
     @operation()
     def role(self, user_id, project_id):
@@ -377,7 +397,9 @@ class PostgresData:
     @operation(write=True)
     def add_member(self, ctx, username):
         self._scope(ctx, owner=True)
-        user = mapping.user(self._one("SELECT * FROM users WHERE username=%s", (username,)))
+        user = mapping.user(
+            self._one("SELECT user_id, username, display_name FROM users WHERE username=%s", (username,))
+        )
         if user is None:
             raise AppError(404, "USER_NOT_FOUND", "账户不存在")
         # A repeated insert retains the existing owner/member role.
@@ -640,12 +662,15 @@ class PostgresData:
 
     @operation(write=True)
     def claim_job(self):
+        scope_filter = " AND t.project_id=%s AND t.actor_id=%s" if self._claim_scope else ""
         row = self._one(
-            "SELECT t.task_id,t.status,t.recovery_failures FROM tasks t WHERE t.status='pending'"
+            "SELECT t.task_id FROM tasks t WHERE (t.status='pending'"
             " OR (t.status='processing' AND EXISTS (SELECT 1 FROM task_attempts a"
             "     WHERE a.task_id=t.task_id AND a.status='processing'"
-            "     AND a.lease_expires_at <= now()))"
-            " ORDER BY t.created_at, t.task_id LIMIT 1 FOR UPDATE SKIP LOCKED"
+            "     AND a.lease_expires_at <= now())))"
+            + scope_filter
+            + " ORDER BY t.created_at, t.task_id LIMIT 1 FOR UPDATE SKIP LOCKED",
+            self._claim_scope or (),
         )
         if row is None:
             return None
@@ -663,8 +688,7 @@ class PostgresData:
             (row["task_id"],),
         )
         self._db.execute(
-            "UPDATE tasks SET recovery_failures=recovery_failures+CASE WHEN status='processing' THEN 1 ELSE 0 END,"
-            " status='processing', attempts=attempts+1, updated_at=now() WHERE task_id=%s",
+            "UPDATE tasks SET status='processing', attempts=attempts+1, updated_at=now() WHERE task_id=%s",
             (row["task_id"],),
         )
         task_row = self._one("SELECT * FROM tasks WHERE task_id=%s", (row["task_id"],))
@@ -936,16 +960,21 @@ class PostgresData:
         else:
             for ordinal, source in enumerate(result.sources, start=1):
                 self._insert_result_source(job, source, field_name=None, ordinal=ordinal)
-        self._db.execute(
+        attempt = self._db.execute(
             "UPDATE task_attempts SET status='succeeded', finished_at=now()"
-            " WHERE task_id=%s AND attempt_no=%s AND status='processing'",
+            " WHERE task_id=%s AND attempt_no=%s AND status='processing'"
+            " AND lease_expires_at > clock_timestamp()",
             (job.task.task_id, job.task.attempts),
         )
-        self._db.execute(
+        if attempt.rowcount != 1:
+            self._state_conflict()
+        task = self._db.execute(
             "UPDATE tasks SET status='succeeded', updated_at=now()"
             " WHERE task_id=%s AND attempts=%s AND status='processing'",
             (job.task.task_id, job.task.attempts),
         )
+        if task.rowcount != 1:
+            self._state_conflict()
         if job.task.kind == "process":
             self._db.execute(
                 "UPDATE project_papers SET status='searchable', index_state='mock_only',"
@@ -985,16 +1014,21 @@ class PostgresData:
             return
         if stored.task.status != "processing":
             self._state_conflict()
-        self._db.execute(
+        attempt = self._db.execute(
             "UPDATE task_attempts SET status='failed', finished_at=now(), error_code=%s, error_message=%s"
-            " WHERE task_id=%s AND attempt_no=%s AND status='processing'",
+            " WHERE task_id=%s AND attempt_no=%s AND status='processing'"
+            " AND lease_expires_at > clock_timestamp()",
             (code, message, job.task.task_id, job.task.attempts),
         )
-        self._db.execute(
+        if attempt.rowcount != 1:
+            self._state_conflict()
+        task = self._db.execute(
             "UPDATE tasks SET status='failed', updated_at=now(), error_code=%s, error_message=%s"
             " WHERE task_id=%s AND attempts=%s AND status='processing'",
             (code, message, job.task.task_id, job.task.attempts),
         )
+        if task.rowcount != 1:
+            self._state_conflict()
         if job.task.kind == "process":
             self._db.execute(
                 "UPDATE project_papers SET status='failed', updated_at=now()"
@@ -1189,9 +1223,9 @@ class PostgresData:
             raise invalid()
         digest = fingerprint(event)
         existing = self._one(
-            "SELECT event_fingerprint FROM audit_events WHERE event_id=%s", (event.event_id,)
+            "SELECT paperpilot_audit.event_fingerprint(%s) AS event_fingerprint", (event.event_id,)
         )
-        if existing:
+        if existing and existing["event_fingerprint"] is not None:
             if existing["event_fingerprint"] == digest:
                 return
             raise AppError(409, "AUDIT_EVENT_CONFLICT", "审计事件编号已使用")
@@ -1236,7 +1270,7 @@ class PostgresData:
         ):
             raise invalid()
         where = (
-            " FROM audit_events WHERE project_id=%s"
+            " FROM paperpilot_audit.project_events WHERE project_id=%s"
             " AND (%s::text IS NULL OR action=%s)"
             " AND (%s::text IS NULL OR decision=%s)"
             " AND (%s::uuid IS NULL OR actor_id=%s)"

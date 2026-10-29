@@ -7,7 +7,7 @@ from fastapi import APIRouter, File, Form, Request, UploadFile
 from app.adapters.ports import FileReference
 from app.auth import project_context
 from app.errors import AppError
-from app.routes.common import ERRORS, key
+from app.routes.common import ERRORS, key, project_reader, project_writer
 from app.schemas import Acknowledgement, PaperDetail, PaperList, Task, UploadResult
 
 router = APIRouter(prefix="/api/v1/projects/{project_id}", tags=["literature"], responses=ERRORS)
@@ -43,13 +43,13 @@ def list_papers(project_id: UUID, request: Request, year_from: int | None = None
     ctx = project_context(request, project_id)
     if year_from is not None and year_to is not None and year_from > year_to:
         raise AppError(422, "VALIDATION_ERROR", "年份范围不正确")
-    return PaperList(items=request.app.state.adapters.data.papers(ctx, year_from, year_to))
+    return PaperList(items=project_reader(request).papers(ctx, year_from, year_to))
 
 
 @router.get("/papers/{paper_id}", response_model=PaperDetail)
 def paper_detail(project_id: UUID, paper_id: UUID, request: Request):
     ctx = project_context(request, project_id)
-    a = request.app.state.adapters.data
+    a = project_reader(request)
     return PaperDetail(paper=a.paper(ctx, paper_id), sources=a.sources(ctx, paper_id))
 
 
@@ -62,6 +62,7 @@ async def upload_paper(
     year: int | None = Form(None, ge=1000, le=3000),
 ):
     ctx = project_context(request, project_id)
+    writer = project_writer(request, ctx)
     payload = await file.read(20 * 1024 * 1024 + 1)
     await file.close()
     if len(payload) > 20 * 1024 * 1024:
@@ -85,7 +86,7 @@ async def upload_paper(
             cleanup_unadopted(path, request)
         raise AppError(503, "FILE_STORAGE_UNAVAILABLE", "文件保存失败，尚未提交论文，请稍后重试") from None
     try:
-        paper, task = request.app.state.adapters.data.import_paper(
+        paper, task = writer.import_paper(
             ctx,
             title,
             year,
@@ -124,7 +125,7 @@ def remove_paper(project_id: UUID, paper_id: UUID, request: Request, confirm_sou
 @router.get("/tasks/{task_id}", response_model=Task)
 def task_status(project_id: UUID, task_id: UUID, request: Request):
     try:
-        return request.app.state.adapters.data.task(project_context(request, project_id), task_id)
+        return project_reader(request).task(project_context(request, project_id), task_id)
     except AppError:
         raise
     except Exception:

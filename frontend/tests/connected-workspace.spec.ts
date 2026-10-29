@@ -30,6 +30,7 @@ test('paper selection, answer citation and report snapshots share the same sourc
   await page.getByRole('button', { name: '添加来源到报告' }).click()
   await expect(page.getByText('该来源已在引用清单 [1] 中，未重复添加。')).toBeVisible()
   await page.getByRole('button', { name: '保存新版本' }).click()
+  await expect(page.getByRole('button', { name: '版本 1', exact: true })).toBeVisible()
   const saved = (await (await page.request.get(`/api/v1/projects/${id}/reports`)).json()).items[0]
   expect(saved.sources).toHaveLength(1)
   expect(saved.sources[0].chunk_id).toBe(second.chunk_id)

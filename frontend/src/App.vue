@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { api, ApiError, onUnauthorized } from './api/client'
+import { api, ApiError, onUnauthorized, sessionChanged } from './api/client'
 import { formatError } from './api/errors'
-import { booting, health, persistentData, projects, refreshProjects, setIdentity, user } from './state'
+import { booting, health, intendedRoute, persistentData, projects, refreshProjects, setIdentity, user } from './state'
 import { useAction } from './composables/useAction'
 import Feedback from './components/Feedback.vue'
 import AppIcon from './components/AppIcon.vue'
@@ -27,7 +27,7 @@ const unsubscribe = onUnauthorized(error => {
 })
 onUnmounted(unsubscribe)
 watch([booting, user, projectId], () => {
-  if (!booting.value && !user.value && projectId.value) void router.replace('/')
+  if (!booting.value && !user.value && projectId.value) { intendedRoute.value = route.fullPath; void router.replace('/') }
 })
 async function connect() {
   if (connecting.value) return
@@ -43,7 +43,7 @@ async function connect() {
 }
 onMounted(connect)
 async function logout() {
-  await logoutAction.run(async () => { await api.logout(); setIdentity(null); sidebarOpen.value = false; sessionNotice.value = ''; await router.push('/') })
+  await logoutAction.run(async () => { sessionChanged(); await api.logout(); setIdentity(null); sidebarOpen.value = false; sessionNotice.value = ''; await router.push('/'); intendedRoute.value = '' })
 }
 </script>
 <template>
@@ -81,7 +81,7 @@ async function logout() {
       <footer v-if="user" class="workspace-footer"><span>PaperPilot Secure</span><span>文献有序 · 引用可溯 · 研究留痕</span></footer>
     </div>
     <el-dialog v-model="modeDetailsOpen" title="当前运行说明" width="480px">
-      <div class="mode-details"><span class="mode-details-icon"><AppIcon name="shield" :size="28" /></span><h3>{{ modeLabel }}</h3><p>{{ modeNote }}</p><p>开发身份不验证真实密码。当前注册模式不代表真实 AI 或 SQL 安全能力已通过验收。</p><p class="muted">具体结果仍需核对 Mock 与合成来源标记。正式数据持久化、AI 质量及安全能力由对应模块实际验收。</p></div>
+      <div class="mode-details"><span class="mode-details-icon"><AppIcon name="shield" :size="28" /></span><h3>{{ modeLabel }}</h3><p>{{ modeNote }}</p><p>{{ health?.limitations.includes('development_identity_only') ? '开发身份不验证真实密码。' : '身份通过服务端会话验证。' }}当前注册模式不代表真实 AI 或 SQL 安全能力已通过验收。</p><p class="muted">具体结果仍需核对 Mock 与合成来源标记。正式数据持久化、AI 质量及安全能力由对应模块实际验收。</p></div>
     </el-dialog>
   </div>
 </template>

@@ -33,9 +33,17 @@ class DevelopmentSessions:
             raise AppError(401, "UNAUTHENTICATED", "请先登录")
         return session
 
+    def revoke(self, token):
+        self.records.pop(token, None)
+
 
 def current_user(request: Request):
-    session = request.app.state.sessions.current(request.cookies.get("pp_session"))
+    token = request.cookies.get("pp_session")
+    session = (
+        request.app.state.sessions.current(token, request.state.request_id)
+        if request.app.state.settings.auth_mode == "credentials"
+        else request.app.state.sessions.current(token)
+    )
     user = request.app.state.adapters.data.user_by_id(session.user_id)
     if user is None:
         raise AppError(401, "UNAUTHENTICATED", "请先登录")
@@ -44,6 +52,7 @@ def current_user(request: Request):
 
 def project_context(request: Request, project_id: UUID, action="project.read") -> Context:
     user = current_user(request)
+    request.state.authenticated_actor_id = user.user_id
     role = request.app.state.adapters.data.role(user.user_id, project_id)
     if role is None:
         raise AppError(404, "RESOURCE_NOT_FOUND", "资源不存在或不可访问")

@@ -5,10 +5,17 @@ services:
     ports: ["127.0.0.1:8000:8000"]
     environment:
       PAPERPILOT_ENV: development
+      PAPERPILOT_AUTH_MODE: development
       PAPERPILOT_A_MODE: mock
       PAPERPILOT_C_MODE: mock
       PAPERPILOT_D_MODE: mock
     volumes: ["mock-uploads:/app/.runtime/uploads"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
   frontend:
     build:
       context: .
@@ -16,6 +23,8 @@ services:
     ports: ["127.0.0.1:5173:5173"]
     environment:
       PAPERPILOT_PROXY_TARGET: http://backend:8000
-    depends_on: [backend]
+    depends_on:
+      backend:
+        condition: service_healthy
 volumes:
   mock-uploads:
