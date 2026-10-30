@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-test('attack replay stays separate from the live protected business query', async ({ page }) => {
+test('attack replay stays separate from the live protected business query', async ({ page }, testInfo) => {
   await page.goto('/')
   await page.getByRole('button', { name: '进入演示' }).click()
   await page.locator('.project-card').filter({ hasText: 'D contract A' }).getByRole('button', { name: '进入工作台' }).click()
@@ -12,7 +12,19 @@ test('attack replay stays separate from the live protected business query', asyn
   await panel.getByRole('button', { name: '演示危险写入', exact: true }).click()
   await expect(panel.getByTestId('experiment-no_gateway')).toContainText('越界候选已执行')
   await expect(panel.getByTestId('experiment-gateway_and_database')).toContainText('策略拒绝，未执行')
+  await expect(panel.getByTestId('experiment-gateway_and_database').getByLabel('本例执行路径')).toContainText('未到达')
+  await expect(panel.getByLabel('直接访问目标')).toHaveValue('write')
+  await expect(panel.getByTestId('probe-gateway_only')).toContainText('绕过成功')
+  await expect(panel.getByTestId('probe-gateway_and_database')).toContainText('原因代码：42501')
+  await panel.getByRole('heading', { name: '场景二：绕过网关，直接访问数据库' }).evaluate(el => el.scrollIntoView({ block: 'start' }))
+  await page.screenshot({ path: testInfo.outputPath('database-write.png'), animations: 'disabled' })
   await panel.getByRole('button', { name: '演示论文提示注入', exact: true }).click()
+  await expect(panel.getByLabel('直接访问目标')).toHaveValue('foreign_view')
+  await expect(panel.getByTestId('probe-gateway_and_database')).toContainText('数据库按项目过滤')
+  await panel.getByRole('heading', { name: '场景一：经过网关的查询入口' }).evaluate(el => el.scrollIntoView({ block: 'start' }))
+  await page.screenshot({ path: testInfo.outputPath('gateway-path.png'), animations: 'disabled' })
+  await panel.getByRole('heading', { name: '场景二：绕过网关，直接访问数据库' }).evaluate(el => el.scrollIntoView({ block: 'start' }))
+  await page.screenshot({ path: testInfo.outputPath('database-cross-project.png'), animations: 'disabled' })
   await panel.getByTestId('experiment-gateway_and_database').getByText('查看本例原始结果与审计', { exact: true }).click()
   await expect(panel.getByTestId('experiment-gateway_and_database')).toContainText('security.query.finished')
   expect(questions).toEqual([])

@@ -66,7 +66,7 @@
 .experiment-presets { display: flex; gap: 8px; flex-wrap: wrap; margin: 18px 0; }
 .experiment-presets button { padding: 9px 12px; border: 1px solid #ded5fa; background: #f5f1ff; border-radius: 6px; color: #554080; cursor: pointer; font: inherit; font-size: 12px; }
 .experiment-selectors { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 15px; margin-bottom: 18px; }
-.experiment-selectors select { width: 100%; min-width: 0; padding: 10px; color: #304158; background: #fff; border: 1px solid #dce2e9; border-radius: 6px; font: inherit; font-size: 13px; }
+.experiment-selectors select, .experiment-probes > select { width: 100%; min-width: 0; padding: 10px; color: #304158; background: #fff; border: 1px solid #dce2e9; border-radius: 6px; font: inherit; font-size: 13px; }
 .experiment-candidate { padding: 18px; border-radius: 8px; background: #f8f7fc; margin-bottom: 18px; }
 .security-experiment pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: 12px; border: 1px solid #e3e4ee; border-radius: 6px; background: #fff; color: #304158; font-size: 12px; line-height: 1.9; }
 .security-experiment code { overflow-wrap: anywhere; user-select: all; font-size: 11px; }
@@ -84,9 +84,16 @@
 .experiment-record p, .experiment-probes p, .experiment-method p { font-size: 12px; overflow-wrap: anywhere; }
 .security-experiment ul { padding-left: 16px; font-size: 12px; }
 .security-experiment li { margin: 12px 0; overflow-wrap: anywhere; }
-.experiment-probes strong, .experiment-probes span { display: block; margin: 5px 0; }
-.probe-open { color: #9e3e34; }
-.probe-blocked { color: #245e49; }
+.experiment-scenario-title { margin: 25px 0 12px; color: #34334d; font-size: 16px; }
+.experiment-explanation { padding: 12px; background: #f3f0fc; border-left: 3px solid #7d63ca; color: #554080; font-size: 12px; line-height: 1.9; }
+.security-experiment .experiment-path { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 0; list-style: none; margin: 16px 0; }
+.experiment-path li { position: relative; min-width: 0; margin: 0; padding: 9px 5px; background: #f5f6f8; border: 1px solid #e1e4ea; border-radius: 5px; }
+.experiment-path li + li::before { content: '→'; position: absolute; left: -12px; top: 12px; color: #667487; }
+.experiment-path strong, .experiment-path span { display: block; margin: 0; font-size: 11px; line-height: 1.8; overflow-wrap: anywhere; }
+.experiment-path [data-state=blocked] { background: #edf8f3; border-color: #b8dfcf; color: #245e49; }
+.experiment-path [data-state=bypassed], .experiment-path [data-state=unknown] { background: #fff7ed; border-color: #edd9bc; color: #81551e; }
+.experiment-path [data-state=skipped] { color: #667487; border-style: dashed; }
+.experiment-probes > select { width: 100%; max-width: 420px; margin-bottom: 18px; }
 .experiment-performance { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .experiment-performance > div { padding: 12px; background: #f8f7fc; border-radius: 7px; }
 .experiment-performance strong, .experiment-performance span { display: block; margin: 6px 0; font-size: 12px; }
