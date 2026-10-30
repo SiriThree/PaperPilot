@@ -1248,6 +1248,57 @@ class PostgresData:
                 (ctx.project_id,),
             )
             return ["paper_id", "title"], [dict(row) for row in rows]
+        if intent == "overview":
+            # A-side extension (docs/member-a-overview-stats.md): one project-scoped
+            # metric/value summary for the project home area. Additive beyond the
+            # frozen AB-1 intent set; HTTP exposure awaits B/D review.
+            row = self._one(
+                """
+                SELECT
+                  (SELECT count(*) FROM project_papers pp
+                    WHERE pp.project_id=%s AND pp.removed_at IS NULL) AS papers_total,
+                  (SELECT count(*) FROM project_papers pp
+                    WHERE pp.project_id=%s AND pp.removed_at IS NULL AND pp.status='searchable')
+                    AS papers_searchable,
+                  (SELECT count(*) FROM project_papers pp
+                    WHERE pp.project_id=%s AND pp.removed_at IS NULL AND pp.status='processing')
+                    AS papers_processing,
+                  (SELECT count(*) FROM project_papers pp
+                    WHERE pp.project_id=%s AND pp.removed_at IS NULL AND pp.status='failed')
+                    AS papers_failed,
+                  (SELECT count(*) FROM project_papers pp
+                    WHERE pp.project_id=%s AND pp.removed_at IS NULL AND pp.status='pending')
+                    AS papers_pending,
+                  (SELECT count(*) FROM chunks c
+                    WHERE c.project_id=%s AND EXISTS (
+                      SELECT 1 FROM project_papers pp WHERE pp.project_id=c.project_id
+                      AND pp.paper_id=c.paper_id AND pp.removed_at IS NULL)) AS chunks_total,
+                  (SELECT count(DISTINCT tr.paper_id) FROM task_results tr
+                    WHERE tr.project_id=%s AND tr.kind='evidence' AND EXISTS (
+                      SELECT 1 FROM project_papers pp WHERE pp.project_id=tr.project_id
+                      AND pp.paper_id=tr.paper_id AND pp.removed_at IS NULL))
+                    AS papers_with_evidence,
+                  (SELECT count(*) FROM reports r WHERE r.project_id=%s) AS reports,
+                  (SELECT count(*) FROM report_versions rv WHERE rv.project_id=%s)
+                    AS report_versions,
+                  (SELECT count(*) FROM project_members m WHERE m.project_id=%s)
+                    AS members_total
+                """,
+                (ctx.project_id,) * 10,
+            )
+            metrics = [
+                "papers_total",
+                "papers_searchable",
+                "papers_processing",
+                "papers_failed",
+                "papers_pending",
+                "chunks_total",
+                "papers_with_evidence",
+                "reports",
+                "report_versions",
+                "members_total",
+            ]
+            return ["metric", "value"], [{"metric": name, "value": int(row[name])} for name in metrics]
         raise AppError(400, "UNSUPPORTED_INTENT", "不支持的统计意图")
 
     # ---- audit ---------------------------------------------------------------

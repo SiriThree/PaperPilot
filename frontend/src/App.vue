@@ -11,7 +11,7 @@ import WorkspaceSidebar from './components/WorkspaceSidebar.vue'
 const route = useRoute(), router = useRouter(), startupError = ref(''), connecting = ref(false), sessionNotice = ref('')
 const logoutAction = useAction()
 const sidebarOpen = ref(false), sidebarCollapsed = ref(false), modeDetailsOpen = ref(false)
-const sectionNames: Record<string, string> = { papers: '文献工作台', research: '研究工作台', security: '查询与审计' }
+const sectionNames: Record<string, string> = { papers: '文献工作台', research: '研究工作台', security: '查询与审计', dictionary: '数据字典' }
 const pageTitle = computed(() => sectionNames[String(route.path.split('/').pop())] || '项目总览')
 const modeNote = computed(() => !health.value ? '暂未确认运行模式，请检查服务连接。' : persistentData.value ? '已注册数据适配器；持久化和重启恢复需由 A 实际验收。' : 'Mock 演示环境 · 合成数据，重启后丢失。')
 function switchProject(value: string) {
@@ -68,7 +68,7 @@ async function logout() {
           <button class="environment-chip" aria-label="查看运行说明" :title="modeLabel" @click="modeDetailsOpen = true"><span class="status-dot" /><span>{{ !health ? '模式未知' : Object.values(health.modes).every(value => value === 'mock') ? '演示数据' : '适配器数据' }}</span><AppIcon name="info" :size="14" /></button>
         </div>
       </header>
-      <nav v-if="projectId && user" class="mobile-project-tabs" aria-label="项目快捷导航"><RouterLink :to="`/projects/${projectId}/papers`">文献</RouterLink><RouterLink :to="`/projects/${projectId}/research`">研究</RouterLink><RouterLink :to="`/projects/${projectId}/security`">查询与审计</RouterLink></nav>
+      <nav v-if="projectId && user" class="mobile-project-tabs" aria-label="项目快捷导航"><RouterLink :to="`/projects/${projectId}/papers`">文献</RouterLink><RouterLink :to="`/projects/${projectId}/research`">研究</RouterLink><RouterLink :to="`/projects/${projectId}/security`">查询与审计</RouterLink><RouterLink :to="`/projects/${projectId}/dictionary`">数据字典</RouterLink></nav>
       <main id="main-content" class="shell-main" :class="{ 'is-guest': !user, 'is-research': isResearch && user }" tabindex="-1">
         <div class="shell-feedback">
           <Feedback :busy="connecting && !booting" :error="startupError" retry-label="重新连接服务" @retry="connect" />

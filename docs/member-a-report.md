@@ -74,3 +74,38 @@
 | 全部验收 | 见第五节表格 |
 
 提交记录：`fa1db36`（环境）→ `0648bc1`/`eff6aca`/`e7482ed`/`0f22730`（模型）→ `db9f5f9`（实现）→ `0d32642`（联调）→ `808ced9`（投递器）→ `cdce9fd`（性能与备份）。
+
+---
+
+## 八、阶段任务轮记录（2026-10-29，member-a 本地）
+
+对应组长阶段清单中 A 的 P0/P1 项与"拉取 main 后验证能跑"要求。基线：合并 origin/main（25 个提交，含集成与安全审计工作）之后的 member-a。
+
+### 完成项
+
+| 任务 | 交付 | 验证 |
+| --- | --- | --- |
+| 演示数据初始化（P0） | `scripts/manage_postgres.py seed-demo-project`：默认演示项目 + 6 论文（5 成功 1 失败）+ 10 片段 + 2 证据 + 2 版报告 + 审计，全部走公开 DataPort，确定性 UUIDv5 + 固定幂等键 | 连续 3 次执行 14 张表行数零变化；中断续跑亦收敛；`backend/tests/test_demo_seed_postgres.py` 3 项真实库用例通过 |
+| 默认项目与论文持久化（P0） | 种子数据落 PostgreSQL，开发组合（`app.dev_composition`，A=persistent） | 后端进程重启后 alice 登录仍可见项目/论文/报告；`secure-queries` 按年份统计返回与种子一致的分布 |
+| 数据统计展示（P0） | `controlled_statistics` 附加 `overview` 意图：项目范围 10 项 metric/value 汇总（论文总数/可检索/失败/片段/证据覆盖/报告版本/成员） | 真实库用例断言全部指标与种子内容一致；AB-1 三意图不变，HTTP 暴露待 B/D 评审 |
+| 文献管理交互设计（P0） | [member-a-literature-ux.md](member-a-literature-ux.md)：列表/筛选/详情/批量方案 | 设计交付，未改前端 |
+| 数据库性能展示（P1） | overview SQL 的 EXPLAIN(BUFFERS) 证据：0.545 ms、32 buffers、全部命中既有索引（含两个部分索引），无需新索引 | 见 [member-a-overview-stats.md](member-a-overview-stats.md)；规模结论沿用 performance-baseline.md |
+| 数据生命周期完善（P1） | 移出论文（软移除/快照保留/摘要占用/文件不动）、任务恢复（租约/上限/迟到写入拒绝）、引用快照（不可变版本链）行为权威说明 | [member-a-literature-ux.md](member-a-literature-ux.md) §3 |
+
+### "能不能跑"验证（拉取 main 后）
+
+- 后端：全量 pytest **606 passed / 398 skipped**，真实库契约门槛 **41/41**（`--data-contract-provider app.data.provider:build_harness`），ruff check/format 通过。唯一失败 `ai_contracts/test_real_ai.py::test_symlink_and_cross_project_files_are_not_opened` 为 Windows 符号链接特权缺失（WinError 1314），环境问题、与代码无关。
+- 前端：`typecheck` 与 `build` 通过。演示 e2e（`playwright.demo.config.ts`）原样无法启动——合并后的 `config.validate()` 强制要求 `PAPERPILOT_AUTH_MODE`，而该配置的 webServer env 漏了此项（主 `playwright.config.ts` 已有）；本轮补上 `PAPERPILOT_AUTH_MODE: 'development'` 一行。修复后套件可运行，暴露一个 **main 上的存量断言冲突**（与 A 无关，需 B 处理）：`demo-data.spec.ts:25` 用全页 `getByText('处理失败')`，而重设计后的 PapersPage 固定列使 el-table 渲染隐藏克隆表，同一文案出现两次触发严格模式冲突，3 个演示用例全部因此失败；建议 B 将断言范围收敛到可见表格。
+- 浏览器人工链路：day0 PostgreSQL + persistent 后端（8100）+ 前端（5273）实测登录 → 项目总览 → 文献库 6 篇（5 可检索 1 失败）→ 按年份统计全部正常，截图留存。
+
+### 给 B 的交接
+
+- 概览区数据结构、SQL、组件方案：[member-a-overview-stats.md](member-a-overview-stats.md)（MockData 是否镜像 overview 由 B 决定）。
+- 演示环境：`migrate` → `seed-demo-project`（应用启动前执行）→ `app.dev_composition` persistent 即得可演示 baseline；种子与 Mock 演示内容一致，两种模式演示效果对齐。
+- 需 B 关注的两件小事：① 演示 e2e 断言冲突（见上）；② `playwright.demo.config.ts` 的 AUTH_MODE 补丁随本轮提交，请复核。
+
+提交：合并 `3a16c65` + 本轮 `9fa9d98`（种子/概览统计/文档/测试）与 e2e 配置修复（见后续提交）。
+
+### 补充：前端数据字典页（2026-10-29，应用户要求）
+
+新增"数据字典"页面（项目内侧边栏入口）：按域分组的表名按钮 + 每表字段/类型/可空/默认值、主外键/唯一/CHECK 约束与索引；数据来自 `scripts/export_data_dictionary.py` 从开发库 pg_catalog/information_schema 导出的静态快照（`frontend/src/data/data-dictionary.json`，29 张表、schema v7、行数为导出时刻值），页面本身不发任何数据库请求。迁移变化后重跑导出脚本即可刷新，`--check` 校验快照是否过期。共享文件改动仅 4 处小接入（router、侧边栏、App 标题映射与移动端 tab），请 B 复核；typecheck、build 与壳相关 e2e（23 项）已验证通过。
