@@ -1,0 +1,22 @@
+{
+  "checked_at": "2026-10-29T17:24:22.498791+00:00",
+  "before": {
+    "projects": 1,
+    "project_papers": 300,
+    "tasks": 300,
+    "process_indexes": 300,
+    "chunks": 19659,
+    "chunk_embeddings": 19659
+  },
+  "after": {
+    "projects": 1,
+    "project_papers": 300,
+    "tasks": 300,
+    "process_indexes": 300,
+    "chunks": 19659,
+    "chunk_embeddings": 19659
+  },
+  "unchanged": true,
+  "downloaded_pdf_files": 300,
+  "uploaded_pdf_files": 300
+}
