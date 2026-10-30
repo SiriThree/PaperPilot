@@ -1,0 +1,504 @@
+{
+  "checked_at": "2026-10-30T02:05:14.141446+00:00",
+  "catalog_sha256": "a63a06a1d04405152afab944ee6d187b02f5f6e347cbdacfc25d61d7f19930ad",
+  "workload_sha256": "14d3ae7251dbf6c8d602e09461338759618b6fbbe67c6aa208bc4c9bc38493f1",
+  "paper_count": 300,
+  "active_sources": 20986,
+  "synthetic_sources": 0,
+  "source_snapshot_sha256": "866a3b95fb4ab8601900bb830227db33184f72729b7610916d20314595f7b825",
+  "source_snapshot_after_sha256": "866a3b95fb4ab8601900bb830227db33184f72729b7610916d20314595f7b825",
+  "corpus_unchanged": true,
+  "implementation_sha256": {
+    "backend/app/ai/adapter.py": "69ce4b33c00c25d8f7e602ef831cc29ce2e613c433dd5490b16a5c4f3ac53845",
+    "backend/app/ai/retrieval.py": "05542fb0ae1e8a98a7f9f3ca60e1d7a47035a4b7305e5bd2bde9e7918b32fe2a",
+    "backend/app/data/retrieval.py": "9092f10fa219764a4bf77196b79f874337a01fca7163140543e3f6de6148e1cd",
+    "backend/app/data/adapter.py": "68029d16e617c880bb6c794c1ef76e150764131642a740a3013db1aba5813c07",
+    "backend/app/data/database.py": "833ae7df7b10e0ba3e2a99b3d1d6dfb387bf64020a203d455768b64cfccc1c63"
+  },
+  "embedding_model": {
+    "provider": "fastembed",
+    "model_name": "BAAI/bge-small-zh-v1.5",
+    "revision": "46fbe35fd4374a00fee7de77dfddaeb6dd6a2c59",
+    "dimensions": 512,
+    "distance_metric": "cosine"
+  },
+  "bm25_top50_matches_original_full_corpus": true,
+  "cosine_top50_matches_python_reference": true,
+  "cosine_score_tolerance": 1e-06,
+  "baseline": [
+    {
+      "id": "q01",
+      "mode": "keyword",
+      "http_status": 503,
+      "code": "AI_CORPUS_LIMIT",
+      "seconds": 0.153821,
+      "hits": 0,
+      "valid": false
+    },
+    {
+      "id": "q11",
+      "mode": "semantic",
+      "http_status": 503,
+      "code": "AI_CORPUS_LIMIT",
+      "seconds": 0.044889,
+      "hits": 0,
+      "valid": false
+    },
+    {
+      "id": "q21",
+      "mode": "hybrid",
+      "http_status": 503,
+      "code": "AI_CORPUS_LIMIT",
+      "seconds": 0.046503,
+      "hits": 0,
+      "valid": false
+    }
+  ],
+  "sequential": [
+    {
+      "id": "q01",
+      "mode": "keyword",
+      "http_status": 200,
+      "code": null,
+      "seconds": 5.38184,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q02",
+      "mode": "keyword",
+      "http_status": 200,
+      "code": null,
+      "seconds": 5.405312,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q03",
+      "mode": "keyword",
+      "http_status": 200,
+      "code": null,
+      "seconds": 5.830444,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q04",
+      "mode": "keyword",
+      "http_status": 200,
+      "code": null,
+      "seconds": 5.235012,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q05",
+      "mode": "keyword",
+      "http_status": 200,
+      "code": null,
+      "seconds": 5.303976,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q06",
+      "mode": "keyword",
+      "http_status": 200,
+      "code": null,
+      "seconds": 5.562577,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q07",
+      "mode": "keyword",
+      "http_status": 200,
+      "code": null,
+      "seconds": 5.807839,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q08",
+      "mode": "keyword",
+      "http_status": 200,
+      "code": null,
+      "seconds": 6.011545,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q09",
+      "mode": "keyword",
+      "http_status": 200,
+      "code": null,
+      "seconds": 5.45721,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q10",
+      "mode": "keyword",
+      "http_status": 200,
+      "code": null,
+      "seconds": 5.416017,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q11",
+      "mode": "semantic",
+      "http_status": 200,
+      "code": null,
+      "seconds": 1.38476,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q12",
+      "mode": "semantic",
+      "http_status": 200,
+      "code": null,
+      "seconds": 1.365962,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q13",
+      "mode": "semantic",
+      "http_status": 200,
+      "code": null,
+      "seconds": 1.471718,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q14",
+      "mode": "semantic",
+      "http_status": 200,
+      "code": null,
+      "seconds": 1.503312,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q15",
+      "mode": "semantic",
+      "http_status": 200,
+      "code": null,
+      "seconds": 1.416235,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q16",
+      "mode": "semantic",
+      "http_status": 200,
+      "code": null,
+      "seconds": 1.198444,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q17",
+      "mode": "semantic",
+      "http_status": 200,
+      "code": null,
+      "seconds": 1.450527,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q18",
+      "mode": "semantic",
+      "http_status": 200,
+      "code": null,
+      "seconds": 1.337724,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q19",
+      "mode": "semantic",
+      "http_status": 200,
+      "code": null,
+      "seconds": 1.424674,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q20",
+      "mode": "semantic",
+      "http_status": 200,
+      "code": null,
+      "seconds": 1.360744,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q21",
+      "mode": "hybrid",
+      "http_status": 200,
+      "code": null,
+      "seconds": 6.729248,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q22",
+      "mode": "hybrid",
+      "http_status": 200,
+      "code": null,
+      "seconds": 6.981901,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q23",
+      "mode": "hybrid",
+      "http_status": 200,
+      "code": null,
+      "seconds": 7.062535,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q24",
+      "mode": "hybrid",
+      "http_status": 200,
+      "code": null,
+      "seconds": 6.636328,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q25",
+      "mode": "hybrid",
+      "http_status": 200,
+      "code": null,
+      "seconds": 6.738771,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q26",
+      "mode": "hybrid",
+      "http_status": 200,
+      "code": null,
+      "seconds": 6.8701,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q27",
+      "mode": "hybrid",
+      "http_status": 200,
+      "code": null,
+      "seconds": 6.837257,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q28",
+      "mode": "hybrid",
+      "http_status": 200,
+      "code": null,
+      "seconds": 6.79451,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q29",
+      "mode": "hybrid",
+      "http_status": 200,
+      "code": null,
+      "seconds": 7.469805,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q30",
+      "mode": "hybrid",
+      "http_status": 200,
+      "code": null,
+      "seconds": 7.697425,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q31",
+      "mode": "hybrid",
+      "http_status": 200,
+      "code": null,
+      "seconds": 7.024949,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q32",
+      "mode": "hybrid",
+      "http_status": 200,
+      "code": null,
+      "seconds": 6.966082,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q33",
+      "mode": "hybrid",
+      "http_status": 200,
+      "code": null,
+      "seconds": 6.862895,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q34",
+      "mode": "hybrid",
+      "http_status": 200,
+      "code": null,
+      "seconds": 6.87446,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q35",
+      "mode": "hybrid",
+      "http_status": 200,
+      "code": null,
+      "seconds": 7.241987,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q36",
+      "mode": "hybrid",
+      "http_status": 200,
+      "code": null,
+      "seconds": 7.13387,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q37",
+      "mode": "hybrid",
+      "http_status": 200,
+      "code": null,
+      "seconds": 7.28956,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q38",
+      "mode": "hybrid",
+      "http_status": 200,
+      "code": null,
+      "seconds": 7.228462,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q39",
+      "mode": "hybrid",
+      "http_status": 200,
+      "code": null,
+      "seconds": 6.68439,
+      "hits": 10,
+      "valid": true
+    },
+    {
+      "id": "q40",
+      "mode": "hybrid",
+      "http_status": 200,
+      "code": null,
+      "seconds": 6.959524,
+      "hits": 10,
+      "valid": true
+    }
+  ],
+  "concurrent_probe": {
+    "concurrency": 3,
+    "samples": [
+      {
+        "id": "q01",
+        "mode": "keyword",
+        "http_status": 200,
+        "code": null,
+        "seconds": 16.248375,
+        "hits": 10,
+        "valid": true
+      },
+      {
+        "id": "q11",
+        "mode": "semantic",
+        "http_status": 200,
+        "code": null,
+        "seconds": 3.931491,
+        "hits": 10,
+        "valid": true
+      },
+      {
+        "id": "q21",
+        "mode": "hybrid",
+        "http_status": 200,
+        "code": null,
+        "seconds": 18.776763,
+        "hits": 10,
+        "valid": true
+      },
+      {
+        "id": "q01",
+        "mode": "keyword",
+        "http_status": 200,
+        "code": null,
+        "seconds": 15.118528,
+        "hits": 10,
+        "valid": true
+      },
+      {
+        "id": "q11",
+        "mode": "semantic",
+        "http_status": 200,
+        "code": null,
+        "seconds": 2.548329,
+        "hits": 10,
+        "valid": true
+      },
+      {
+        "id": "q21",
+        "mode": "hybrid",
+        "http_status": 200,
+        "code": null,
+        "seconds": 7.006406,
+        "hits": 10,
+        "valid": true
+      }
+    ]
+  },
+  "timing_summary": {
+    "keyword": {
+      "n": 10,
+      "median_seconds": 5.436613,
+      "min_seconds": 5.235012,
+      "max_seconds": 6.011545
+    },
+    "semantic": {
+      "n": 10,
+      "median_seconds": 1.400497,
+      "min_seconds": 1.198444,
+      "max_seconds": 1.503312
+    },
+    "hybrid": {
+      "n": 20,
+      "median_seconds": 6.962803,
+      "min_seconds": 6.636328,
+      "max_seconds": 7.697425
+    }
+  },
+  "notes": [
+    "Single local run; sequential samples include HTTP, auth checks and model startup.",
+    "Six concurrent probes are a smoke test, not a sustained load or capacity benchmark.",
+    "No relevance labels, recall, nDCG or answer-quality claims.",
+    "Baseline errors are failures, never successful latency/speedup samples."
+  ]
+}

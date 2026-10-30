@@ -23,7 +23,7 @@ V2 修复了按固定字符切块时的英文词内边界，并将送入嵌入�
 
 旧版基线仍为 300 篇 / 19659 分片 / 19659 向量 / 300 个处理索引，见 [`baseline-check.json`](../demo/chunking-v2/baseline-check.json)。旧库额外存在一个失败问答任务，原样保留；仅允许导入任务的旧快照脚本因此会拒绝其任务表，不代表原文或索引被改写。新代码的 V1 模式还复现了原始 RAG 论文全部 70 个原来源 ID 与摘录，见 [`backward-compatibility.json`](../demo/chunking-v2/backward-compatibility.json)。
 
-真实服务验证：三种模式在 2020–2022 年范围均返回 10 个真实来源，完整 300 篇范围仍返回 `AI_CORPUS_LIMIT`；800 字符超长中文问题在小范围语义检索中返回 HTTP 413 / `AI_EMBEDDING_INPUT_LIMIT`，见 [`search-smoke.json`](../demo/chunking-v2/search-smoke.json) 与 [`input-limit-check.json`](../demo/chunking-v2/input-limit-check.json)。浏览器确认 300 篇、每页 50 行、来源可实际展开且摘录可见，无页面脚本错误。
+切块阶段的原始服务验证：三种模式在 2020–2022 年范围均返回 10 个真实来源，完整 300 篇范围返回 `AI_CORPUS_LIMIT`；800 字符超长中文问题在小范围语义检索中返回 HTTP 413 / `AI_EMBEDDING_INPUT_LIMIT`，见 [`search-smoke.json`](../demo/chunking-v2/search-smoke.json) 与 [`input-limit-check.json`](../demo/chunking-v2/input-limit-check.json)。浏览器确认 300 篇、每页 50 行、来源可实际展开且摘录可见，无页面脚本错误。后续已在同一批来源上实现 [PostgreSQL 全库检索](full-corpus-retrieval.md)，本页原始记录保留供对照。
 
 常规回归 **654 passed / 446 skipped**。另已显式运行临时 PostgreSQL 的同模型重切块 / 历史保留 / 幂等提交测试；跳过项并不表示其他环境测试已执行。
 
@@ -123,4 +123,4 @@ export PYTHONPATH="$PWD/backend"
 
 单元/子进程检查覆盖句子缩写与小数、PDF 换行、词边界、原文覆盖、重叠、CJK、超长 URL、最终标题预算、超过块数上限、重试稳定性与旧版 ID 隔离；临时 PostgreSQL 检查同模型重切块后的原子切换及历史保留。
 
-当前全项目检索仍有 1000 候选片段上限；本次没有将该保护调大或把失败响应计作性能结果。新分片数量、边界改善和 token 覆盖不能代替 Recall@K、nDCG 或答案质量。正式效果比较要在固定模型、合法检索范围和人工证据标注下完成；搜索性能仍需分别测量数据库取候选、向量读取、查询嵌入及排序。
+切块阶段使用的旧检索版本有 1000 候选片段上限；切块改动没有将该保护调大或把失败响应计作性能结果。后续上限修复及真实查询核验见 [全库检索说明](full-corpus-retrieval.md)。新分片数量、边界改善和 token 覆盖不能代替 Recall@K、nDCG 或答案质量。正式效果比较要在固定模型、合法检索范围和人工证据标注下完成。

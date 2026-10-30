@@ -7,6 +7,7 @@ Each call owns one transaction; external AI calls never run inside it.
 import re
 import json
 import math
+from contextlib import contextmanager
 from contextvars import ContextVar
 from datetime import UTC, datetime, timedelta
 from functools import wraps
@@ -943,6 +944,23 @@ class PostgresData:
                 raise AppError(409, "INDEX_NOT_READY", "指定模型索引未就绪，请重新处理论文或使用关键词检索")
             vectors.append(json.loads(row["vector"]))
         return vectors
+
+    @contextmanager
+    def retrieval_snapshot(self, ctx, query, paper_ids=None, *, timeout_seconds=45):
+        """Private A/C read extension; no model calls or public port changes."""
+        from app.data.retrieval import RetrievalSnapshot
+
+        with self.database.transaction(snapshot=True) as conn:
+            token = self._connection.set(conn)
+            try:
+                self._scope(ctx)
+                reader = RetrievalSnapshot(conn, ctx, query, paper_ids, timeout_seconds)
+                reader.check_papers()
+                yield reader
+            except psycopg.errors.QueryCanceled:
+                raise AppError(504, "AI_TIMEOUT", "检索处理超时，请稍后重试") from None
+            finally:
+                self._connection.reset(token)
 
     def _commit_result(self, job, result):
         payload = canonical(result)
