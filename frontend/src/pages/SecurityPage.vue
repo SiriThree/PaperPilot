@@ -9,6 +9,7 @@ import { useResource } from '../composables/useResource'
 import Feedback from '../components/Feedback.vue'
 import AppIcon from '../components/AppIcon.vue'
 import SecurityEvidencePanel from '../components/SecurityEvidencePanel.vue'
+import SecurityExperimentPanel from '../components/SecurityExperimentPanel.vue'
 const pid = String(useRoute().params.projectId), { busy, error, run } = useAction()
 const scope = useResource<Models['Project'] | null>(null, async () => {
   const project = (await api.projects()).items.find(value => value.project_id === pid)
@@ -61,7 +62,7 @@ function eventTime(value: string) {
 </script>
 <template>
   <div class="business-page security-page">
-    <div class="business-heading"><div><span class="eyebrow">QUERY & TRACE</span><h1>查询与审计</h1><p>先确认访问范围，再查询数据，最后追溯具体操作。</p></div><nav class="security-page-nav" aria-label="查询与审计页内导航"><a href="#query-workspace">统计查询</a><a href="#project-audit">操作审计</a><a href="#security-evidence">离线验证</a></nav></div>
+    <div class="business-heading"><div><span class="eyebrow">QUERY & TRACE</span><h1>查询与审计</h1><p>先确认访问范围，再查询数据，最后追溯具体操作。</p></div><nav class="security-page-nav" aria-label="查询与审计页内导航"><a href="#query-workspace">统计查询</a><a href="#project-audit">操作审计</a><a href="#security-evidence">离线验证</a><a href="#security-experiment">攻防实验</a></nav></div>
     <section class="security-scope" aria-label="当前访问范围"><div><span>当前身份</span><strong>{{ user?.display_name || '未登录' }}</strong><small>{{ identityMode }}</small></div><div><span>项目角色</span><strong data-testid="scope-role">{{ scope.data.value?.role === 'owner' ? '负责人' : scope.data.value?.role === 'member' ? '成员' : '待确认' }}</strong></div><div><span>当前项目</span><strong data-testid="scope-project">{{ scope.data.value?.name || '未确认访问范围' }}</strong></div><div><span>访问范围</span><strong>{{ scope.loaded.value ? '当前项目' : '待服务端确认' }}</strong><small>{{ owner ? '可查询、管理成员、移出论文和查看审计' : scope.data.value?.role === 'member' ? '可参与文献研究与查询；成员管理、移出论文和完整审计仅负责人可用' : '访问权限未确认，暂不可提交查询' }}</small></div><el-button :disabled="scope.loading.value" @click="scope.load"><AppIcon name="refresh" :size="14" />核对访问范围</el-button></section>
     <Feedback :busy="scope.loading.value" :error="scope.error.value" retry-label="重新核对访问范围" @retry="scope.load" />
     <div class="gateway-notice"><AppIcon name="info" :size="18" /><p>{{ gatewayMock ? 'Mock 网关仅匹配演示意图，未生成或执行 SQL，也不验证真实 SQL 攻击防护。' : health ? '已注册安全适配器；注册和接口返回不代表 SQL 安全防护已通过验收。' : '安全适配器运行模式未知；所有查询仍由服务端网关处理。' }}</p></div>
@@ -90,6 +91,7 @@ function eventTime(value: string) {
       </template>
     </section>
     <SecurityEvidencePanel id="security-evidence" :real="!gatewayMock" />
+    <SecurityExperimentPanel />
     <el-dialog v-model="auditDetailOpen" title="审计操作详情" width="720px" class="audit-detail-dialog">
       <template v-if="selectedAudit">
         <p class="audit-detail-title">{{ actionLabels[selectedAudit.action] || selectedAudit.action }}</p>

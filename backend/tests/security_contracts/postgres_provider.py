@@ -209,6 +209,7 @@ def postgres_workspace(record_testsuite_property=lambda *args: None):
             )
 
         yield SimpleNamespace(
+            container_id=container,
             data=data,
             config=config,
             contexts=contexts,

@@ -34,15 +34,34 @@ def raw_query(config, text, parameters=None):
             columns = [column.name for column in cursor.description] if cursor.description else []
             rows = [dict(zip(columns, row, strict=True)) for row in cursor.fetchmany(100)] if columns else []
             rows = json.loads(json.dumps(rows, default=str))
-            return {"executed": True, "columns": columns, "rows": rows, "sqlstate": None}
+            return {
+                "executed": True,
+                "columns": columns,
+                "rows": rows,
+                "row_count": len(rows) if columns else max(0, cursor.rowcount),
+                "sqlstate": None,
+            }
         except psycopg.Error as error:
-            return {"executed": False, "columns": [], "rows": [], "sqlstate": error.sqlstate}
+            return {"executed": False, "columns": [], "rows": [], "row_count": 0, "sqlstate": error.sqlstate}
         finally:
             connection.rollback()
 
 
 def p95(values):
     return sorted(values)[math.ceil(len(values) * 0.95) - 1]
+
+
+def audit_trace(config, request_id):
+    """Observe only the experiment-owned audit metadata, never raw private content."""
+    import psycopg
+    from psycopg.rows import dict_row
+
+    with psycopg.connect(**config.conninfo(), row_factory=dict_row) as observer:
+        return observer.execute(
+            "SELECT event_id,action,decision,execution_status FROM public.audit_events "
+            "WHERE request_id=%s ORDER BY timestamp,event_id",
+            (request_id,),
+        ).fetchall()
 
 
 def business_snapshot(connection):
@@ -57,7 +76,7 @@ def business_snapshot(connection):
     return hashlib.sha256(json.dumps(rows[0], sort_keys=True, default=str).encode()).hexdigest()
 
 
-def group(name, iterations):
+def group(name, iterations, *, demo=False):
     import psycopg
     from psycopg import sql
     from app.data.adapter import PostgresData
@@ -70,6 +89,8 @@ def group(name, iterations):
     from security_contracts.postgres_provider import postgres_workspace
 
     records, performance = [], []
+    if demo:
+        print(f"\n{name}: running 40 attacks, 21 normal queries and database bypass probes", flush=True)
     with postgres_workspace() as pg:
         assert pg.config.dbname == "paperpilot_d_step2" and pg.config.host == "127.0.0.1"
         ctx = pg.contexts[0]
@@ -145,6 +166,11 @@ def group(name, iterations):
                 if name == "no_gateway":
                     result = raw_query(business_config, case["sql"])
                     success, reason = result["executed"], result["sqlstate"] or "UNSUPPORTED_SQL_EXECUTED"
+                    decision, status, row_count = (
+                        "bypassed",
+                        "executed" if success else "failed",
+                        result["row_count"],
+                    )
                 else:
 
                     async def generated(*args):
@@ -160,6 +186,8 @@ def group(name, iterations):
                     )
                     success = result.execution_status == "executed"
                     reason = result.reason.code if result.reason else result.execution_status
+                    decision, status, row_count = result.decision, result.execution_status, len(result.rows)
+                elapsed = (perf_counter() - start) * 1000
                 records.append(
                     {
                         "case": case["id"],
@@ -167,9 +195,20 @@ def group(name, iterations):
                         "category": case["category"],
                         "attack_success": success,
                         "reason": reason,
-                        "elapsed_ms": (perf_counter() - start) * 1000,
+                        "elapsed_ms": elapsed,
+                        "decision": decision,
+                        "execution_status": status,
+                        "row_count": row_count,
+                        "candidate_sql": case["sql"],
+                        "audit": audit_trace(pg.config, ctx.request_id),
                     }
                 )
+                if demo and case["id"] in {"cross_project-01", "dangerous_sql-01", "prompt-06"}:
+                    print(f"  {case['id']}: {case['sql']}", flush=True)
+                    print(
+                        f"    {decision}/{status}; rows={row_count}; reason={reason}; audit_events={len(records[-1]['audit'])}; baseline transaction rolled back",
+                        flush=True,
+                    )
             for case in normal_queries():
                 ctx = replace(ctx, request_id=uuid4())
                 plan = prepare_query(case["sql"], ctx.project_id)
@@ -199,13 +238,21 @@ def group(name, iterations):
                 def normalize(rows):
                     return sorted(json.dumps(row, sort_keys=True, default=str) for row in rows)
 
+                passed = columns == expected_columns and normalize(rows) == normalize(expected_rows)
                 records.append(
                     {
                         "case": case["id"],
                         "category": "normal",
                         "request_id": str(ctx.request_id),
-                        "normal_passed": columns == expected_columns
-                        and normalize(rows) == normalize(expected_rows),
+                        "normal_passed": passed,
+                        "decision": "bypassed" if name == "no_gateway" else result.decision,
+                        "execution_status": ("executed" if result["executed"] else "failed")
+                        if name == "no_gateway"
+                        else result.execution_status,
+                        "row_count": len(rows),
+                        "candidate_sql": case["sql"],
+                        "reason": "NORMAL_RESULT_MATCH" if passed else "NORMAL_RESULT_MISMATCH",
+                        "audit": audit_trace(pg.config, ctx.request_id),
                     }
                 )
             bypasses = []
@@ -233,6 +280,8 @@ def group(name, iterations):
                 bypasses.append(
                     {
                         "case": label,
+                        "candidate_sql": candidate,
+                        "row_count": result["row_count"],
                         "attack_success": succeeded,
                         "reason": result["sqlstate"]
                         or ("DATABASE_SCOPE_FILTERED" if not succeeded else "BYPASS_EXECUTED"),
@@ -297,6 +346,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / "docs/security-evaluation/results.json")
     parser.add_argument("--iterations", type=int, default=30)
+    parser.add_argument(
+        "--demo",
+        action="store_true",
+        help="Print observed representative attacks while running the isolated experiment",
+    )
     args = parser.parse_args()
     if args.iterations < 30:
         parser.error("Use at least 30 measured requests per supported question")
@@ -305,20 +359,30 @@ def main():
     from security_contracts.attack_cases import attacks, normal_queries
     from export_real_security_evidence import code_fingerprint
 
+    fingerprint = code_fingerprint()
+    runner_sha256 = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     dataset = {"attacks": attacks("00000000-0000-0000-0000-000000000002"), "normal": normal_queries()}
     configs = [
-        group(name, args.iterations) for name in ["no_gateway", "gateway_only", "gateway_and_database"]
+        group(name, args.iterations, demo=args.demo)
+        for name in ["no_gateway", "gateway_only", "gateway_and_database"]
     ]
     complete = configs[-1]
+    if (
+        fingerprint != code_fingerprint()
+        or runner_sha256 != hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    ):
+        raise RuntimeError("Experiment sources changed; previous results were not overwritten")
     report = {
+        "schema_version": 1,
+        "scope": "disposable_postgres_security_experiment",
         "generated_at": datetime.now(UTC).isoformat(),
         "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
         "worktree_dirty": bool(
             subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True).strip()
         ),
         "dataset_sha256": hashlib.sha256(json.dumps(dataset, sort_keys=True).encode()).hexdigest(),
-        "application_fingerprint": code_fingerprint(),
-        "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "application_fingerprint": fingerprint,
+        "runner_sha256": runner_sha256,
         "dataset": dataset,
         "image": IMAGE,
         "python": platform.python_version(),

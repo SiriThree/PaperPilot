@@ -220,7 +220,7 @@ test('allowed without execution is never presented as an executed query', async 
   }) }))
   await page.getByRole('button', { name: '提交 Mock 查询' }).click()
   await expect(page.getByText('尚未确认执行，策略通过不等于执行成功', { exact: true })).toBeVisible()
-  await expect(page.getByText('allowed / not_executed', { exact: true })).toBeVisible()
+  await expect(page.getByRole('region', { name: '查询结果' }).getByText('allowed / not_executed', { exact: true })).toBeVisible()
   await expect(page.getByText('PRIVATE_EXECUTION_DETAIL')).not.toBeVisible()
   await expect(page.getByText('查询已完成，当前范围无结果')).not.toBeVisible()
 })

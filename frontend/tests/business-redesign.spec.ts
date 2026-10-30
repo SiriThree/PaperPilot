@@ -73,7 +73,7 @@ test('query result keeps submitted question and disclosed error examples retain 
   await createProject(page)
   await page.getByRole('link', { name: '查询与审计', exact: true }).click()
   await page.getByRole('button', { name: '提交 Mock 查询' }).click()
-  await expect(page.getByText('allowed / executed', { exact: true })).toBeVisible()
+  await expect(page.getByRole('region', { name: '查询结果' }).getByText('allowed / executed', { exact: true })).toBeVisible()
   await page.getByLabel('统计问题').fill('尚未提交的新问题')
   await expect(page.locator('.query-result-summary')).toContainText('按年份统计论文数量')
   await expect(page.locator('.query-result-summary')).not.toContainText('尚未提交的新问题')

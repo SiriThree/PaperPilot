@@ -53,6 +53,11 @@ def code_fingerprint():
             ROOT / "pyproject.toml",
             ROOT / "frontend/src/components/SecurityEvidencePanel.vue",
             ROOT / "frontend/src/pages/SecurityPage.vue",
+            ROOT / "frontend/src/components/SecurityExperimentPanel.vue",
+            ROOT / "frontend/src/securityExperiment.ts",
+            ROOT / "frontend/src/research-security.css",
+            ROOT / "scripts/evaluate_security.py",
+            ROOT / "Dockerfile.security",
         ]
     )
     paths.extend(ROOT.glob("requirements*.lock"))

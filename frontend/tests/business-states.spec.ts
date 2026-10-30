@@ -253,7 +253,7 @@ test('gateway rejection shows safe reason and request ID instead of provider int
   await page.getByRole('link', { name: '查询与审计', exact: true }).click()
   await page.route('**/secure-queries', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ decision: 'rejected', execution_status: 'not_executed', columns: [], rows: [], reason: { code: 'QUERY_BLOCKED', message: privateDetail }, policy_id: 'browser-fixture', request_id: rid, mock: true }) }))
   await page.getByRole('button', { name: '提交 Mock 查询' }).click()
-  await expect(page.getByText('rejected / not_executed', { exact: true })).toBeVisible()
+  await expect(page.getByRole('region', { name: '查询结果' }).getByText('rejected / not_executed', { exact: true })).toBeVisible()
   await expect(page.getByText(rid, { exact: true })).toBeVisible()
   await expect(page.getByRole('alert').filter({ hasText: 'QUERY_BLOCKED' })).toContainText('查询未完成或被网关拒绝')
   await expect(page.getByText(privateDetail)).not.toBeVisible()

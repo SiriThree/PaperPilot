@@ -1,5 +1,7 @@
 # D 固定安全实验
 
+2026-10-30 新增[页面攻防回放与现场脚本](../member-d-defense-demo.md)：`python scripts/evaluate_security.py --demo --output frontend/public/security-experiment.json` 可打印实际代表用例，并为查询页生成逐例三组对照、审计摘录和计时记录。[新报告](../../frontend/public/security-experiment.json)为当前版本实测；本目录原 `results.json` 保留为旧版本基线。回放不提供任意 SQL 执行接口。
+
 运行 `python scripts/evaluate_security.py`。需要 Python 3.12、锁文件依赖和 Docker；工具不接收业务 DSN，只创建并销毁自己的 PostgreSQL 16 合成测试库。生成的 `results.json` 是原始逐项结果和计时样本，未达到目标时保留失败并退出非零。
 
 固定用例在 `backend/tests/security_contracts/attack_cases.py`：SQL 注入／语法变形、跨项目资源访问、危险 SQL／非业务访问、恶意用户及论文提示各 10 项，另有三类统计的 21 个正常 AST 变体。正常通过要求与 A 的独立统计结果一致，不仅检查 HTTP 成功或 SQL 无异常。固定数据摘要保存在报告中。

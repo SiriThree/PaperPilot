@@ -18,7 +18,7 @@ test('D P0: template provenance, real query, audit filters and denied project ac
   expect(result.policy_id).toMatch(/-template$/)
   await page.getByRole('button', { name: '不支持的问题', exact: true }).click()
   await page.getByRole('button', { name: '提交查询', exact: true }).click()
-  await expect(page.getByText('rejected / not_executed', { exact: true })).toBeVisible()
+  await expect(page.getByRole('region', { name: '查询结果' }).getByText('rejected / not_executed', { exact: true })).toBeVisible()
   await page.getByLabel('审计事件类型').fill('security.query.finished')
   await page.getByLabel('审计起始时间').fill('2020-01-01T00:00:00Z')
   await page.getByLabel('审计结束时间').fill('2099-01-01T00:00:00Z')

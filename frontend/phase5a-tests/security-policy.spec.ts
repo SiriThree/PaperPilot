@@ -25,12 +25,12 @@ test('PostgreSQL A and real D policy: allowed without execution and explicit rej
     await expect(page.getByText('已注册安全适配器；注册和接口返回不代表 SQL 安全防护已通过验收。')).toBeVisible()
     await page.getByRole('button', { name: '提交查询', exact: true }).click()
     await expect(page.getByText('尚未确认执行，策略通过不等于执行成功')).toBeVisible()
-    await expect(page.getByText('allowed / not_executed', { exact: true })).toBeVisible()
+    await expect(page.getByRole('region', { name: '查询结果' }).getByText('allowed / not_executed', { exact: true })).toBeVisible()
     await expect(page.locator('.query-result-table')).toHaveCount(0)
     await page.getByLabel('统计问题').fill('unsupported policy query')
     await page.getByRole('button', { name: '提交查询', exact: true }).click()
     await expect(page.getByText('查询被策略拒绝，未执行')).toBeVisible()
-    await expect(page.getByText('rejected / not_executed', { exact: true })).toBeVisible()
+    await expect(page.getByRole('region', { name: '查询结果' }).getByText('rejected / not_executed', { exact: true })).toBeVisible()
     await expect(page.locator('.query-result-table')).toHaveCount(0)
   } finally {
     if (server && server.exitCode === null) {

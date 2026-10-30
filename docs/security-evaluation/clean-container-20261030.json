@@ -1,0 +1,17 @@
+{
+  "generated_at": "2026-10-30T06:17:31.392008+00:00",
+  "image": "sha256:18602bb0d23ff0f8664aec6d3150e25169cf2bf59a65e125b486c97005764ef8",
+  "scope": "clean_linux_image_native_D_owned_postgres",
+  "authentication": "development_identity_only_not_password_acceptance",
+  "host_sources_mounted": false,
+  "results": {
+    "real_query": true,
+    "scope_isolated": true,
+    "unsupported_rejected": true,
+    "audit_details": true,
+    "member_audit_denied": true,
+    "nonmember_denied": true,
+    "audit_fault_closed": true,
+    "audit_survived_restart": true
+  }
+}

@@ -1,5 +1,7 @@
 # 成员 D 当前进度
 
+2026-10-30 更新：GitHub #12/#13 已合并；本轮补齐 P1 机制／实验页面、当前审计版本三组复测及独立 Linux 安全镜像自检。当前逐项状态与团队共验边界见 [10 月 30 日验收表](member-d-acceptance-20261030.md)，直观演示见[攻防脚本](member-d-defense-demo.md)。以下历史计数不代表本轮最新结果。
+
 更新于 2026-10-29。当前以 main 合并基线 `2586767` 加本地改动验收，最新结果见 [D 验收清单](member-d-acceptance-20261029.md)、[威胁模型](member-d-threat-model.md)和[安全实验](security-evaluation/README.md)。当前全量 985 通过、34 跳过、0 失败；下文 10 月 28 日的计数和团队快照保留为历史记录，不作为当前验收。未推送、未修改远程 PR，公开 AIPort、DataPort、SecurityPort 及 HTTP Schema 不变。
 
 ## 本轮只读核对并合入的团队快照

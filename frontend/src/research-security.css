@@ -56,6 +56,43 @@
 .audit-detail-note { padding-top: 16px; margin: 20px 0 0; border-top: 1px solid #e4e6ee; }
 .security-page > .security-evidence .security-checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; }
 .security-evidence { margin-bottom: 0; }
+.security-experiment { margin-top: 22px; scroll-margin-top: 24px; }
+.experiment-verdict, .experiment-case-result { border: 1px solid; border-radius: 8px; padding: 14px; }
+.experiment-verdict { display: flex; gap: 12px; flex-wrap: wrap; justify-content: space-between; }
+.experiment-verdict span, .experiment-boundary { font-size: 12px; line-height: 1.9; }
+.experiment-pass { color: #245e49; background: #eff8f3; border-color: #cce4d6; }
+.experiment-fail { color: #9e3e34; background: #fff3f0; border-color: #edcfc7; }
+.experiment-boundary { color: #667487; margin: 14px 0 20px; }
+.experiment-presets { display: flex; gap: 8px; flex-wrap: wrap; margin: 18px 0; }
+.experiment-presets button { padding: 9px 12px; border: 1px solid #ded5fa; background: #f5f1ff; border-radius: 6px; color: #554080; cursor: pointer; font: inherit; font-size: 12px; }
+.experiment-selectors { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 15px; margin-bottom: 18px; }
+.experiment-selectors select { width: 100%; min-width: 0; padding: 10px; color: #304158; background: #fff; border: 1px solid #dce2e9; border-radius: 6px; font: inherit; font-size: 13px; }
+.experiment-candidate { padding: 18px; border-radius: 8px; background: #f8f7fc; margin-bottom: 18px; }
+.security-experiment pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: 12px; border: 1px solid #e3e4ee; border-radius: 6px; background: #fff; color: #304158; font-size: 12px; line-height: 1.9; }
+.security-experiment code { overflow-wrap: anywhere; user-select: all; font-size: 11px; }
+.security-experiment small { display: block; color: #667487; font-size: 11px; line-height: 1.9; }
+.experiment-comparison { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.experiment-config { min-width: 0; padding: 18px; border: 1px solid #e1e1ed; border-radius: 8px; }
+.experiment-config h3 { color: #34334d; font-size: 15px; }
+.experiment-mechanism { font-size: 12px; color: #667487; min-height: 72px; }
+.experiment-rates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
+.experiment-rates dt { color: #667487; font-size: 11px; }
+.experiment-rates dd { margin: 7px 0 0; font-size: 22px; font-weight: 600; color: #34334d; }
+.experiment-case-result strong, .experiment-case-result span { display: block; margin: 5px 0; font-size: 12px; overflow-wrap: anywhere; }
+.security-experiment details { margin-top: 20px; }
+.security-experiment summary { cursor: pointer; color: #554080; font-size: 13px; padding: 6px 0; }
+.experiment-record p, .experiment-probes p, .experiment-method p { font-size: 12px; overflow-wrap: anywhere; }
+.security-experiment ul { padding-left: 16px; font-size: 12px; }
+.security-experiment li { margin: 12px 0; overflow-wrap: anywhere; }
+.experiment-probes strong, .experiment-probes span { display: block; margin: 5px 0; }
+.probe-open { color: #9e3e34; }
+.probe-blocked { color: #245e49; }
+.experiment-performance { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.experiment-performance > div { padding: 12px; background: #f8f7fc; border-radius: 7px; }
+.experiment-performance strong, .experiment-performance span { display: block; margin: 6px 0; font-size: 12px; }
+.experiment-method > a { display: inline-block; margin: 12px; font-size: 12px; }
+@media (max-width: 1080px) { .experiment-comparison, .experiment-performance { grid-template-columns: minmax(0, 1fr); } .experiment-mechanism { min-height: auto; } }
+@media (max-width: 640px) { .experiment-selectors { grid-template-columns: minmax(0, 1fr); } .experiment-config, .experiment-candidate { padding: 14px; } }
 .security-evidence .work-panel-heading { margin-bottom: 16px; }
 .evidence-environment { color: #6f657f; font-size: 11px; background: #f7f4ff; padding: 9px; border-radius: 5px; }
 .security-checks { margin: 0; padding: 0; list-style: none; }

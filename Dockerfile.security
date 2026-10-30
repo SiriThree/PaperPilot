@@ -1,0 +1,10 @@
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.lock requirements-security-test.lock ./
+RUN pip install --no-cache-dir -r requirements.lock -r requirements-security-test.lock
+COPY pyproject.toml ./
+COPY backend ./backend
+RUN pip install --no-deps .
+EXPOSE 8000
+# Explicit A/D composition; operator-supplied config is required, never copied into the image.
+CMD ["python", "-m", "uvicorn", "app.security.bootstrap:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]
