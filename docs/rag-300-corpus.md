@@ -102,7 +102,7 @@ $HOME/.local/opt/postgresql-16.15/bin/pg_ctl \
 
 ## 后续检索优化与压力测试
 
-当前版本有明确的规模限制：`RealAI._corpus()` 枚举项目论文和分片，超过 1000 个候选片段返回 `AI_CORPUS_LIMIT`；关键词、语义和混合检索都会先走这个检查。向量虽然已持久化到 pgvector，`indexed_vectors()` 仍逐片读取向量，再在 Python 内计算余弦/BM25/RRF。当前没有用 PostgreSQL 的 ANN 索引完成 Top-K 检索。
+本页基线版本有明确的规模限制：`RealAI._corpus()` 枚举项目论文和分片，超过 1000 个候选片段返回 `AI_CORPUS_LIMIT`；关键词、语义和混合检索都会先走这个检查。该基线的 `indexed_vectors()` 逐片读取向量，再在 Python 内计算余弦/BM25/RRF。后续已实现 [PostgreSQL 全库流式 BM25 与精确余弦 Top-K](full-corpus-retrieval.md)，本页保留原始基线及冻结工作集，不覆盖旧测量。新实现仍没有 ANN 索引。
 
 因此，“300 篇成功入库”不等于“300 篇全库搜索已支持”。本次保留该限制作为起点，不调大阈值、截断前若干分片或把错误响应当作高吞吐。只做功能基线探测；不在入库、下载与多进程嵌入同时运行时报告性能数字。
 

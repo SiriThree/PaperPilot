@@ -1,4 +1,5 @@
 import asyncio
+import time
 from contextlib import asynccontextmanager
 from dataclasses import replace
 from hashlib import sha256
@@ -9,7 +10,7 @@ from app.adapters.ports import AIPort, Context, DataPort, FileReference
 from app.ai.client import ModelClient
 from app.ai.files import LocalPDFReader
 from app.ai.models import Extraction, Narrative
-from app.ai.retrieval import bm25, fuse, rank
+from app.ai.retrieval import bm25, bm25_topk, fuse, rank
 from app.ai.settings import AISettings
 from app.errors import AppError
 from app.schemas import (
@@ -224,6 +225,8 @@ class RealAI:
 
     async def _search(self, ctx, query, paper_ids=None):
         async with self._operation():
+            if callable(getattr(self.data, "retrieval_snapshot", None)):
+                return await self._search_indexed(ctx, query, paper_ids)
             corpus = await asyncio.to_thread(self._corpus, ctx, query, paper_ids)
             scores = []
             if corpus and query.query.strip():
@@ -262,6 +265,54 @@ class RealAI:
             # Recheck after awaiting remote embeddings; membership/removal may have changed.
             await asyncio.to_thread(self._validate_sources, ctx, [h.source for h in hits])
             return SearchResult(items=hits, mode=query.mode, mock=False, provider=f"member-c-{query.mode}")
+
+    async def _search_indexed(self, ctx, query, paper_ids):
+        deadline = time.monotonic() + self.settings.timeout_seconds
+        # Reject untrusted scopes before any external model operation.
+        await asyncio.to_thread(self._authorize, ctx)
+        if paper_ids is not None:
+            for paper_id in paper_ids:
+                await asyncio.to_thread(self.data.paper, ctx, paper_id)
+        vector = None
+        if query.query.strip() and paper_ids != frozenset() and query.mode != "keyword":
+            vector = (await (self.embedder or self.client).embed([query.query]))[0]
+        hits = await asyncio.to_thread(self._rank_indexed, ctx, query, paper_ids, vector, deadline)
+        # Recheck current membership/active source after the snapshot and model wait.
+        await asyncio.to_thread(self._validate_sources, ctx, [h.source for h in hits])
+        return SearchResult(items=hits, mode=query.mode, mock=False, provider=f"member-c-{query.mode}")
+
+    def _rank_indexed(self, ctx, query, paper_ids, vector, deadline):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise AppError(504, "AI_TIMEOUT", "检索处理超时，请稍后重试")
+        with self.data.retrieval_snapshot(ctx, query, paper_ids, timeout_seconds=remaining) as snapshot:
+            if not query.query.strip() or paper_ids == frozenset():
+                return []
+            # This is a per-channel ranked shortlist, never a cap on the corpus scanned.
+            budget = max(query.limit, self.settings.max_candidates) if query.mode == "hybrid" else query.limit
+            semantic = (
+                snapshot.nearest(self._index_model(), vector, self.settings.min_similarity, budget)
+                if query.mode != "keyword"
+                else []
+            )
+            lexical = bm25_topk(query.query, snapshot.documents, budget) if query.mode != "semantic" else []
+            if query.mode == "keyword":
+                scores = lexical
+            elif query.mode == "semantic":
+                scores = semantic
+            else:
+                combined = fuse([key for key, _ in lexical], [key for key, _ in semantic])
+                scores = sorted(combined.items(), key=lambda item: (-item[1], item[0]))
+            scores = scores[: query.limit]
+            canonical = snapshot.resolve([key for key, _ in scores])
+            return [
+                SearchHit(
+                    paper=canonical[key][0],
+                    source=canonical[key][1].model_copy(update={"citation_id": str(number)}, deep=True),
+                    score=score,
+                )
+                for number, (key, score) in enumerate(scores, 1)
+            ]
 
     def _validate_sources(self, ctx, sources, paper_ids=()):
         self._authorize(ctx)
