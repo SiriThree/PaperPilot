@@ -6,6 +6,8 @@ import sys
 import tempfile
 import time
 from pathlib import Path
+from types import SimpleNamespace
+from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
@@ -14,6 +16,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 from app.adapters.mock_data import seed_id  # noqa: E402
 from app.config import Settings  # noqa: E402
 from app.main import create_app  # noqa: E402
+from app.schemas import SecurityExperimentState  # noqa: E402
 
 
 def write_json(path, data):
@@ -33,7 +36,12 @@ def export(check=False):
             return
         write_json(target, spec)
         with (
-            TestClient(app, headers={"X-PaperPilot-Client": "web"}) as client,
+            TestClient(
+                app,
+                base_url="http://127.0.0.1",
+                client=("127.0.0.1", 50000),
+                headers={"X-PaperPilot-Client": "web"},
+            ) as client,
             TestClient(app, headers={"X-PaperPilot-Client": "web"}) as anonymous,
         ):
 
@@ -100,6 +108,26 @@ def export(check=False):
             project = capture("get", "/api/v1/projects").json()["items"][0]["project_id"]
             capture("post", "/api/v1/projects", json={"name": "契约演示项目", "description": "合成数据"})
             prefix, actual = "/api/v1/projects/{project_id}", f"/api/v1/projects/{project}"
+            capture("get", prefix + "/security-experiments", actual + "/security-experiments")
+            # Contract-only synthetic accepted task; this exporter never launches Docker.
+            app.state.security_experiments = SimpleNamespace(
+                start=lambda ctx: SecurityExperimentState(
+                    enabled=True,
+                    busy=True,
+                    run_id=uuid4(),
+                    status="running",
+                )
+            )
+            try:
+                capture(
+                    "post",
+                    prefix + "/security-experiments",
+                    actual + "/security-experiments",
+                    json={},
+                    headers={"Origin": "http://127.0.0.1:5173"},
+                )
+            finally:
+                app.state.security_experiments = None
             capture("get", prefix + "/members", actual + "/members")
             capture("post", prefix + "/members", actual + "/members", json={"username": "bob"})
             capture("delete", prefix + "/members/{user_id}", actual + f"/members/{seed_id('bob')}")

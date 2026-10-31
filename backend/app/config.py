@@ -17,6 +17,7 @@ class Settings:
     auth_login_limit: int = 10
     auth_login_window_seconds: int = 300
     security_execution: str = "disabled"
+    security_experiments: bool = False
     audit_preflight: str = "disabled"
     business_privilege_preflight: str = "disabled"
     audit_trusted_owner: str = ""
@@ -28,6 +29,8 @@ class Settings:
     allowed_origins: tuple[str, ...] = ("http://localhost:5173", "http://127.0.0.1:5173")
 
     def validate(self):
+        if self.security_experiments and self.environment not in {"development", "test"}:
+            raise RuntimeError("Local security experiments are forbidden outside development/test")
         if self.scoped_audit not in {"disabled", "isolated"}:
             raise RuntimeError("Unsupported scoped audit mode")
         if self.scoped_audit == "isolated" and (
@@ -108,6 +111,7 @@ class Settings:
             auth_login_limit=int(os.getenv("PAPERPILOT_AUTH_LOGIN_LIMIT", "10")),
             auth_login_window_seconds=int(os.getenv("PAPERPILOT_AUTH_LOGIN_WINDOW_SECONDS", "300")),
             security_execution=os.getenv("PAPERPILOT_SECURITY_EXECUTION", "disabled"),
+            security_experiments=os.getenv("PAPERPILOT_SECURITY_EXPERIMENTS", "0") == "1",
             audit_preflight=os.getenv("PAPERPILOT_AUDIT_PREFLIGHT", "disabled"),
             business_privilege_preflight=os.getenv("PAPERPILOT_BUSINESS_PRIVILEGE_PREFLIGHT", "disabled"),
             audit_trusted_owner=os.getenv("PAPERPILOT_AUDIT_TRUSTED_OWNER", ""),

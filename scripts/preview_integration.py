@@ -107,6 +107,7 @@ def main():
             PAPERPILOT_A_MODE="persistent",
             PAPERPILOT_C_MODE="real",
             PAPERPILOT_D_MODE="real",
+            PAPERPILOT_SECURITY_EXPERIMENTS="1",
             PAPERPILOT_SECURITY_CONFIG=str(configuration),
             PAPERPILOT_STORAGE_DIR=str(uploads),
             PAPERPILOT_ALLOWED_ORIGINS=f"http://127.0.0.1:{web_port}",
@@ -129,7 +130,13 @@ def main():
         children = []
 
         def shutdown():
+            stop.touch(exist_ok=True)
             for child in reversed(children):
+                if child is children[0] and child.poll() is None:
+                    try:
+                        child.wait(timeout=60)
+                    except subprocess.TimeoutExpired:
+                        pass
                 if child.poll() is None:
                     child.terminate()
                 child.wait(timeout=15)
@@ -137,7 +144,14 @@ def main():
         resources.callback(shutdown)
         backend_log = resources.enter_context((directory / "backend.log").open("w", encoding="utf-8"))
         backend = subprocess.Popen(
-            [sys.executable, str(ROOT / "scripts/run_security.py"), "--port", str(api_port)],
+            [
+                sys.executable,
+                str(ROOT / "scripts/run_security.py"),
+                "--port",
+                str(api_port),
+                "--stop-file",
+                str(stop),
+            ],
             cwd=ROOT,
             env=environment,
             stdout=backend_log,

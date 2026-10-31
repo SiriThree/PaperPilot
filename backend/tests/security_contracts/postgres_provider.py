@@ -64,6 +64,12 @@ def postgres_workspace(record_testsuite_property=lambda *args: None):
 
         name = "paperpilot-d-step2-" + uuid4().hex[:12]
         environment = dict(os.environ, POSTGRES_PASSWORD=secrets.token_urlsafe(32))
+        labels = []
+        if run_id := os.getenv("PAPERPILOT_EXPERIMENT_RUN_ID"):
+            from uuid import UUID
+
+            run_id = str(UUID(run_id))
+            labels = ["--label", "paperpilot.security-experiment-run=" + run_id]
         result = subprocess.run(
             [
                 "docker",
@@ -78,6 +84,7 @@ def postgres_workspace(record_testsuite_property=lambda *args: None):
                 "POSTGRES_PASSWORD",
                 "--env",
                 "POSTGRES_DB=paperpilot_d_step2",
+                *labels,
                 IMAGE,
             ],
             env=environment,

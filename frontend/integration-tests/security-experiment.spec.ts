@@ -5,7 +5,7 @@ test('attack replay stays separate from the live protected business query', asyn
   await page.getByRole('button', { name: '进入演示' }).click()
   await page.locator('.project-card').filter({ hasText: 'D contract A' }).getByRole('button', { name: '进入工作台' }).click()
   await page.getByRole('link', { name: '查询与审计', exact: true }).click()
-  const panel = page.getByRole('region', { name: '攻防实验历史回放' })
+  const panel = page.getByRole('region', { name: '攻防实验演示' })
   await expect(panel).toContainText('完整配置：本次固定实验达到目标')
   const questions: string[] = []
   page.on('request', request => { if (request.method() === 'POST' && request.url().endsWith('/secure-queries')) questions.push(request.postDataJSON().question) })

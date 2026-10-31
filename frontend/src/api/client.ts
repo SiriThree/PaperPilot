@@ -131,6 +131,8 @@ export const api = {
   reports: (projectId: string) => client.GET('/api/v1/projects/{project_id}/reports', { params: readParams(projectId) }).then(unwrap).catch(normalizeError),
   versions: (projectId: string, reportId: string) => client.GET('/api/v1/projects/{project_id}/reports/{report_id}/versions', { params: { path: { project_id: projectId, report_id: reportId } } }).then(unwrap).catch(normalizeError),
   secureQuery: (projectId: string, question: string) => client.POST('/api/v1/projects/{project_id}/secure-queries', { params: params(projectId), body: { question } }).then(unwrap).catch(normalizeError),
+  securityExperiment: (projectId: string) => client.GET('/api/v1/projects/{project_id}/security-experiments', { params: readParams(projectId) }).then(unwrap).catch(normalizeError),
+  startSecurityExperiment: (projectId: string) => client.POST('/api/v1/projects/{project_id}/security-experiments', { params: params(projectId), body: {} }).then(unwrap).catch(normalizeError),
   audit: (projectId: string, query: { action?: string; decision?: string; actor_id?: string; since?: string; until?: string; offset: number; limit: number }) => client.GET('/api/v1/projects/{project_id}/audit-events', { params: { ...readParams(projectId), query } }).then(unwrap).catch(normalizeError),
 }
 

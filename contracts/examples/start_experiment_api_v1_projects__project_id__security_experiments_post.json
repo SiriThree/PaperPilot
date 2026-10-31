@@ -1,0 +1,49 @@
+{
+  "method": "post",
+  "path_template": "/api/v1/projects/{project_id}/security-experiments",
+  "mock": true,
+  "success": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/security-experiments",
+      "headers": {
+        "X-PaperPilot-Client": "web",
+        "Origin": "http://127.0.0.1:5173"
+      },
+      "body": {}
+    },
+    "response": {
+      "status": 202,
+      "content_type": "application/json",
+      "body": {
+        "enabled": true,
+        "busy": true,
+        "run_id": "141efee1-72b6-4acb-99e3-26f5f7ef0bd2",
+        "status": "running",
+        "phase": "starting",
+        "started_at": null,
+        "finished_at": null,
+        "error": null,
+        "report": null
+      }
+    }
+  },
+  "error": {
+    "request": {
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/security-experiments",
+      "headers": {
+        "X-PaperPilot-Client": "web",
+        "Origin": "http://127.0.0.1:5173"
+      },
+      "body": {}
+    },
+    "response": {
+      "status": 401,
+      "content_type": "application/json",
+      "body": {
+        "code": "UNAUTHENTICATED",
+        "message": "请先登录",
+        "request_id": "006a4585-44b5-4873-8602-b53232066f7a"
+      }
+    }
+  }
+}

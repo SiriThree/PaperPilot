@@ -359,6 +359,21 @@ def main():
     from security_contracts.attack_cases import attacks, normal_queries
     from export_real_security_evidence import code_fingerprint
 
+    try:
+        subprocess.run(
+            ["docker", "info", "--format", "{{.ServerVersion}}"],
+            check=True,
+            capture_output=True,
+            timeout=20,
+        )
+    except (OSError, subprocess.SubprocessError):
+        print("EXPERIMENT_ERROR:DOCKER_UNAVAILABLE", flush=True)
+        print("Docker 不可用，请先启动 Docker Desktop 的 Linux 引擎。", flush=True)
+        return 2
+    if subprocess.run(["docker", "image", "inspect", IMAGE], capture_output=True, timeout=20).returncode:
+        print("EXPERIMENT_ERROR:DOCKER_IMAGE_MISSING", flush=True)
+        print(f"请先准备实验镜像：docker pull {IMAGE}", flush=True)
+        return 2
     fingerprint = code_fingerprint()
     runner_sha256 = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     dataset = {"attacks": attacks("00000000-0000-0000-0000-000000000002"), "normal": normal_queries()}
@@ -375,6 +390,7 @@ def main():
     report = {
         "schema_version": 1,
         "scope": "disposable_postgres_security_experiment",
+        "run_id": os.getenv("PAPERPILOT_EXPERIMENT_RUN_ID"),
         "generated_at": datetime.now(UTC).isoformat(),
         "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
         "worktree_dirty": bool(
@@ -434,4 +450,9 @@ def main():
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        print("EXPERIMENT_ERROR:DOCKER_CONTAINER_FAILED", flush=True)
+        print("Docker 临时容器启动或运行失败，请检查 Linux 引擎、镜像、端口及资源。", flush=True)
+        raise SystemExit(2) from None

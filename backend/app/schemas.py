@@ -20,6 +20,22 @@ class ErrorResponse(Schema):
     details: dict[str, str] | None = None
 
 
+class SecurityExperimentStart(Schema):
+    """No client SQL, shell options, paths or database credentials are accepted."""
+
+
+class SecurityExperimentState(Schema):
+    enabled: bool
+    busy: bool = False
+    run_id: UUID | None = None
+    status: Literal["idle", "running", "succeeded", "failed"] = "idle"
+    phase: Literal["starting", "no_gateway", "gateway_only", "gateway_and_database", "finished"] = "starting"
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    error: str | None = None
+    report: dict | None = None
+
+
 class User(Schema):
     user_id: UUID
     username: str

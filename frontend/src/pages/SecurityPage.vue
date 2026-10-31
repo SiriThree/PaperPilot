@@ -91,7 +91,7 @@ function eventTime(value: string) {
       </template>
     </section>
     <SecurityEvidencePanel id="security-evidence" :real="!gatewayMock" />
-    <SecurityExperimentPanel />
+    <SecurityExperimentPanel :project-id="pid" :owner="owner" />
     <el-dialog v-model="auditDetailOpen" title="审计操作详情" width="720px" class="audit-detail-dialog">
       <template v-if="selectedAudit">
         <p class="audit-detail-title">{{ actionLabels[selectedAudit.action] || selectedAudit.action }}</p>

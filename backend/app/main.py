@@ -178,6 +178,8 @@ def create_app(
                 app.state.scoped_worker_tasks = isolated_tasks
             yield
         finally:
+            if app.state.security_experiments is not None:
+                await app.state.security_experiments.close()
             for task in isolated_tasks:
                 task.cancel()
             for task in isolated_tasks:
@@ -233,6 +235,11 @@ def create_app(
         else "Development contracts only. No real AI, durable database or SQL security gateway.",
     )
     app.state.settings = settings
+    app.state.security_experiments = None
+    if settings.security_experiments:
+        from app.security.experiment import LocalSecurityExperiments
+
+        app.state.security_experiments = LocalSecurityExperiments()
     app.state.adapters = adapters
     app.state.data_binding = data_binding
     app.state.restricted_executor = restricted_executor

@@ -8,7 +8,7 @@ async function open(page: Page) {
   await expect(page.getByRole('heading', { name: '你的研究项目' })).toBeVisible()
   await page.locator('.project-card').first().getByRole('button', { name: '进入工作台' }).click()
   await page.getByRole('link', { name: '查询与审计', exact: true }).click()
-  return page.getByRole('region', { name: '攻防实验历史回放' })
+  return page.getByRole('region', { name: '攻防实验演示' })
 }
 
 for (const width of [390, 1440]) {
@@ -122,4 +122,62 @@ test('a genuine measured target miss is shown as failure with its samples', asyn
   await expect(panel.locator('.experiment-verdict')).toHaveClass(/experiment-fail/)
   await panel.getByText('测量口径、来源与现场复跑', { exact: true }).click()
   await expect(panel).toContainText('目标 ≤200 ms')
+})
+
+test('live run hides history, reports progress and downloads only its fresh result', async ({ page }) => {
+  const runId = 'a0123456-0123-4123-8123-012345678901', startedAt = new Date().toISOString()
+  let started = false, finished = false, posts = 0
+  await page.route('**/security-experiments', async route => {
+    if (route.request().method() === 'POST') { expect(route.request().postDataJSON()).toEqual({}); posts++; started = true }
+    const report = fixture(); report.run_id = runId; report.generated_at = new Date().toISOString()
+    await route.fulfill({ json: { enabled: true, busy: started && !finished, status: !started ? 'idle' : finished ? 'succeeded' : 'running', phase: finished ? 'finished' : 'gateway_only', run_id: started ? runId : null, started_at: startedAt, report: finished ? report : null } })
+  })
+  const panel = await open(page)
+  await expect(panel).toContainText('历史结果回放')
+  await panel.getByRole('button', { name: '开始实时实验', exact: true }).click()
+  await expect(panel).toContainText('阶段 2/3')
+  await expect(panel.locator('.experiment-verdict')).toHaveCount(0)
+  finished = true
+  await panel.getByRole('button', { name: '查询运行进度', exact: true }).click()
+  await expect(panel).toContainText('完整配置：本次固定实验达到目标')
+  await expect(panel).toContainText(runId)
+  await panel.getByText('测量口径、来源与现场复跑', { exact: true }).click()
+  const download = page.waitForEvent('download')
+  await panel.getByRole('button', { name: '下载当前结果 JSON', exact: true }).click()
+  const file = await download
+  expect(JSON.parse(readFileSync((await file.path())!, 'utf8')).run_id).toBe(runId)
+  expect(posts).toBe(1)
+})
+
+for (const kind of ['docker-failed', 'wrong-result']) {
+  test(`live ${kind} never falls back to a passing historical report`, async ({ page }) => {
+    const runId = 'b0123456-0123-4123-8123-012345678902'
+    let started = false, finished = false
+    await page.route('**/security-experiments', async route => {
+      if (route.request().method() === 'POST') started = true
+      await route.fulfill({ json: { enabled: true, busy: started && !finished, status: !started ? 'idle' : !finished ? 'running' : kind === 'docker-failed' ? 'failed' : 'succeeded', run_id: started ? runId : null, phase: 'starting', started_at: new Date().toISOString(), error: kind === 'docker-failed' ? 'DOCKER_CONTAINER_FAILED' : null, report: finished ? fixture() : null } })
+    })
+    const panel = await open(page)
+    await expect(panel).toContainText('完整配置：本次固定实验达到目标')
+    await panel.getByRole('button', { name: '开始实时实验', exact: true }).click()
+    finished = true
+    await panel.getByRole('button', { name: '查询运行进度', exact: true }).click()
+    await expect(panel.locator('.experiment-live-error')).toBeVisible()
+    if (kind === 'docker-failed') await expect(panel).toContainText('DOCKER_CONTAINER_FAILED')
+    await expect(panel.locator('.experiment-verdict')).toHaveCount(0)
+    await expect(panel).toContainText('历史通过记录不会作为本次结果展示')
+  })
+}
+
+test('opening an active run resumes status polling without starting another experiment', async ({ page }) => {
+  let posts = 0
+  await page.route('**/security-experiments', async route => {
+    if (route.request().method() === 'POST') posts++
+    await route.fulfill({ json: { enabled: true, busy: true, status: 'running', run_id: 'c0123456-0123-4123-8123-012345678903', phase: 'gateway_and_database', started_at: new Date().toISOString() } })
+  })
+  const panel = await open(page)
+  await expect(panel).toContainText('阶段 3/3')
+  await expect(panel.locator('.experiment-verdict')).toHaveCount(0)
+  await expect(panel.getByRole('button', { name: '实验运行中' })).toBeDisabled()
+  expect(posts).toBe(0)
 })
