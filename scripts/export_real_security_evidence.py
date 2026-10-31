@@ -19,7 +19,7 @@ GROUPS = {
     "database_scope": ("PostgreSQL 项目隔离与统计契约", ["test_security_postgres_contract.py"]),
     "audit_identity": (
         "关键审计、身份生命周期及业务降权",
-        ["test_security_identities_postgres.py", "test_business_login.py"],
+        ["test_security_identities_postgres.py", "test_business_login.py", "test_password_auth_postgres.py"],
     ),
     "recovery_integration": (
         "持久化索引、任务恢复及 A/C/D 联调",
@@ -50,6 +50,11 @@ def code_fingerprint():
             Path(__file__),
             ROOT / "scripts/verify_integration.py",
             ROOT / "scripts/reindex_paper.py",
+            ROOT / "scripts/local_deployment.py",
+            ROOT / "scripts/local_operations.py",
+            ROOT / "scripts/manage_accounts.py",
+            ROOT / "scripts/manage_security.py",
+            ROOT / "compose.local.yaml",
             ROOT / "pyproject.toml",
             ROOT / "frontend/src/components/SecurityEvidencePanel.vue",
             ROOT / "frontend/src/pages/SecurityPage.vue",

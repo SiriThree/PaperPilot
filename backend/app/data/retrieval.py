@@ -82,6 +82,32 @@ class RetrievalSnapshot:
                 self.check_deadline()
                 yield self.key(row), row["title"] + "\n" + row["excerpt"]
 
+    def lexical_versions(self):
+        """Only current, authorized paper versions; titles participate in lexical identity."""
+        self._budget()
+        rows = self.connection.execute(self.papers_sql + " ORDER BY pp.paper_id", self.values).fetchall()
+        return [
+            (row["project_id"], row["paper_id"], row["active_process_task_id"], row["title"])
+            for row in rows
+            if row["active_process_task_id"] is not None
+        ]
+
+    def lexical_documents(self, paper_ids):
+        """Read cache misses once, ordered for per-paper incremental index construction."""
+        if not paper_ids:
+            return
+        self._budget()
+        with self.connection.cursor(name="lexical_" + uuid4().hex) as cursor:
+            cursor.itersize = 256
+            cursor.execute(
+                "SELECT * FROM (" + self.active_sql + ") a WHERE paper_id=ANY(%s::uuid[])"
+                " ORDER BY paper_id,page_number,chunk_id",
+                self.values + (list(paper_ids),),
+            )
+            for row in cursor:
+                self.check_deadline()
+                yield self.key(row), row["title"] + "\n" + row["excerpt"]
+
     def nearest(self, model, vector, threshold, limit):
         model = EmbeddingModel.model_validate(model)
         if (

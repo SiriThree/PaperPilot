@@ -30,6 +30,10 @@ class AISettings:
     chunk_strategy: str = "auto"
     chunk_tokens: int = 384
     chunk_token_overlap: int = 48
+    lexical_backend: str = "inverted"
+    lexical_cache_mb: int = 256
+    query_embedding_worker: str = "resident"
+    embedding_queue_size: int = 16
 
     @property
     def active_chunk_strategy(self):
@@ -42,6 +46,14 @@ class AISettings:
         return self.chunk_strategy
 
     def __post_init__(self):
+        if self.lexical_backend not in {"streaming", "inverted"}:
+            raise ValueError("Unsupported lexical backend")
+        if type(self.lexical_cache_mb) is not int or not 1 <= self.lexical_cache_mb <= 2048:
+            raise ValueError("Invalid lexical cache budget")
+        if self.query_embedding_worker not in {"oneshot", "resident"}:
+            raise ValueError("Unsupported query embedding worker")
+        if type(self.embedding_queue_size) is not int or not 1 <= self.embedding_queue_size <= 256:
+            raise ValueError("Invalid embedding queue budget")
         if self.embedding_revision is not None and (
             not self.embedding_revision.strip() or len(self.embedding_revision) > 200
         ):
@@ -102,10 +114,12 @@ class AISettings:
 
     @classmethod
     def from_env(cls):
+        from app.secrets import read_secret
+
         try:
             return cls(
                 base_url=os.environ["PAPERPILOT_AI_BASE_URL"].rstrip("/"),
-                api_key=os.environ["PAPERPILOT_AI_API_KEY"],
+                api_key=read_secret("PAPERPILOT_AI_API_KEY"),
                 chat_model=os.environ["PAPERPILOT_AI_CHAT_MODEL"],
                 embedding_model=os.environ["PAPERPILOT_AI_EMBEDDING_MODEL"],
                 embedding_dimensions=int(os.environ["PAPERPILOT_AI_EMBEDDING_DIMENSIONS"]),
@@ -113,11 +127,18 @@ class AISettings:
                 chunk_strategy=os.getenv("PAPERPILOT_AI_CHUNK_STRATEGY", "auto"),
                 chunk_tokens=int(os.getenv("PAPERPILOT_AI_CHUNK_TOKENS", "384")),
                 chunk_token_overlap=int(os.getenv("PAPERPILOT_AI_CHUNK_TOKEN_OVERLAP", "48")),
+                lexical_backend=os.getenv("PAPERPILOT_AI_LEXICAL_BACKEND", "inverted"),
+                lexical_cache_mb=int(os.getenv("PAPERPILOT_AI_LEXICAL_CACHE_MB", "256")),
+                query_embedding_worker=os.getenv("PAPERPILOT_AI_QUERY_EMBEDDING_WORKER", "resident"),
+                embedding_queue_size=int(os.getenv("PAPERPILOT_AI_EMBEDDING_QUEUE_SIZE", "16")),
                 timeout_seconds=float(os.getenv("PAPERPILOT_AI_TIMEOUT_SECONDS", "45")),
                 min_similarity=float(os.getenv("PAPERPILOT_AI_MIN_SIMILARITY", "0.2")),
                 embedding_backend=os.getenv("PAPERPILOT_AI_EMBEDDING_BACKEND", "remote"),
                 embedding_base_url=os.getenv("PAPERPILOT_AI_EMBEDDING_BASE_URL") or None,
-                embedding_api_key=os.getenv("PAPERPILOT_AI_EMBEDDING_API_KEY") or None,
+                embedding_api_key=read_secret("PAPERPILOT_AI_EMBEDDING_API_KEY")
+                if os.getenv("PAPERPILOT_AI_EMBEDDING_API_KEY")
+                or os.getenv("PAPERPILOT_AI_EMBEDDING_API_KEY_FILE")
+                else None,
                 local_model_dir=Path(os.environ["PAPERPILOT_AI_LOCAL_MODEL_DIR"])
                 if os.getenv("PAPERPILOT_AI_LOCAL_MODEL_DIR")
                 else None,

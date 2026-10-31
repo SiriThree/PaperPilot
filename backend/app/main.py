@@ -153,6 +153,9 @@ def create_app(
         worker = None
         isolated_tasks = []
         try:
+            ai_start = getattr(adapters.ai, "astart", None)
+            if callable(ai_start):
+                await ai_start()
             if app.state.auth_boundary is not None:
                 app.state.auth_boundary.ready()
             if scoped_system_audit is not None and not scoped_system_audit.ready():
@@ -191,6 +194,12 @@ def create_app(
                 worker.cancel()
                 with suppress(asyncio.CancelledError):
                     await worker
+            ai_close = getattr(adapters.ai, "aclose", None)
+            if callable(ai_close):
+                try:
+                    await ai_close()
+                except Exception:
+                    logger.warning("ai_adapter_shutdown_failed")
             for scoped_worker in reversed(scoped_workers):
                 try:
                     scoped_worker.close()
@@ -338,6 +347,13 @@ def create_app(
                 and not (identity_path or scoped_read or scoped_upload or scoped_report)
             ):
                 denied = (503, "DATA_UNAVAILABLE", "项目隔离测试模式暂不支持此操作")
+        if (
+            settings.auth_mode == "credentials"
+            and settings.environment == "development"
+            and request.url.scheme != "https"
+            and request.url.path != "/api/v1/health"
+        ):
+            denied = (403, "HTTPS_REQUIRED", "密码认证要求 HTTPS 连接")
         if request.method not in {"GET", "HEAD", "OPTIONS"}:
             origin = request.headers.get("Origin")
             if settings.auth_mode == "credentials":

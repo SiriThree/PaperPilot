@@ -227,6 +227,7 @@ npm.cmd --prefix frontend run test:e2e
 - [300 篇真实 RAG 文献、入库核验与后续压测输入](docs/rag-300-corpus.md)
 - [句段边界与 token 预算切块 V2、真实 300 篇对照](docs/sentence-token-chunking.md)
 - [全库检索、1000 片段门槛修复与真实查询核验](docs/full-corpus-retrieval.md)
+- [查询加速、词频索引、常驻模型与四组对照](docs/retrieval-acceleration.md)
 - [C/D 全方法可执行示例与异常](contracts/module-port-examples.json)
 - [数据库中立接入、测试与待确认事项](docs/persistence-integration.md)、[历史 SQLite 实验](docs/persistence.md)
 - [任务恢复、未知提交与重复提交边界](docs/task-recovery.md)

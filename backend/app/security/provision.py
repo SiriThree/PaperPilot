@@ -6,8 +6,11 @@ from uuid import UUID
 
 
 def _name(role):
-    if not isinstance(role, str) or re.fullmatch(r"pp_(reader|audit|business)_[a-z0-9_]{1,48}", role) is None:
-        raise ValueError("Use a pp_reader_, pp_audit_ or pp_business_ managed login name")
+    if (
+        not isinstance(role, str)
+        or re.fullmatch(r"pp_(reader|audit|business|auth)_[a-z0-9_]{1,48}", role) is None
+    ):
+        raise ValueError("Use a pp_reader_, pp_audit_, pp_business_ or pp_auth_ managed login name")
 
 
 def _idle_admin(connection):
@@ -66,17 +69,61 @@ def upgrade_business_registry(connection):
         )
 
 
-BUSINESS_READ_TABLES = "users,projects,project_members,papers,project_papers,topics,paper_topics,chunks,embedding_models,chunk_embeddings,process_indexes,tasks,task_papers,task_attempts,task_results,result_sources,evidence_fields,reports,report_versions,report_version_sources,outbox_events,idempotency_records,schema_migrations"
+BUSINESS_READ_TABLES = "projects,project_members,papers,project_papers,topics,paper_topics,chunks,embedding_models,chunk_embeddings,process_indexes,tasks,task_papers,task_attempts,task_results,result_sources,evidence_fields,reports,report_versions,report_version_sources,outbox_events,idempotency_records,schema_migrations"
 BUSINESS_INSERT_TABLES = "projects,project_members,papers,project_papers,chunks,embedding_models,chunk_embeddings,process_indexes,tasks,task_papers,task_attempts,task_results,result_sources,evidence_fields,reports,report_versions,report_version_sources,audit_events,outbox_events,idempotency_records"
 
 
-def create_login(connection, role, password, *, project_id=None, business=False):
+def install_password_auth(connection):
+    """Explicit B credential lock installation; no alternate account/session tables."""
+    from psycopg import sql
+    import hashlib
+
+    _idle_admin(connection)
+    database = connection.execute("SELECT current_database()").fetchone()[0]
+    owner = "pp_auth_lock_" + hashlib.sha256(database.encode()).hexdigest()[:16]
+    with connection.transaction():
+        connection.execute(
+            files("app.security")
+            .joinpath("migrations/004_auth_lock_candidate.sql")
+            .read_text(encoding="utf-8")
+        )
+        connection.execute(
+            sql.SQL(
+                "CREATE ROLE {} NOLOGIN NOSUPERUSER NOBYPASSRLS NOINHERIT NOCREATEDB NOCREATEROLE NOREPLICATION"
+            ).format(sql.Identifier(owner))
+        )
+        connection.execute(sql.SQL("GRANT USAGE ON SCHEMA public TO {}").format(sql.Identifier(owner)))
+        connection.execute(
+            sql.SQL("GRANT USAGE,CREATE ON SCHEMA paperpilot_auth TO {}").format(sql.Identifier(owner))
+        )
+        connection.execute(
+            sql.SQL(
+                "GRANT SELECT(user_id,password_hash,disabled),UPDATE(password_hash) ON public.users TO {}"
+            ).format(sql.Identifier(owner))
+        )
+        connection.execute(
+            sql.SQL("ALTER FUNCTION paperpilot_auth.lock_credential(uuid) OWNER TO {}").format(
+                sql.Identifier(owner)
+            )
+        )
+        connection.execute(
+            sql.SQL("REVOKE CREATE ON SCHEMA paperpilot_auth FROM {}").format(sql.Identifier(owner))
+        )
+        connection.execute(
+            files("app.security")
+            .joinpath("migrations/005_credentials_registry.sql")
+            .read_text(encoding="utf-8")
+        )
+    return owner
+
+
+def create_login(connection, role, password, *, project_id=None, business=False, auth=False):
     from psycopg import sql
 
     _name(role)
     _idle_admin(connection)
-    kind = "business" if business else "reader" if project_id is not None else "audit"
-    if business and project_id is not None:
+    kind = "auth" if auth else "business" if business else "reader" if project_id is not None else "audit"
+    if (business and auth) or ((business or auth) and project_id is not None):
         raise ValueError("Business login cannot have a reader binding")
     if not role.startswith(f"pp_{kind}_") or (project_id is not None and type(project_id) is not UUID):
         raise ValueError("Login kind and project binding do not match")
@@ -112,6 +159,14 @@ def create_login(connection, role, password, *, project_id=None, business=False)
                 "GRANT SELECT(user_id) ON public.users TO {}",
                 "GRANT SELECT(project_id) ON public.projects TO {}",
             ]
+        elif kind == "auth":
+            grants = [
+                "GRANT USAGE ON SCHEMA public,paperpilot_auth TO {}",
+                "GRANT SELECT(user_id,username,password_hash,disabled) ON public.users TO {}",
+                "GRANT SELECT,INSERT,UPDATE ON public.auth_sessions,public.auth_login_limits TO {}",
+                "GRANT INSERT ON public.audit_events TO {}",
+                "GRANT EXECUTE ON FUNCTION paperpilot_auth.lock_credential(uuid) TO {}",
+            ]
         else:
             grants = [
                 "GRANT USAGE ON SCHEMA public TO {}",
@@ -126,6 +181,10 @@ def create_login(connection, role, password, *, project_id=None, business=False)
                 + " TO {}",
                 "GRANT UPDATE ON public.project_papers,public.tasks,public.task_attempts,public.reports,public.outbox_events TO {}",
                 "GRANT DELETE ON public.project_members TO {}",
+                "GRANT SELECT(user_id,username,display_name) ON public.users TO {}",
+                "GRANT USAGE ON SCHEMA paperpilot_audit TO {}",
+                "GRANT SELECT ON paperpilot_audit.project_events TO {}",
+                "GRANT EXECUTE ON FUNCTION paperpilot_audit.event_fingerprint(uuid) TO {}",
             ]
         for statement in grants:
             connection.execute(sql.SQL(statement).format(sql.Identifier(role)))
@@ -193,6 +252,13 @@ def revoke_login(connection, role):
                 "REVOKE SELECT(event_id,event_fingerprint) ON public.audit_events FROM {}",
                 "REVOKE SELECT(user_id) ON public.users FROM {}",
                 "REVOKE SELECT(project_id) ON public.projects FROM {}",
+            ]
+        elif kind == "auth":
+            statements = [
+                "REVOKE ALL ON public.auth_sessions,public.auth_login_limits,public.audit_events FROM {}",
+                "REVOKE SELECT(user_id,username,password_hash,disabled) ON public.users FROM {}",
+                "REVOKE EXECUTE ON FUNCTION paperpilot_auth.lock_credential(uuid) FROM {}",
+                "REVOKE ALL ON SCHEMA paperpilot_auth FROM {}",
             ]
         else:
             statements = [

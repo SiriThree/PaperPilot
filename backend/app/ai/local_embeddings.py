@@ -36,19 +36,85 @@ class LocalEmbeddings:
         except Exception:
             raise RuntimeError("Local embedding model/dependencies not prepared; startup refused") from None
         self.settings, self.root = settings, root
+        self.query_worker = None
         self.token_budget = None
         if settings.active_chunk_strategy == "sentence-token-v2":
             from app.ai.token_budget import TokenBudget
 
             self.token_budget = TokenBudget(root)
 
-    async def embed(self, texts):
+    def _guard(self, texts):
         if self.token_budget is not None:
             for text in texts:
                 if self.token_budget.count(text) > self.token_budget.max_tokens:
                     raise AppError(
                         413, "AI_EMBEDDING_INPUT_LIMIT", "嵌入输入超过模型 token 上限，请缩小输入范围"
                     )
+
+    def _normalize(self, vector):
+        if (
+            not isinstance(vector, list)
+            or len(vector) != self.settings.embedding_dimensions
+            or any(type(v) not in {int, float} or not math.isfinite(v) for v in vector)
+        ):
+            raise invalid_response()
+        norm = math.hypot(*vector)
+        if not norm or not math.isfinite(norm):
+            raise invalid_response()
+        return [v / norm for v in vector]
+
+    async def _spawn_query_worker(self):
+        return await asyncio.create_subprocess_exec(
+            sys.executable,
+            str(Path(__file__).with_name("embedding_worker.py")),
+            self.settings.embedding_model,
+            str(self.root),
+            "--resident",
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL,
+            limit=2 * 1024**2,
+            env={
+                **os.environ,
+                "HF_HUB_OFFLINE": "1",
+                "HF_HUB_DISABLE_TELEMETRY": "1",
+                "OPENBLAS_NUM_THREADS": "1",
+                "OMP_NUM_THREADS": "2",
+                "TOKENIZERS_PARALLELISM": "false",
+            },
+        )
+
+    def _query_worker(self):
+        if self.query_worker is None:
+            from app.ai.resident_embeddings import ResidentEmbeddingWorker
+
+            self.query_worker = ResidentEmbeddingWorker(
+                self._spawn_query_worker,
+                self.settings.timeout_seconds,
+                self.settings.embedding_queue_size,
+                self._normalize,
+            )
+        return self.query_worker
+
+    async def astart(self):
+        if self.settings.query_embedding_worker == "resident":
+            try:
+                await self._query_worker().start()
+            except Exception:
+                raise RuntimeError("Local query embedding worker failed; startup refused") from None
+
+    async def aclose(self):
+        if self.query_worker is not None:
+            await self.query_worker.aclose()
+
+    async def embed_query(self, text):
+        self._guard([text])
+        if self.settings.query_embedding_worker == "oneshot":
+            return (await self.embed([text]))[0]
+        return await self._query_worker().query(text)
+
+    async def embed(self, texts):
+        self._guard(texts)
         try:
             process = await asyncio.create_subprocess_exec(
                 sys.executable,
