@@ -1,0 +1,195 @@
+{
+  "version": "rag300-sentence-v2",
+  "verified_at": "2026-10-29T18:25:33.667409+00:00",
+  "code_commit": "00c9859000f1ff30cfe8577249d80ab5be0e2473",
+  "catalog_sha256": "a63a06a1d04405152afab944ee6d187b02f5f6e347cbdacfc25d61d7f19930ad",
+  "domain": "Retrieval-Augmented Generation in NLP",
+  "paper_count": 300,
+  "distinct_arxiv_ids": 300,
+  "distinct_pdf_sha256": 300,
+  "years": {
+    "2020": 1,
+    "2021": 2,
+    "2022": 2,
+    "2023": 17,
+    "2024": 252,
+    "2025": 26
+  },
+  "pdf_bytes": 514105919,
+  "uploaded_pdf_bytes": 514105919,
+  "pages": 5031,
+  "pages_with_text": 5030,
+  "chunks": 20986,
+  "synthetic_chunks": 0,
+  "embeddings": 20986,
+  "min_dimensions": 512,
+  "max_dimensions": 512,
+  "process_indexes": 300,
+  "tasks": [
+    {
+      "kind": "process",
+      "status": "succeeded",
+      "count": 300
+    }
+  ],
+  "task_attempts": [
+    {
+      "status": "succeeded",
+      "error_code": null,
+      "count": 300
+    }
+  ],
+  "packages": {
+    "pypdf": "6.21.3",
+    "fastembed": "0.9.1",
+    "onnxruntime": "1.31.1",
+    "psycopg": "3.3.6"
+  },
+  "embedding_models": [
+    {
+      "provider": "fastembed",
+      "model_name": "BAAI/bge-small-zh-v1.5",
+      "revision": "46fbe35fd4374a00fee7de77dfddaeb6dd6a2c59",
+      "dimensions": 512,
+      "distance_metric": "cosine"
+    }
+  ],
+  "chunking": {
+    "strategy": "sentence-token-v2",
+    "pysbd": "0.3.4",
+    "tokenizer_sha256": "7be03536eed91e4dcb928088e15f7286977603cc59b0be7d54a3c37fe645b86a",
+    "target_tokens": 384,
+    "overlap_tokens": 48,
+    "max_input_tokens": 512,
+    "max_excerpt_chars": 4000
+  },
+  "postgresql": "16.15",
+  "pgvector": "0.8.7",
+  "schema_version": 8,
+  "database_bytes": 168254487,
+  "relations": [
+    {
+      "relname": "audit_events",
+      "bytes": 1138688
+    },
+    {
+      "relname": "auth_login_limits",
+      "bytes": 49152
+    },
+    {
+      "relname": "auth_sessions",
+      "bytes": 98304
+    },
+    {
+      "relname": "authors",
+      "bytes": 24576
+    },
+    {
+      "relname": "chunk_embeddings",
+      "bytes": 61997056
+    },
+    {
+      "relname": "chunks",
+      "bytes": 50069504
+    },
+    {
+      "relname": "embedding_models",
+      "bytes": 65536
+    },
+    {
+      "relname": "evidence_fields",
+      "bytes": 24576
+    },
+    {
+      "relname": "idempotency_records",
+      "bytes": 671744
+    },
+    {
+      "relname": "outbox_events",
+      "bytes": 638976
+    },
+    {
+      "relname": "outbox_requeue_history",
+      "bytes": 24576
+    },
+    {
+      "relname": "paper_authors",
+      "bytes": 16384
+    },
+    {
+      "relname": "paper_topics",
+      "bytes": 8192
+    },
+    {
+      "relname": "papers",
+      "bytes": 163840
+    },
+    {
+      "relname": "process_indexes",
+      "bytes": 286720
+    },
+    {
+      "relname": "project_members",
+      "bytes": 65536
+    },
+    {
+      "relname": "project_papers",
+      "bytes": 352256
+    },
+    {
+      "relname": "projects",
+      "bytes": 32768
+    },
+    {
+      "relname": "report_version_sources",
+      "bytes": 24576
+    },
+    {
+      "relname": "report_versions",
+      "bytes": 49152
+    },
+    {
+      "relname": "reports",
+      "bytes": 16384
+    },
+    {
+      "relname": "result_sources",
+      "bytes": 29761536
+    },
+    {
+      "relname": "schema_migrations",
+      "bytes": 24576
+    },
+    {
+      "relname": "task_attempts",
+      "bytes": 204800
+    },
+    {
+      "relname": "task_papers",
+      "bytes": 106496
+    },
+    {
+      "relname": "task_results",
+      "bytes": 12763136
+    },
+    {
+      "relname": "tasks",
+      "bytes": 327680
+    },
+    {
+      "relname": "topics",
+      "bytes": 32768
+    },
+    {
+      "relname": "users",
+      "bytes": 49152
+    }
+  ],
+  "filesystem_free_bytes": 120778096640,
+  "filesystem_total_bytes": 421606629376,
+  "limitations": [
+    "Not a relevance benchmark: questions have no human relevance judgments.",
+    "Current retrieval rejects more than 1000 candidate chunks (AI_CORPUS_LIMIT).",
+    "No full-corpus latency or throughput result is claimed."
+  ]
+}

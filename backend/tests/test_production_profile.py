@@ -26,6 +26,7 @@ def configuration():
 
 def test_explicit_local_production_profile_is_valid():
     configuration().validate()
+    replace(configuration(), c_mode="real").validate()
 
 
 @pytest.mark.parametrize(
@@ -152,3 +153,34 @@ def test_production_model_uses_explicit_composition_and_keeps_ast_rejection(monk
     monkeypatch.setenv("PAPERPILOT_SQL_GENERATOR", "model")
     with pytest.raises(ValueError, match="one composition"):
         build_security(MockData(), candidate_generator=gateway._candidate_generator)
+
+
+def test_research_model_verifies_prepared_files_and_preserves_explicit_local_embedding(tmp_path):
+    import hashlib
+    import json
+    from app.production import ResearchModel
+
+    weights = tmp_path / "model.onnx"
+    weights.write_bytes(b"fixture weights")
+    raw = json.dumps(
+        {
+            "model": "BAAI/bge-small-zh-v1.5",
+            "revision": "a" * 40,
+            "dimensions": 512,
+            "files_sha256": {"model.onnx": hashlib.sha256(weights.read_bytes()).hexdigest()},
+        }
+    ).encode()
+    (tmp_path / "model-manifest.json").write_bytes(raw)
+    config = ResearchModel(
+        chat={"base_url": "https://model.invalid/v1", "api_key": "test-secret", "chat_model": "test-chat"},
+        embedding_revision="a" * 40,
+        embedding_manifest_sha256=hashlib.sha256(raw).hexdigest(),
+    )
+    config.verify_files(tmp_path)
+    settings = config.settings()
+    assert settings.active_chunk_strategy == "sentence-token-v2" and settings.embedding_backend == "fastembed"
+    assert settings.embedding_dimensions == 512 and settings.timeout_seconds == 90
+    assert "test-secret" not in config.model_dump_json()
+    weights.write_bytes(b"changed")
+    with pytest.raises(ValueError, match="mismatch"):
+        config.verify_files(tmp_path)

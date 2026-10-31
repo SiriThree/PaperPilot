@@ -1,0 +1,50 @@
+import { test, expect } from '@playwright/test'
+import { readFileSync } from 'node:fs'
+
+test('real literature retrieval, original sources, saved evidence and report work in the HTTPS project', async ({ page }, testInfo) => {
+  const accounts = JSON.parse(readFileSync('../.runtime/production/acceptance-secrets.json', 'utf8'))
+  const corpus = JSON.parse(readFileSync('../.runtime/production/literature/corpus-state.json', 'utf8'))
+  const project = corpus.projects['rag-evidence']
+  await page.goto('/')
+  await page.getByLabel('账号', { exact: true }).fill(accounts.owner.username)
+  await page.getByLabel('密码', { exact: true }).fill(accounts.owner.password)
+  await page.getByRole('button', { name: '登录', exact: true }).click()
+  await page.locator('.project-card').filter({ hasText: project.name }).getByRole('button', { name: '进入工作台' }).click()
+  await page.getByRole('link', { name: '研究', exact: true }).click()
+  await expect(page.locator('.desk-paper')).toHaveCount(3)
+  await page.getByRole('button', { name: `选择文献 ${project.papers.rag.title}`, exact: true }).click()
+  await expect(page.getByTestId('active-source')).toBeVisible()
+  await page.getByRole('tab', { name: '检索结果', exact: true }).click()
+  await page.getByLabel('检索问题', { exact: true }).fill('retrieval augmented generation')
+  const search = page.waitForResponse(response => response.url().endsWith('/search') && response.request().method() === 'POST', { timeout: 100000 })
+  await page.getByRole('button', { name: '检索', exact: true }).click()
+  const result = await (await search).json()
+  expect(result.mock).toBe(false)
+  expect(result.items.length).toBeGreaterThan(0)
+  expect(result.items.every((hit: { source: { synthetic: boolean } }) => !hit.source.synthetic)).toBe(true)
+  await page.locator('.source-hit').first().getByRole('button', { name: /^展开来源/ }).click()
+  await expect(page.getByTestId('active-source')).toBeVisible()
+  await page.getByRole('button', { name: `选择文献 ${project.papers.rag.title}`, exact: true }).click()
+  await page.getByRole('tab', { name: '证据', exact: true }).click()
+  await page.getByRole('button', { name: '查看已有证据', exact: true }).click()
+  await expect(page.locator('.evidence-fields')).toBeVisible()
+  await expect(page.locator('.evidence-fields .el-collapse-item')).toHaveCount(5)
+  await page.screenshot({ path: testInfo.outputPath('production-real-literature.png') })
+  await page.getByRole('tab', { name: '报告', exact: true }).click()
+  await page.locator('.saved-report-row').filter({ hasText: 'RAG 文献模型验收' }).click()
+  await expect(page.getByLabel('报告正文', { exact: true })).not.toHaveValue('')
+  await expect(page.getByRole('link', { name: '导出当前版本文本', exact: true })).toBeVisible()
+  await page.screenshot({ path: testInfo.outputPath('production-research-report.png') })
+  await page.getByRole('link', { name: '查询与审计', exact: true }).click()
+  await page.getByLabel('统计问题').fill('按年份统计论文数量')
+  await page.getByRole('button', { name: '提交查询', exact: true }).click()
+  await expect(page.getByRole('region', { name: '查询结果' })).toContainText('allowed / executed', { timeout: 100000 })
+})
+
+test.afterEach(async ({ page }) => {
+  if (!page.url().startsWith(process.env.PAPERPILOT_PRODUCTION_URL!)) return
+  await page.evaluate(async () => {
+    const token = document.cookie.split('; ').find(value => value.startsWith('pp_csrf='))?.slice('pp_csrf='.length)
+    if (token) await fetch('/api/v1/auth/logout', { method: 'POST', headers: { 'X-CSRF-Token': decodeURIComponent(token) } })
+  })
+})

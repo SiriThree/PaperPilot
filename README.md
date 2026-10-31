@@ -27,7 +27,7 @@
 
 ## 当前运行边界
 
-**开发模式可显式选择 Mock。成员 D 另提供[本机 HTTPS 生产安全配置](docs/production-security-deployment.md)：PostgreSQL 凭据认证、独立数据库身份与原生统计查询，可显式接入统计 SQL 模型；C 文献处理 AI 仍禁用。默认开发入口与隔离候选执行器的限制保留。历史 SQLite 实验保留。**
+**开发模式可显式选择 Mock。另提供[本机 HTTPS 生产配置](docs/production-security-deployment.md)：PostgreSQL 凭据认证、独立数据库身份、D 原生统计与模型 SQL，以及 C 的真实 PDF、检索和生成。[当前 C/D 验收](docs/member-c-d-https-acceptance-20261031.md)使用 6 篇真实论文。默认开发入口与隔离候选执行器的限制保留。历史 SQLite 实验保留。**
 
 ## 技术栈
 
@@ -226,6 +226,9 @@ npm.cmd --prefix frontend run test:e2e
 - [A/B 数据层契约 AB-1](docs/ab-data-contract.md)、[成员 A 交接摘要](docs/member-a-handoff.md)
 - [成员 C：AI 接口与开工验收](docs/member-c-handoff.md)、[成员 D：安全接口与开工验收](docs/member-d-handoff.md)
 - [C 实现、交大 API 与本地嵌入配置](docs/ai-adapter.md)、[真实论文评测](docs/ai-evaluation/README.md)
+- [300 篇真实 RAG 文献、入库核验与后续压测输入](docs/rag-300-corpus.md)
+- [句段边界与 token 预算切块 V2、真实 300 篇对照](docs/sentence-token-chunking.md)
+- [全库检索、1000 片段门槛修复与真实查询核验](docs/full-corpus-retrieval.md)
 - [C/D 全方法可执行示例与异常](contracts/module-port-examples.json)
 - [数据库中立接入、测试与待确认事项](docs/persistence-integration.md)、[历史 SQLite 实验](docs/persistence.md)
 - [任务恢复、未知提交与重复提交边界](docs/task-recovery.md)

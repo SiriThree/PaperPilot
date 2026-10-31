@@ -107,7 +107,7 @@ class Settings:
                 and self.auth_lock_owner.strip()
                 and self.a_mode in {"persistent", "real"}
                 and self.d_mode == "real"
-                and self.c_mode == "disabled"
+                and self.c_mode in {"disabled", "real"}
                 and self.audit_preflight == "required"
                 and self.business_privilege_preflight == "required"
                 and self.audit_trusted_owner.strip()

@@ -50,6 +50,8 @@ export PAPERPILOT_AI_LOCAL_MODEL_DIR=/absolute/path/to/prepared/model
 | `PAPERPILOT_AI_EMBEDDING_BASE_URL` / `..._API_KEY` | 可选独立嵌入服务，两者必须一起配置；remote 模式均未指定时才使用聊天服务地址/密钥，不把聊天密钥自动发送给另一服务 |
 | `PAPERPILOT_AI_LOCAL_MODEL_DIR` | fastembed 必填；显式准备好的模型目录，缺少依赖/文件或维度不符拒绝启动 |
 | `PAPERPILOT_AI_TIMEOUT_SECONDS` | 每个 AIPort 操作总期限，默认 45，范围 (0,90] 秒，包括所有嵌入批次；需小于 A 的租约 |
+| `PAPERPILOT_AI_CHUNK_STRATEGY` | `auto`（默认）：已准备的 fastembed BGE-small-zh-v1.5 使用 `sentence-token-v2`，其他模型/remote 使用 `character-v1`；可显式选择旧版复现基线 |
+| `PAPERPILOT_AI_CHUNK_TOKENS` / `..._TOKEN_OVERLAP` | V2 正文 token 目标 / 重叠上限，默认 384 / 48；标题、正文、特殊 token 合计仍须符合模型输入上限 |
 | `PAPERPILOT_AI_MIN_SIMILARITY` | 余弦阈值，默认 0.2；是开发阈值，需要按语料校准 |
 | `PAPERPILOT_AI_TOKEN_LIMIT_PARAMETER` | 默认 `max_tokens`（交大示例）；可明确改成 `max_completion_tokens` |
 | `PAPERPILOT_AI_RESPONSE_FORMAT` | 默认 `json_schema`；DeepSeek 官方 Chat Completions 可显式选 `json_object`。客户端将 JSON Schema 写入系统提示并保留本地严格 Pydantic 校验及引用校验；不自动切换或重试。 |
@@ -61,23 +63,31 @@ DeepSeek 官方服务与上述交大历史示例是不同服务；官方地址�
 
 本地模型来自 [Qdrant 的 FastEmbed 模型目录](https://qdrant.github.io/fastembed/examples/Supported_Models/)，模型卡：[BGE small Chinese v1.5](https://huggingface.co/BAAI/bge-small-zh-v1.5)。默认 512 维、CPU 两线程；原始模型有 512-token 截断，分词后超长片段的后部可能不参与语义表示。通过 FastEmbed 的 query/passage 方法生成向量并归一化；模型及分词版本、文件哈希应随评测保留。推理在可终止的独立子进程中运行；请求超时或取消会终止并等待子进程，不遗留后台推理。
 
+本地推理子进程在 POSIX 下限制地址空间为 3 GiB、CPU 时间为 180 秒；CPU 时间会累计两个线程的用量，与墙钟时间不同。外层 AIPort 操作期限仍最多 90 秒，取消时终止子进程。旧的 60 CPU 秒限制在真实 379 分片论文上约 31 墙钟秒即触发，因此调整为与两线程最大操作期限一致。非零进程退出报告 `AI_EMBEDDING_UNAVAILABLE`，与有效进程返回畸形 JSON 的 `AI_INVALID_RESPONSE` 区分。
+
 ## 文件、片段与检索
 
 `LocalPDFReader` 只接受 B 的 `<paper_id>.pdf` 存储键；先检查 Context、项目成员和论文，再读取可信上传根目录下的普通文件，拒绝路径、URL 和符号链接。无需暴露上传目录或创建下载 HTTP 接口。这已解决同进程本地文件读取；跨主机文件传输/存储服务不在本次交付内，可通过 reader 私有依赖替换。
 
-PDF 使用 pypdf 独立子进程解析，不跨页分片。默认 1200 字符、重叠 120 字符；页码从 1 起，空白页不移动后续页码。chunk UUID 由论文、解析版本、分片参数、页码、偏移及文本摘要确定，重试稳定。返回原提取文本，`mock=false`、`synthetic=false`；这表示从 PDF 提取，不保证 PDF 内陈述真实。已存合成来源在检索和生成时保留 `synthetic=true`，输出另加合成提示。
+PDF 使用 pypdf 独立子进程解析，不跨页分片。本机 BGE 默认 V2：按段落、句子、子句、词边界打包，正文最多 384 token、重叠最多 48 token，并用实际模型 tokenizer 检查“标题 + 换行 + 正文 + 特殊 token”没有超限。句子检测使用固定版本 PySBD，不下载句子模型；PDF 单换行仅在等长的边界检测视图中暂换成空格，存储摘录仍是原文切片。普通词能够完整放入下一块时，宁可本块短一些；超长不可分 URL/公式等才使用有记录的回退。
+
+remote 默认及显式 `character-v1` 沿用 1200 字符、重叠 120 字符。页码从 1 起，空白页不移动后续页码。V1 的 chunk ID 算法保持兼容；V2 将策略版本、PySBD 版本、tokenizer 文件哈希、预算、页码、原文偏移和文本摘要纳入 ID，重试稳定且与 V1 不混用。返回原提取文本，`mock=false`、`synthetic=false`；这表示从 PDF 提取，不保证 PDF 内陈述真实。已存合成来源在检索和生成时保留 `synthetic=true`，输出另加合成提示。真实 300 篇对照、重建与限制见 [V2 切块说明](sentence-token-chunking.md)。
+
+V2 本地嵌入在推理前逐条检查最终输入，超过模型上限返回 `AI_EMBEDDING_INPUT_LIMIT`，避免静默右截断；此规则也适用于超长检索问题。V1 保留原有行为用于复现。切块策略变更需要显式重处理或导入到独立对照库，不会在检索时改写已有向量及历史引用。
 
 上限：20 MiB、300 页、200 万提取字符、2500 片段；加密、无文本扫描件、损坏、超限均显式失败，不伪造 OCR。解析子进程在 POSIX 下限制内存/CPU，所有平台均受操作期限约束。多栏阅读顺序、公式、表格、图像、OCR 与精确坐标尚未专门解决。
 
 检索每次从 `DataPort.papers(ctx, year_from, year_to)` 和 `sources(ctx, paper_id)` 建立当前项目的候选集，仅接受 searchable 论文，并在调用模型前完成项目、年份过滤。关键词为中英文 BM25；语义为真实嵌入余弦排序；混合为两路 RRF（常数 60）。结果编号重新分配、原始摘录/页码/合成标记不变。调用模型后再检查成员、论文和来源，删除/撤权后不能返回旧缓存结果。
 
-合并后的持久化 A+C 使用 PostgreSQL 版本化文档向量，检索只嵌入问题；无持久化扩展的隔离 DataPort 仍每次嵌入文档，local 每次在子进程加载已准备模型。默认最多 1000 候选片段，超出返回 `AI_CORPUS_LIMIT`。指定论文任务先按论文范围过滤再排序/截取，避免全项目前 50 条截断。仍面向小项目，不声称具有 ANN 大库性能。
+合并后的持久化 A+C 使用 PostgreSQL 版本化文档向量，检索只嵌入问题，local 每次在子进程加载已准备模型。新版 PostgreSQL 私有读取扩展支持全库流式 BM25、SQL 精确余弦 Top-K 与两路候选 RRF；默认 1000 是组合模式每路保留的候选数，不再限制参与检索的全库片段数。指定论文任务先按论文范围过滤再排序/截取，避免全项目前 50 条截断。无该读取扩展的隔离 DataPort 保留旧路径及 `AI_CORPUS_LIMIT`；无持久化向量扩展时仍每次嵌入文档。实现、真实 300 篇验证与性能边界见 [全库检索说明](full-corpus-retrieval.md)，当前没有 ANN 索引。
 
 ## 来源、生成与不足
 
 只使用调用方提供的授权来源，先逐项核对 canonical chunk/page/excerpt/synthetic，再向模型发送来源数据；最多取排序前 50 个、累计不超过 60000 字符，不改写摘录。模型只返回文字、状态与 citation_ids，不能生成 public Source。引用不在本次来源内、重复编号、正文自行夹带方括号引用、无依据成功、状态矛盾均拒绝。
 
-空来源时直接返回结构化不足，不调用模型。answer 的正文引用和 citation_ids 由程序渲染并与返回来源一致。extract 的五字段只允许有文本、有来源的 `pending_verification`；其他状态必须为 null/无引用。draft 只返回待核验正文，不写任务、证据或报告版本。合成输入不重标真实。
+空来源时直接返回结构化不足，不调用模型。answer 的正文引用和 citation_ids 由程序渲染并与返回来源一致。问答/草稿与五字段提取使用独立输出协议，提取提示不再包含问答的 `statements`/布尔不足格式。提取明确要求简短中文正文，以及字符串形式的来源编号。
+
+extract 的五字段只允许有文本、有来源的 `pending_verification`；其他状态必须为 null/无引用。这一状态关系在私有模型解析时校验，随后仍验证引用是否属于当前授权原文。缺字段、截断、类型错误、状态矛盾或伪造引用都失败，不自动补字段、丢弃异常正文或隐式重试。draft 只返回待核验正文，不写任务、证据或报告版本。合成输入不重标真实。
 
 提示将问题和论文正文视为不可信数据，不提供工具、SQL、文件执行或外部检索权限。结构校验只能保证来源身份和引用范围，不能证明每个生成陈述被来源蕴含，亦不代表完成了提示注入安全认证；生成内容仍需人工核验。
 
@@ -107,7 +117,7 @@ def create_app():
 
 需先按 A 文档准备数据库，设 A=persistent、C=real。正常关闭由 B 的生命周期清理 DataBinding；C 的 HTTP/PDF/本地嵌入资源在每次调用完成或取消时释放。合并后的 PostgreSQL/浏览器联调记录见[集成记录](member-d-merged-integration.md)，模型端点使用本地可控替身，不代表外部模型效果验收。
 
-B 当前为研究任务在整个项目检索最多 50 条后按 paper_ids 筛选；指定论文可能不在全项目 top-50 中。C 遇到空来源会正确返回不足，但无法仅凭现有 AIPort 修复 B 的选源策略；团队后续应在 B 调用 extract 前直接获取该论文来源，或商定检索的私有范围参数。当前不改公开契约或 B 服务。
+当前 B 的问答/草稿任务通过私有 `search_scoped` 先限定 paper_ids，再排序并截取最多 50 条；单篇证据任务直接读取该论文来源并应用上下文预算。公开 AIPort、DataPort 与 HTTP 契约保持不变。真实文献联调与后续格式修复记录见[演示验收](real-literature-acceptance.md)。
 
 ## 验证与真实评测
 

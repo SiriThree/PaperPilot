@@ -60,7 +60,7 @@ def health(request: Request):
                 "registered_persistence_provider",
                 "isolated_auth_database",
                 "production_security_profile",
-                "ai_disabled_by_operator",
+                "research_ai_real" if deployment["ai_available"] else "ai_disabled_by_operator",
                 "statistics_sql_" + deployment["statistics_sql_mode"],
                 "shared_business_project_authorization",
                 "native_project_sql_readers",

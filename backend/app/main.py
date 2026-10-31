@@ -115,7 +115,9 @@ def create_app(
             def enforce_business_privileges(connection):
                 try:
                     verify_business_privileges(
-                        connection, project_audit_read=settings.environment == "production"
+                        connection,
+                        project_audit_read=settings.environment == "production",
+                        indexed_ai=settings.environment == "production" and settings.c_mode == "real",
                     )
                 except Exception:
                     raise AppError(503, "DATA_UNAVAILABLE", "业务数据库权限配置不可用") from None
@@ -146,7 +148,7 @@ def create_app(
     async def lifespan(app):
         logging.getLogger("paperpilot").warning(
             (
-                "LOCAL PRODUCTION SECURITY: adapter_modes a=%s c=%s d=%s; identity=%s; audit_preflight=%s; AI disabled"
+                "LOCAL PRODUCTION SECURITY: adapter_modes a=%s c=%s d=%s; identity=%s; audit_preflight=%s"
                 if settings.environment == "production"
                 else "DEVELOPMENT: adapter_modes a=%s c=%s d=%s; identity=%s; audit_preflight=%s; production_unverified"
             ),

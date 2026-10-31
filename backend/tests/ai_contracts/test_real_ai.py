@@ -385,7 +385,10 @@ def test_local_inference_process_is_reaped_on_timeout(real, tmp_path, monkeypatc
     for name in ("model.onnx", "tokenizer.json", "config.json"):
         (tmp_path / name).write_text("isolated fixture")
     settings = configuration(
-        embedding_backend="fastembed", embedding_model="local-fixture", local_model_dir=tmp_path
+        embedding_backend="fastembed",
+        embedding_model="local-fixture",
+        local_model_dir=tmp_path,
+        chunk_strategy="character-v1",
     )
     embedding = LocalEmbeddings(settings)
 

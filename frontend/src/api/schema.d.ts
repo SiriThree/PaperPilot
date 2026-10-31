@@ -749,6 +749,12 @@ export interface components {
             runtime_checks_passed: boolean;
             /** Ai Available */
             ai_available: boolean;
+            /** Research Model Name */
+            research_model_name?: string | null;
+            /** Research Model Fingerprint */
+            research_model_fingerprint?: string | null;
+            /** Embedding Model */
+            embedding_model?: string | null;
             /**
              * Statistics Sql Mode
              * @default template

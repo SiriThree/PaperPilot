@@ -1,0 +1,49 @@
+{
+  "checked_at": "2026-10-29T18:27:13.025269+00:00",
+  "paper_count": 300,
+  "checks": [
+    {
+      "scope": "2020-2022",
+      "mode": "keyword",
+      "http_status": 200,
+      "hit_count": 10,
+      "synthetic": false
+    },
+    {
+      "scope": "whole-300-paper-project",
+      "mode": "keyword",
+      "http_status": 503,
+      "code": "AI_CORPUS_LIMIT",
+      "success": false
+    },
+    {
+      "scope": "2020-2022",
+      "mode": "semantic",
+      "http_status": 200,
+      "hit_count": 10,
+      "synthetic": false
+    },
+    {
+      "scope": "whole-300-paper-project",
+      "mode": "semantic",
+      "http_status": 503,
+      "code": "AI_CORPUS_LIMIT",
+      "success": false
+    },
+    {
+      "scope": "2020-2022",
+      "mode": "hybrid",
+      "http_status": 200,
+      "hit_count": 10,
+      "synthetic": false
+    },
+    {
+      "scope": "whole-300-paper-project",
+      "mode": "hybrid",
+      "http_status": 503,
+      "code": "AI_CORPUS_LIMIT",
+      "success": false
+    }
+  ],
+  "note": "Functional smoke checks only. No latency/throughput measurement; full-corpus searches are currently rejected."
+}

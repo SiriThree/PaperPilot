@@ -1,0 +1,32 @@
+{
+  "checked_at": "2026-10-30T02:07:52.523153+00:00",
+  "regular_pytest": {
+    "passed": 670,
+    "skipped": 458,
+    "warnings": 1,
+    "seconds": 22.27
+  },
+  "disposable_retrieval_postgres": {
+    "passed": 12,
+    "opt_in": "PAPERPILOT_RETRIEVAL_POSTGRES_TEST=1"
+  },
+  "disposable_chunk_version_postgres": {
+    "passed": 1,
+    "opt_in": "PAPERPILOT_CHUNKING_POSTGRES_TEST=1"
+  },
+  "browser": {
+    "url": "http://127.0.0.1:15177",
+    "wholeProjectSearch": true,
+    "yearFilters": false,
+    "mode": "hybrid",
+    "hits": 10,
+    "sourceNavigation": true,
+    "sourceExact": true,
+    "pageErrors": []
+  },
+  "notes": [
+    "Skipped tests include explicitly opt-in database and historical configurations; this is not a claim that every D security suite ran.",
+    "The disposable protocol fixtures are boundary tests; real 300-paper retrieval results are in verification.json.",
+    "Browser screenshot containing paper excerpts stays local."
+  ]
+}

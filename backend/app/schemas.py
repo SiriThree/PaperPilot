@@ -362,6 +362,9 @@ class ProductionDeployment(Schema):
     source_fingerprint: str = Field(pattern=r"^[a-f0-9]{64}$")
     runtime_checks_passed: bool
     ai_available: bool
+    research_model_name: str | None = None
+    research_model_fingerprint: str | None = Field(None, pattern=r"^[a-f0-9]{64}$")
+    embedding_model: str | None = None
     statistics_sql_mode: Literal["template", "model"] = "template"
     statistics_model_name: str | None = None
     sql_model_fingerprint: str | None = Field(None, pattern=r"^[a-f0-9]{64}$")

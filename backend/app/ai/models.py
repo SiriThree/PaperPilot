@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class ModelOutput(BaseModel):
@@ -20,9 +20,26 @@ class Narrative(ModelOutput):
 
 
 class ExtractedField(ModelOutput):
-    text: str | None = Field(max_length=6000)
-    status: Literal["pending_verification", "not_mentioned", "insufficient_evidence"]
-    citation_ids: list[str] = Field(max_length=50)
+    text: str | None = Field(
+        max_length=6000,
+        description="Concise supported claim for pending_verification; otherwise JSON null, without explanation.",
+    )
+    status: Literal["pending_verification", "not_mentioned", "insufficient_evidence"] = Field(
+        description="pending_verification requires text and citations; the other states require null text and []."
+    )
+    citation_ids: list[str] = Field(
+        max_length=50,
+        description="Source ID strings, nonempty for pending_verification; otherwise an empty array.",
+    )
+
+    @model_validator(mode="after")
+    def consistent_state(self):
+        if self.status == "pending_verification":
+            if not self.text or not self.text.strip() or not self.citation_ids:
+                raise ValueError("Supported evidence requires nonempty text and citations")
+        elif self.text is not None or self.citation_ids:
+            raise ValueError("Absent evidence requires null text and no citations")
+        return self
 
 
 class Extraction(ModelOutput):

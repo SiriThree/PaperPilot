@@ -25,6 +25,8 @@ services:
     volumes:
       - runtime-secrets:/runtime
       - ./.runtime/production:/state
+      - production-uploads:/uploads
+      - ./.runtime/production/embedding-model:/opt/paperpilot-model:ro
     networks: [database]
     depends_on:
       postgres:
@@ -35,7 +37,7 @@ services:
       PAPERPILOT_ENV: production
       PAPERPILOT_PRODUCTION_SECURITY_PROFILE: "1"
       PAPERPILOT_A_MODE: persistent
-      PAPERPILOT_C_MODE: disabled
+      PAPERPILOT_C_MODE: ${RESEARCH_AI_MODE:-disabled}
       PAPERPILOT_D_MODE: real
       PAPERPILOT_AUTH_MODE: credentials
       PAPERPILOT_AUTH_DATABASE: isolated
@@ -45,10 +47,13 @@ services:
       PAPERPILOT_PRODUCTION_CONFIG: /run/paperpilot/runtime.json
       PAPERPILOT_STORAGE_DIR: /uploads
       PAPERPILOT_ALLOWED_ORIGINS: https://localhost:${HTTPS_PORT:-8443}
+      HF_HUB_OFFLINE: "1"
+      HF_HUB_DISABLE_TELEMETRY: "1"
     volumes:
       - runtime-secrets:/run/paperpilot:ro
       - production-uploads:/uploads
       - ./.runtime/production/evidence:/run/acceptance:ro
+      - ./.runtime/production/embedding-model:/opt/paperpilot-model:ro
     networks: [application, database, model-egress]
     read_only: true
     tmpfs: [/tmp]
@@ -64,7 +69,7 @@ services:
       timeout: 12s
       retries: 5
       start_period: 30s
-    mem_limit: 768m
+    mem_limit: 2g
   proxy:
     image: ${WEB_IMAGE:?production web image required}
     ports: ["127.0.0.1:${HTTPS_PORT:-8443}:443"]

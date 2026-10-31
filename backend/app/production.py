@@ -63,6 +63,54 @@ class SQLModel(BaseModel):
         return hashlib.sha256(json.dumps(content, sort_keys=True).encode()).hexdigest()
 
 
+class ResearchModel(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    chat: SQLModel
+    embedding_revision: str = Field(pattern=r"^[a-f0-9]{40,64}$")
+    embedding_manifest_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+
+    def settings(self):
+        from app.ai.settings import AISettings, TOKEN_CHUNK_MODEL
+
+        return AISettings(
+            **{
+                **self.chat.model_dump(exclude={"api_key", "timeout_seconds"}),
+                "api_key": self.chat.api_key.get_secret_value(),
+            },
+            timeout_seconds=90,
+            embedding_model=TOKEN_CHUNK_MODEL,
+            embedding_dimensions=512,
+            embedding_backend="fastembed",
+            embedding_revision=self.embedding_revision,
+            local_model_dir=Path("/opt/paperpilot-model"),
+            chunk_strategy="sentence-token-v2",
+        )
+
+    def fingerprint(self):
+        value = {**self.model_dump(mode="json"), "chat_fingerprint": self.chat.fingerprint()}
+        return hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest()
+
+    def verify_files(self, root=Path("/opt/paperpilot-model")):
+        manifest_path = root / "model-manifest.json"
+        raw = manifest_path.read_bytes()
+        if len(raw) > 65536 or hashlib.sha256(raw).hexdigest() != self.embedding_manifest_sha256:
+            raise ValueError("Embedding manifest mismatch")
+        manifest = json.loads(raw)
+        if manifest["model"] != "BAAI/bge-small-zh-v1.5" or manifest["dimensions"] != 512:
+            raise ValueError("Unreviewed embedding model")
+        if manifest.get("revision") != self.embedding_revision:
+            raise ValueError("Embedding revision mismatch")
+        if not manifest["files_sha256"]:
+            raise ValueError("Missing embedding file digests")
+        for name, expected in manifest["files_sha256"].items():
+            path = root / name
+            if path.is_symlink() or not path.resolve().is_relative_to(root.resolve()) or not path.is_file():
+                raise ValueError("Invalid embedding file")
+            with path.open("rb") as stream:
+                if hashlib.file_digest(stream, "sha256").hexdigest() != expected:
+                    raise ValueError("Embedding file mismatch")
+
+
 class Runtime(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     format: int = Field(1, ge=1, le=1)
@@ -78,6 +126,7 @@ class Runtime(BaseModel):
     outbox: Login
     readers: list[Login] = Field(min_length=1, max_length=256)
     sql_model: SQLModel | None = None
+    research_model: ResearchModel | None = None
 
 
 def runtime_config():
@@ -153,6 +202,10 @@ def create_app():
         settings.validate()
         if settings.environment != "production" or not settings.production_security_profile:
             raise ValueError("Production entry requires explicit production profile")
+        if (settings.c_mode == "real") != (config.research_model is not None):
+            raise ValueError("Research AI configuration and registration differ")
+        if config.research_model:
+            config.research_model.verify_files()
 
         def connection(login):
             return ConnectionConfig(
@@ -202,6 +255,14 @@ def create_app():
                 binding.close()
 
         composed = DataBinding(binding.data, ready, close)
+        ai_factory = None
+        if config.research_model is not None:
+            from app.ai.adapter import RealAI
+            from app.ai.files import LocalPDFReader
+
+            ai_factory = partial(
+                RealAI, settings=config.research_model.settings(), reader=LocalPDFReader(settings.storage_dir)
+            )
         candidate_generator = None
         if config.sql_model is not None:
             from app.ai.client import ModelClient
@@ -215,6 +276,7 @@ def create_app():
             settings,
             data_binding=composed,
             auth_database=auth_db,
+            ai_factory=ai_factory,
             security_factory=partial(
                 build_security,
                 readers=readers,
@@ -258,6 +320,8 @@ def create_app():
                     == ("model" if config.sql_model else "template")
                     and evidence.get("sql_model_fingerprint")
                     == (config.sql_model.fingerprint() if config.sql_model else None)
+                    and evidence.get("research_model_fingerprint")
+                    == (config.research_model.fingerprint() if config.research_model else None)
                 ):
                     acceptance = {
                         "completed_at": evidence["completed_at"],
@@ -269,7 +333,14 @@ def create_app():
                 "deployment_id": config.deployment_id,
                 "source_fingerprint": source,
                 "runtime_checks_passed": True,
-                "ai_available": False,
+                "ai_available": config.research_model is not None,
+                "research_model_name": config.research_model.chat.chat_model
+                if config.research_model
+                else None,
+                "research_model_fingerprint": config.research_model.fingerprint()
+                if config.research_model
+                else None,
+                "embedding_model": "BAAI/bge-small-zh-v1.5" if config.research_model else None,
                 "statistics_sql_mode": "model" if config.sql_model else "template",
                 "statistics_model_name": config.sql_model.chat_model if config.sql_model else None,
                 "sql_model_fingerprint": config.sql_model.fingerprint() if config.sql_model else None,

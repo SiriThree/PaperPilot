@@ -15,7 +15,7 @@ const production = computed(() => health.value?.deployment)
 const modelSQL = computed(() => health.value?.limitations.includes('statistics_sql_model') === true)
 const sectionNames: Record<string, string> = { papers: '文献工作台', research: '研究工作台', security: '查询与审计' }
 const pageTitle = computed(() => sectionNames[String(route.path.split('/').pop())] || '项目总览')
-const modeNote = computed(() => production.value ? `本机 HTTPS 生产安全配置；密码会话、数据库身份与原生 SQL 权限经过运行预检。${modelSQL.value ? '统计查询已配置真实模型；文献处理 AI 尚未启用。' : '统计查询使用固定模板；文献处理 AI 尚未启用。'}` : !health.value ? '暂未确认运行模式，请检查服务连接。' : persistentData.value ? '已注册数据适配器；持久化和重启恢复需由 A 实际验收。' : 'Mock 演示环境 · 合成数据，重启后丢失。')
+const modeNote = computed(() => production.value ? `本机 HTTPS 生产安全配置；密码会话、数据库身份与原生 SQL 权限经过运行预检。${modelSQL.value ? '统计查询已配置真实模型。' : '统计查询使用固定模板。'}${production.value.ai_available ? '文献 AI 已接入，模型生成内容与引用仍需人工核验。' : '文献处理 AI 尚未启用。'}` : !health.value ? '暂未确认运行模式，请检查服务连接。' : persistentData.value ? '已注册数据适配器；持久化和重启恢复需由 A 实际验收。' : 'Mock 演示环境 · 合成数据，重启后丢失。')
 function switchProject(value: string) {
   const section = String(route.path.split('/').pop())
   void router.push(`/projects/${value}/${sectionNames[section] ? section : 'papers'}`)

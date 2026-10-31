@@ -7,6 +7,7 @@ import os
 import secrets
 import shutil
 import subprocess
+import tarfile
 import time
 from uuid import uuid4
 
@@ -109,6 +110,58 @@ def main():
             shutil.copy2(STATE / file, backup / file)
         if (STATE / "sql-model.json").is_file():
             shutil.copy2(STATE / "sql-model.json", backup / "sql-model.json")
+        if (STATE / "research-model.json").is_file():
+            shutil.copy2(STATE / "research-model.json", backup / "research-model.json")
+            shutil.copytree(STATE / "embedding-model", backup / "embedding-model")
+        with (backup / "uploads.tar.gz").open("wb") as stream:
+            run(
+                [
+                    "docker",
+                    "run",
+                    "--rm",
+                    "--network",
+                    "none",
+                    "--user",
+                    "0:0",
+                    "--mount",
+                    "type=volume,src=paperpilot-production_production-uploads,dst=/uploads,readonly",
+                    meta["images"]["BACKEND_IMAGE"],
+                    "python",
+                    "-c",
+                    "import tarfile,sys; a=tarfile.open(fileobj=sys.stdout.buffer,mode='w|gz'); a.add('/uploads',arcname='uploads'); a.close()",
+                ],
+                stdout=stream,
+            )
+        upload_digests = {}
+        restored_files = backup / "restored-files"
+        restored_files.mkdir()
+        with tarfile.open(backup / "uploads.tar.gz") as archive:
+            for member in archive:
+                if member.isdir():
+                    continue
+                if (
+                    not member.isfile()
+                    or not member.name.startswith("uploads/")
+                    or ".." in member.name.split("/")
+                ):
+                    raise RuntimeError("Unexpected upload archive entry")
+                with archive.extractfile(member) as stream:
+                    upload_digests[member.name] = hashlib.file_digest(stream, "sha256").hexdigest()
+            archive.extractall(restored_files, filter="data")
+        for upload_name, expected in upload_digests.items():
+            with (restored_files / upload_name).open("rb") as stream:
+                if hashlib.file_digest(stream, "sha256").hexdigest() != expected:
+                    raise RuntimeError("Restored upload differs from its archive")
+        research = None
+        if (STATE / "literature/corpus-state.json").is_file():
+            shutil.copy2(STATE / "literature/corpus-state.json", backup / "literature-state.json")
+            literature = json.loads((backup / "literature-state.json").read_text(encoding="utf-8"))
+            for project in literature["projects"].values():
+                for paper in project["papers"].values():
+                    if upload_digests.get("uploads/" + paper["paper_id"] + ".pdf") != paper["sha256"]:
+                        raise RuntimeError("Uploaded PDF differs from its pinned corpus digest")
+            project = literature["projects"]["rag-evidence"]
+            research = {"project": project["project_id"], "paper": project["papers"]["rag"]}
         runtime_volume = "paperpilot-production_runtime-secrets"
         secret = run(
             [
@@ -253,12 +306,13 @@ from app.security.adapter import build_security
 from app.security.executor import ReaderConfig
 from app.adapters.ports import Context
 c=runtime_config(); info=json.loads(sys.stdin.read())
+if getattr(c,'research_model',None) is not None: c.research_model.verify_files()
 def config(login): return ConnectionConfig('127.0.0.1',5432,login.user,login.password.get_secret_value(),c.dbname)
 b=PostgresDatabase(config(c.business)); a=PostgresDatabase(config(c.authentication)); outbox=PostgresDatabase(config(c.outbox))
 try:
  AuthenticationBoundary(b,a,trusted_lock_owner=c.auth_lock_owner).ready()
  with b.transaction() as conn:
-  verify_business_privileges(conn,project_audit_read=True)
+  verify_business_privileges(conn,project_audit_read=True,**({'indexed_ai':True} if getattr(c,'research_model',None) is not None else {}))
   verify_audit_boundary(conn,trusted_owner=c.audit_owner)
  with outbox.transaction() as conn: verify_outbox(conn,c.outbox.user)
  writer=compose_audit(config(c.audit))
@@ -267,6 +321,21 @@ try:
   gateway=build_security(PostgresData(b,DataSettings()),readers=readers,audit_append=writer.append)
   result=asyncio.run(gateway.execute(Context(UUID(info['user']),UUID(info['project']),uuid4()),'按年份统计论文数量'))
   assert result.execution_status=='executed' and not result.mock
+  if info.get('research'):
+   import hashlib
+   from pathlib import Path
+   from app.ai.adapter import RealAI
+   from app.ai.files import LocalPDFReader
+   from app.adapters.ports import FileReference
+   from app.schemas import SearchRequest
+   details=info['research']; context=Context(UUID(info['user']),UUID(details['project']),uuid4())
+   pdf_reader=LocalPDFReader(Path('/uploads'))
+   pdf=pdf_reader._read(FileReference(details['paper']['paper_id']+'.pdf',UUID(details['paper']['paper_id']),context.project_id))
+   assert hashlib.sha256(pdf).hexdigest()==details['paper']['sha256']
+   ai=RealAI(PostgresData(b,DataSettings()),c.research_model.settings(),reader=pdf_reader)
+   for mode in ('keyword','semantic'):
+    hits=asyncio.run(ai.search(context,SearchRequest(query='retrieval augmented generation',mode=mode,limit=3)))
+    assert hits.items and not hits.mock and all(not h.source.synthetic for h in hits.items)
  finally: writer.close()
  print('Restored native security query, authentication and audit preflights passed')
 finally:
@@ -282,6 +351,16 @@ finally:
                 "container:" + restore,
                 "--mount",
                 f"type=volume,src={runtime_volume},dst=/run/paperpilot,readonly",
+                "--mount",
+                f"type=bind,src={restored_files / 'uploads'},dst=/uploads,readonly",
+                *(
+                    [
+                        "--mount",
+                        f"type=bind,src={backup / 'embedding-model'},dst=/opt/paperpilot-model,readonly",
+                    ]
+                    if (backup / "embedding-model").is_dir()
+                    else []
+                ),
                 "--env",
                 "PAPERPILOT_PRODUCTION_CONFIG=/run/paperpilot/runtime.json",
                 meta["images"]["BACKEND_IMAGE"],
@@ -291,7 +370,11 @@ finally:
             ],
             capture=True,
             input=json.dumps(
-                {"user": meta["users"]["owner"]["user_id"], "project": meta["projects"]["accept_a"]}
+                {
+                    "user": meta["users"]["owner"]["user_id"],
+                    "project": meta["projects"]["accept_a"],
+                    "research": research,
+                }
             ).encode(),
         )
         digests = {
@@ -308,6 +391,9 @@ finally:
             "native_security_and_auth_after_restore": True,
             "files_sha256": digests,
             "snapshot": before,
+            "upload_files_sha256": upload_digests,
+            "upload_files": len(upload_digests),
+            "research_retrieval_after_restore": research is not None,
         }
         (backup / "manifest.json").write_text(
             json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"

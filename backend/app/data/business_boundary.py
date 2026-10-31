@@ -29,9 +29,12 @@ BUSINESS_TABLE_PRIVILEGES = {
     "audit_events": {"INSERT"},
 }
 _ALLOWED_USER_COLUMNS = {"user_id", "username", "display_name"}
+INDEXED_AI_PRIVILEGES = {
+    name: {"SELECT", "INSERT"} for name in ("embedding_models", "chunk_embeddings", "process_indexes")
+}
 
 
-def verify_business_privileges(connection, *, project_audit_read=False):
+def verify_business_privileges(connection, *, project_audit_read=False, indexed_ai=False):
     """Check effective grants, including column and inherited/PUBLIC grants."""
     identity = connection.execute(
         "SELECT current_user=session_user AS identity, rolcanlogin AND NOT "
@@ -59,15 +62,14 @@ def verify_business_privileges(connection, *, project_audit_read=False):
         "WHERE left(n.nspname,3)<>'pg_' AND n.nspname<>'information_schema' "
         "AND c.relkind IN ('r','p','v','m','f')"
     ).fetchall()
+    baseline = BUSINESS_TABLE_PRIVILEGES | (INDEXED_AI_PRIVILEGES if indexed_ai else {})
     found = set()
     for row in rows:
         name = row["relname"]
         public = row["nspname"] == "public"
         audit_view = project_audit_read and row["nspname"] == "paperpilot_audit" and name == "project_events"
         is_users = public and name == "users"
-        expected = (
-            {"SELECT"} if audit_view else BUSINESS_TABLE_PRIVILEGES.get(name, set()) if public else set()
-        )
+        expected = {"SELECT"} if audit_view else baseline.get(name, set()) if public else set()
         if audit_view and row["relkind"] != "v":
             raise PermissionError("Business audit view type invalid")
         if expected and not audit_view:
@@ -84,7 +86,7 @@ def verify_business_privileges(connection, *, project_audit_read=False):
             if mode != "delete" and not permitted and not (is_users and mode == "select"):
                 if row["column_" + mode]:
                     raise PermissionError("Business column privileges invalid")
-    if found != set(BUSINESS_TABLE_PRIVILEGES):
+    if found != set(baseline):
         raise PermissionError("Business grant baseline incomplete")
     columns = connection.execute(
         "SELECT attname,has_column_privilege(current_user,attrelid,attnum,'SELECT') AS can_read "

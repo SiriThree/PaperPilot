@@ -13,8 +13,9 @@ test('trusted HTTPS production login, native SQL and matching deployment accepta
   await page.getByRole('link', { name: '查询与审计', exact: true }).click()
   const deployment = page.getByRole('region', { name: '当前生产安全配置' })
   await expect(deployment).toContainText('当前部署安全验收通过')
-  await expect(deployment).toContainText('文献处理 AI 尚未启用')
-  const modelMode = (await page.evaluate(async () => (await fetch('/api/v1/health')).json())).deployment.statistics_sql_mode === 'model'
+  const health = await page.evaluate(async () => (await fetch('/api/v1/health')).json())
+  await expect(deployment).toContainText(health.deployment.ai_available ? '文献模型：' : '文献处理 AI 尚未启用')
+  const modelMode = health.deployment.statistics_sql_mode === 'model'
   if (modelMode) await expect(deployment).toContainText('统计查询模型：')
   await deployment.getByRole('button', { name: '重新检查当前服务', exact: true }).click()
   await expect(deployment).toContainText('预检通过')

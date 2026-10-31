@@ -1,0 +1,2 @@
+# Published corpus SHA-256 values refer to these exact LF bytes on every platform.
+demo/**/*.json text eol=lf

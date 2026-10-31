@@ -317,6 +317,70 @@ def audit_drift(enabled):
     print("Controlled audit grant drift enabled" if enabled else "Controlled audit grant drift repaired")
 
 
+def configure_research_model():
+    from app.production import ResearchModel
+    from app.data.business_boundary import INDEXED_AI_PRIVILEGES
+
+    model = ResearchModel.model_validate_json((STATE / "research-model.json").read_bytes())
+    model.verify_files()
+    runtime_path = RUNTIME / "runtime.json"
+    runtime = json.loads(runtime_path.read_text())
+    meta = json.loads((STATE / "deployment.json").read_text())
+    if runtime["deployment_id"] != meta["deployment_id"]:
+        raise ValueError("Runtime deployment mismatch")
+    with psycopg.connect(**admin_config().conninfo(), autocommit=True) as conn:
+        with conn.transaction():
+            for table, privileges in INDEXED_AI_PRIVILEGES.items():
+                conn.execute(
+                    sql.SQL("GRANT {} ON public.{} TO {}").format(
+                        sql.SQL(",").join(sql.SQL(p) for p in sorted(privileges)),
+                        sql.Identifier(table),
+                        sql.Identifier(runtime["business"]["user"]),
+                    )
+                )
+    uploads = Path("/uploads")
+    os.chown(uploads, 10001, 10001)
+    uploads.chmod(0o700)
+    runtime["research_model"] = {
+        **model.model_dump(mode="json"),
+        "chat": {**model.chat.model_dump(mode="json"), "api_key": model.chat.api_key.get_secret_value()},
+    }
+    save(runtime_path, runtime, app=True)
+    meta["research_model_fingerprint"] = model.fingerprint()
+    save(STATE / "deployment.json", meta)
+    print("Research AI configured with pinned local BGE files and precise index grants")
+
+
+def bind_project_reader(project_id):
+    project_id = UUID(project_id)
+    meta = json.loads((STATE / "deployment.json").read_text())
+    runtime = json.loads((RUNTIME / "runtime.json").read_text())
+    if runtime["deployment_id"] != meta["deployment_id"]:
+        raise ValueError("Runtime deployment mismatch")
+    if any(r["project_id"] == str(project_id) for r in runtime["readers"]):
+        print("Existing project reader retained")
+        return
+    if len(runtime["readers"]) >= 256:
+        raise ValueError("Project reader limit reached")
+    reader = {
+        "project_id": str(project_id),
+        "user": "pp_reader_" + uuid4().hex,
+        "password": secrets.token_urlsafe(36),
+    }
+    with psycopg.connect(**admin_config().conninfo(), autocommit=True) as conn:
+        if conn.execute(
+            "SELECT owner_id FROM public.projects WHERE project_id=%s", (project_id,)
+        ).fetchone() != (UUID(meta["users"]["owner"]["user_id"]),):
+            raise ValueError("Reader provisioning requires an existing deployment owner project")
+        create_login(conn, reader["user"], reader["password"], project_id=project_id)
+        grant(conn, "ALTER ROLE {} SET statement_timeout='5s'", reader["user"])
+        grant(conn, "ALTER ROLE {} SET lock_timeout='2s'", reader["user"])
+        grant(conn, "ALTER ROLE {} SET idle_in_transaction_session_timeout='10s'", reader["user"])
+    runtime["readers"].append(reader)
+    save(RUNTIME / "runtime.json", runtime, app=True)
+    print("Dedicated project reader provisioned; restart the backend to load it")
+
+
 def database_checks():
     runtime = json.loads((RUNTIME / "runtime.json").read_text())
     meta = json.loads((STATE / "deployment.json").read_text())
@@ -390,6 +454,8 @@ def main():
         choices=[
             "provision",
             "configure-sql-model",
+            "configure-research-model",
+            "bind-project-reader",
             "qa-enable",
             "qa-disable",
             "audit-drift",
@@ -399,12 +465,17 @@ def main():
         ],
     )
     parser.add_argument("--peer")
+    parser.add_argument("--project-id")
     args = parser.parse_args()
     try:
         if args.command == "provision":
             provision()
         elif args.command == "configure-sql-model":
             configure_sql_model()
+        elif args.command == "configure-research-model":
+            configure_research_model()
+        elif args.command == "bind-project-reader":
+            bind_project_reader(args.project_id)
         elif args.command in {"qa-enable", "qa-disable"}:
             qa(args.command == "qa-enable")
         elif args.command in {"audit-drift", "audit-repair"}:

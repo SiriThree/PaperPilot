@@ -121,7 +121,7 @@ def initialize(port):
     )
 
 
-def up(port, sql_model_config=None):
+def up(port, sql_model_config=None, research_model_config=None):
     initialize(port)
     staged_model = None
     if sql_model_config is not None:
@@ -141,6 +141,37 @@ def up(port, sql_model_config=None):
             )
         except Exception:
             raise RuntimeError("Invalid SQL model configuration; expected a complete JSON file") from None
+    staged_research = None
+    if research_model_config is not None:
+        import sys
+
+        sys.path.insert(0, str(ROOT / "backend"))
+        from app.production import ResearchModel, SQLModel
+
+        try:
+            if (
+                not research_model_config.is_absolute()
+                or research_model_config.is_symlink()
+                or research_model_config.stat().st_size > 65536
+            ):
+                raise ValueError("Invalid research configuration file")
+            chat = SQLModel.model_validate_json(research_model_config.read_bytes())
+            manifest_raw = (STATE / "embedding-model/model-manifest.json").read_bytes()
+            manifest = json.loads(manifest_raw)
+            model = ResearchModel(
+                chat=chat,
+                embedding_revision=manifest["revision"],
+                embedding_manifest_sha256=hashlib.sha256(manifest_raw).hexdigest(),
+            )
+            model.verify_files(STATE / "embedding-model")
+            staged_research = json.dumps(
+                {
+                    **model.model_dump(mode="json"),
+                    "chat": {**chat.model_dump(mode="json"), "api_key": chat.api_key.get_secret_value()},
+                }
+            )
+        except Exception:
+            raise RuntimeError("Research model or prepared embedding manifest is invalid") from None
     meta = metadata()
     for tag in ("python:3.12-slim", "pgvector/pgvector:pg16", "caddy:2-alpine"):
         run(["docker", "pull", tag])
@@ -183,6 +214,9 @@ def up(port, sql_model_config=None):
         "BACKEND_IMAGE": backend,
         "WEB_IMAGE": web,
         "HTTPS_PORT": str(meta["https_port"]),
+        "RESEARCH_AI_MODE": "real"
+        if staged_research is not None or (STATE / "research-model.json").is_file()
+        else "disabled",
     }
     (STATE / "compose.env").write_text(
         "\n".join(f"{key}={value}" for key, value in env.items()) + "\n", encoding="utf-8"
@@ -197,6 +231,12 @@ def up(port, sql_model_config=None):
         temporary.replace(STATE / "sql-model.json")
     if (STATE / "sql-model.json").is_file():
         compose("run", "--rm", "setup", "configure-sql-model")
+    if staged_research is not None:
+        temporary = STATE / "research-model.json.new"
+        temporary.write_text(staged_research, encoding="utf-8")
+        temporary.replace(STATE / "research-model.json")
+    if (STATE / "research-model.json").is_file():
+        compose("run", "--rm", "setup", "configure-research-model")
     compose("up", "-d", "--wait", "backend", "proxy", "--wait-timeout", "150")
     proxy = service_id("proxy")
     run(["docker", "cp", proxy + ":/data/caddy/pki/authorities/local/root.crt", str(STATE / "local-ca.crt")])
@@ -282,11 +322,13 @@ def verify():
         with client() as owner, client() as member, client() as outsider:
             health = wait_ready(owner)
             model_mode = health["deployment"]["statistics_sql_mode"] == "model"
+            research_ai = health["deployment"]["ai_available"]
             policy_id = "postgres-statistics-v2-" + ("model" if model_mode else "template")
             passed(
-                "production_no_mock_research_AI_disabled",
+                "production_no_mock_modes_match_configuration",
                 health["mock"] is False
-                and health["modes"] == {"a": "persistent", "c": "disabled", "d": "real"},
+                and health["modes"]
+                == {"a": "persistent", "c": "real" if research_ai else "disabled", "d": "real"},
             )
             passed("production_preflights", health["deployment"]["runtime_checks_passed"])
             passed("TLS_and_HSTS", "max-age=" in owner.get("/").headers.get("strict-transport-security", ""))
@@ -382,10 +424,25 @@ def verify():
                 ),
             )
             ai = owner.post(base + "/answers", headers=headers, json={"question": "不可伪造模型结果"})
-            passed(
-                "AI_explicitly_unavailable",
-                ai.status_code == 503 and ai.json()["code"] == "AI_NOT_CONFIGURED",
-            )
+            if research_ai:
+                passed("empty_corpus_returns_explicit_insufficient_evidence", ai.status_code == 202)
+                task_id = ai.json()["task_id"]
+                for _ in range(100):
+                    task = owner.get(base + "/tasks/" + task_id).json()
+                    if task["status"] in {"succeeded", "failed"}:
+                        break
+                    time.sleep(0.3)
+                passed(
+                    "empty_corpus_AI_never_fabricates_sources",
+                    task["status"] == "succeeded"
+                    and task["result"]["insufficient_evidence"]
+                    and not task["result"]["sources"],
+                )
+            else:
+                passed(
+                    "AI_explicitly_unavailable",
+                    ai.status_code == 503 and ai.json()["code"] == "AI_NOT_CONFIGURED",
+                )
             experiment = owner.post(base + "/security-experiments", headers=headers, json={})
             passed(
                 "production_Docker_experiment_disabled",
@@ -445,11 +502,14 @@ def verify():
             "source_fingerprint": meta["source_fingerprint"],
             "statistics_sql_mode": "model" if model_mode else "template",
             "sql_model_fingerprint": health["deployment"]["sql_model_fingerprint"],
+            "research_model_fingerprint": health["deployment"]["research_model_fingerprint"],
             "completed_at": datetime.now(UTC).isoformat(),
             "passed": True,
             "checks": checks,
             "url": url,
-            "scope": "local_https_production_security_research_AI_disabled",
+            "scope": "local_https_production_A_C_D"
+            if research_ai
+            else "local_https_production_security_research_AI_disabled",
         }
         (STATE / "evidence/acceptance.json").write_text(
             json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
@@ -468,11 +528,16 @@ def main():
     parser.add_argument(
         "--sql-model-config", type=Path, help="Absolute path to protected SQL model JSON; used by up"
     )
+    parser.add_argument(
+        "--research-model-config",
+        type=Path,
+        help="Absolute chat config for research AI; requires prepared local BGE files",
+    )
     args = parser.parse_args()
     if not 1024 <= args.https_port <= 65535:
         parser.error("Use an unprivileged valid HTTPS port")
     if args.command == "up":
-        up(args.https_port, args.sql_model_config)
+        up(args.https_port, args.sql_model_config, args.research_model_config)
     elif args.command == "verify":
         verify()
     elif args.command == "status":

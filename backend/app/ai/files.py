@@ -38,17 +38,36 @@ class LocalPDFReader:
         except OSError:
             raise AppError(503, "FILE_UNAVAILABLE", "论文文件暂不可读取") from None
 
-    async def chunks(self, file, settings):
+    async def chunks(self, file, settings, *, title=""):
         payload = await asyncio.to_thread(self._read, file)
+        options = []
+        if settings.active_chunk_strategy == "sentence-token-v2":
+            options = [
+                json.dumps(
+                    {
+                        "tokenizer_dir": str(settings.local_model_dir.resolve()),
+                        "target_tokens": settings.chunk_tokens,
+                        "overlap_tokens": settings.chunk_token_overlap,
+                        "title": title,
+                    }
+                )
+            ]
         try:
             process = await asyncio.create_subprocess_exec(
                 sys.executable,
                 str(Path(__file__).with_name("pdf_worker.py")),
                 str(settings.chunk_chars),
                 str(settings.chunk_overlap),
+                *options,
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.DEVNULL,
+                env={
+                    **os.environ,
+                    "PYTHONPATH": str(Path(__file__).resolve().parents[2]),
+                    "TOKENIZERS_PARALLELISM": "false",
+                    "HF_HUB_OFFLINE": "1",
+                },
             )
         except OSError:
             raise AppError(503, "PDF_PARSER_UNAVAILABLE", "PDF 解析器暂不可用") from None
@@ -65,6 +84,7 @@ class LocalPDFReader:
                     "PDF_NO_TEXT": "PDF 没有可提取文本，扫描件需要 OCR",
                     "PDF_LIMIT_EXCEEDED": "PDF 超过解析限制",
                     "PDF_INVALID": "PDF 格式无效或无法解析",
+                    "AI_CHUNK_INPUT_LIMIT": "论文标题或原文单元超出嵌入切块预算",
                 }
                 raise AppError(422, code, messages.get(code, "PDF 无法解析"))
             return result["chunks"]

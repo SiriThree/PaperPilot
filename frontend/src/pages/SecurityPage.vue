@@ -76,7 +76,7 @@ function eventTime(value: string) {
       <p v-if="!deploymentError">最近一次服务检查：{{ production.runtime_checks_passed ? '认证、业务权限、项目读取身份与独立审计预检通过' : '生产配置未就绪' }}</p>
       <p v-if="production.acceptance && !deploymentError">当前部署安全验收通过：{{ production.acceptance.passed_checks }} 项 · {{ new Date(production.acceptance.completed_at).toLocaleString('zh-CN') }}</p>
       <p v-else-if="!deploymentError">当前部署尚无匹配本版本的验收记录。</p>
-      <p>{{ modelSQL ? `统计查询模型：${production.statistics_model_name}；由模型生成候选 SQL，经安全网关校验执行。` : '统计查询使用固定模板，未调用模型。' }}文献处理 AI 尚未启用。下方历史测试报告与当前部署验收分别记录。</p>
+      <p>{{ modelSQL ? `统计查询模型：${production.statistics_model_name}；由模型生成候选 SQL，经安全网关校验执行。` : '统计查询使用固定模板，未调用模型。' }}{{ production.ai_available ? `文献模型：${production.research_model_name}，本地向量：${production.embedding_model}；生成内容与引用需人工核验。` : '文献处理 AI 尚未启用。' }}下方历史测试报告与当前部署验收分别记录。</p>
       <el-button :loading="deploymentBusy" @click="refreshDeployment">重新检查当前服务</el-button>
       <a href="/api/v1/health" target="_blank" rel="noopener">查看当前健康检查 JSON</a>
     </section>

@@ -1,0 +1,14 @@
+{
+  "verified_at": "2026-10-29T18:25:45.105985+00:00",
+  "catalog_sha256": "a63a06a1d04405152afab944ee6d187b02f5f6e347cbdacfc25d61d7f19930ad",
+  "paper_count": 300,
+  "active_sources": 20986,
+  "unique_chunk_ids": 20986,
+  "exact_matches_to_audited_page_excerpts": true,
+  "tokenizer_sha256": "7be03536eed91e4dcb928088e15f7286977603cc59b0be7d54a3c37fe645b86a",
+  "max_actual_embedding_input_tokens": 422,
+  "model_input_limit": 512,
+  "over_limit": 0,
+  "synthetic_sources": 0,
+  "database_read_only": true
+}

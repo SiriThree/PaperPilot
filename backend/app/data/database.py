@@ -152,13 +152,15 @@ class PostgresDatabase:
                     pass
 
     @contextmanager
-    def transaction(self, write=False):
+    def transaction(self, write=False, *, snapshot=False):
         connection = self._acquire()
         broken = False
         committing = False
         try:
             try:
                 connection.execute("BEGIN")
+                if snapshot:
+                    connection.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY")
                 if self._transaction_guard is not None:
                     self._transaction_guard(connection)
                 yield connection
