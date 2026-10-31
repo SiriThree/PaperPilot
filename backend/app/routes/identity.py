@@ -46,10 +46,39 @@ def health(request: Request):
                 raise RuntimeError("Audit not ready")
         except Exception:
             raise AppError(503, "AUDIT_UNAVAILABLE", "后台审计服务尚未就绪") from None
+    if s.environment == "production":
+        status = getattr(request.app.state, "deployment_status", None)
+        if not callable(status):
+            raise AppError(503, "DEPLOYMENT_UNAVAILABLE", "生产安全组合未就绪")
+        deployment = status()
+        return Health(
+            modes={"a": s.a_mode, "c": s.c_mode, "d": s.d_mode},
+            mock=False,
+            limitations=[
+                "authentication_credentials",
+                "persistent_sessions",
+                "registered_persistence_provider",
+                "isolated_auth_database",
+                "production_security_profile",
+                "ai_disabled_by_operator",
+                "statistics_sql_" + deployment["statistics_sql_mode"],
+                "shared_business_project_authorization",
+                "native_project_sql_readers",
+            ],
+            deployment=deployment,
+        )
     return Health(
         modes={"a": s.a_mode, "c": s.c_mode, "d": s.d_mode},
         mock=True,
         limitations=[
+            *(
+                ["statistics_sql_model"]
+                if getattr(request.app.state.adapters.security, "policy_id", "")
+                == "postgres-statistics-v2-model"
+                else ["statistics_sql_template"]
+                if s.d_mode == "real"
+                else []
+            ),
             "authentication_credentials" if s.auth_mode == "credentials" else "development_identity_only",
             "registered_persistence_provider" if s.a_mode != "mock" else "in_memory_data_lost_on_restart",
             "persistent_sessions" if s.auth_mode == "credentials" else "in_memory_sessions_lost_on_restart",

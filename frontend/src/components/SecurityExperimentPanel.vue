@@ -8,7 +8,7 @@ import AppIcon from './AppIcon.vue'
 import Feedback from './Feedback.vue'
 
 const reportUrl = '/security-experiment.json'
-const props = defineProps<{ projectId: string; owner: boolean }>()
+const props = defineProps<{ projectId: string; owner: boolean; production?: boolean }>()
 const resource = useResource<ExperimentReport | null>(null, async () => {
   const response = await fetch(reportUrl, { cache: 'no-store', signal: AbortSignal.timeout(10000) })
   if (!response.ok) throw new Error('Unavailable experiment')
@@ -115,7 +115,7 @@ const percentage = (value: number) => `${(value * 100).toFixed(1)}%`
       <el-button v-if="owner" :disabled="starting" @click="poll">查询运行进度</el-button>
       <el-button :disabled="running" @click="history">查看历史报告</el-button>
       <p v-if="!owner">仅项目负责人可启动和查看实时实验。</p>
-      <p v-else-if="live?.enabled === false">本服务未启用实时实验。请用 scripts/preview_integration.py 启动本机演示环境。</p>
+      <p v-else-if="live?.enabled === false">{{ production ? '生产服务不运行攻防容器；请在独立本机实验环境执行攻防对照。' : '本服务未启用实时实验。请用 scripts/preview_integration.py 启动本机演示环境。' }}</p>
       <p v-if="running" role="status">{{ phaseLabels[live?.phase || 'starting'] }}。请保留任务编号；刷新页面后可继续查询，不会重复启动。</p>
       <p v-if="live?.busy && !live.run_id">本机另一个隔离实验正在运行，结束后才能启动新实验。</p>
       <p v-if="liveAttempted && live?.run_id">任务编号 <code>{{ live.run_id }}</code> · 开始 {{ live.started_at ? new Date(live.started_at).toLocaleString('zh-CN') : '待确认' }}{{ live.finished_at ? ` · 完成 ${new Date(live.finished_at).toLocaleString('zh-CN')}` : '' }}</p>

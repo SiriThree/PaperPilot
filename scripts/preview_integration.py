@@ -45,7 +45,32 @@ def main():
         required=True,
         help="Nonsecret runtime state file; create <state>.stop to shut down",
     )
+    parser.add_argument(
+        "--sql-generator",
+        choices=("template", "model"),
+        default=os.getenv("PAPERPILOT_SQL_GENERATOR", "template"),
+        help="Explicit statistics generation mode; model requires configured chat credentials",
+    )
     args = parser.parse_args()
+    sql_environment = {}
+    if args.sql_generator == "model":
+        from app.ai.settings import ChatSettings
+
+        prefix = (
+            "PAPERPILOT_SQL_MODEL_"
+            if any(k.startswith("PAPERPILOT_SQL_MODEL_") for k in os.environ)
+            else "PAPERPILOT_AI_"
+        )
+        chat = ChatSettings.from_env(prefix)
+        # Resolve before C's research fixture overrides its own model configuration.
+        sql_environment = {
+            "PAPERPILOT_SQL_MODEL_BASE_URL": chat.base_url,
+            "PAPERPILOT_SQL_MODEL_API_KEY": chat.api_key,
+            "PAPERPILOT_SQL_MODEL_CHAT_MODEL": chat.chat_model,
+            "PAPERPILOT_SQL_MODEL_TIMEOUT_SECONDS": str(chat.timeout_seconds),
+            "PAPERPILOT_SQL_MODEL_TOKEN_LIMIT_PARAMETER": chat.token_limit_parameter,
+            "PAPERPILOT_SQL_MODEL_RESPONSE_FORMAT": chat.response_format,
+        }
     args.state = args.state.resolve()
     args.state.parent.mkdir(parents=True, exist_ok=True)
     stop = args.state.with_suffix(args.state.suffix + ".stop")
@@ -104,6 +129,7 @@ def main():
             os.environ,
             PAPERPILOT_ENV="test",
             PAPERPILOT_AUTH_MODE="development",
+            PAPERPILOT_SQL_GENERATOR=args.sql_generator,
             PAPERPILOT_A_MODE="persistent",
             PAPERPILOT_C_MODE="real",
             PAPERPILOT_D_MODE="real",
@@ -126,7 +152,11 @@ def main():
             PAPERPILOT_AI_EMBEDDING_BACKEND="remote",
             PAPERPILOT_PROXY_TARGET=f"http://127.0.0.1:{api_port}",
             **passwords,
+            **sql_environment,
         )
+        if args.sql_generator == "model":
+            # The protected file was resolved above; do not configure both forms in the child.
+            environment.pop("PAPERPILOT_SQL_MODEL_API_KEY_FILE", None)
         children = []
 
         def shutdown():

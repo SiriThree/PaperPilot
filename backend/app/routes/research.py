@@ -5,7 +5,7 @@ from fastapi.responses import PlainTextResponse
 
 from app.auth import project_context
 from app.errors import AppError
-from app.routes.common import ERRORS, key, project_reader, project_report_writer
+from app.routes.common import ERRORS, key, project_reader, project_report_writer, require_ai
 from app.schemas import (
     AuditDetails,
     EvidenceList,
@@ -23,19 +23,22 @@ router = APIRouter(prefix="/api/v1/projects/{project_id}", tags=["research"], re
 
 @router.post("/search", response_model=SearchResult)
 async def search(project_id: UUID, data: SearchRequest, request: Request):
-    return await request.app.state.service.search(project_context(request, project_id), data)
+    ctx = project_context(request, project_id)
+    require_ai(request)
+    return await request.app.state.service.search(ctx, data)
 
 
 @router.post("/answers", response_model=Task, status_code=202)
 def answer(project_id: UUID, data: QuestionRequest, request: Request):
-    return request.app.state.service.question_task(
-        project_context(request, project_id), "answer", data, key(request)
-    )
+    ctx = project_context(request, project_id)
+    require_ai(request)
+    return request.app.state.service.question_task(ctx, "answer", data, key(request))
 
 
 @router.post("/papers/{paper_id}/evidence", response_model=Task, status_code=202)
 def evidence(project_id: UUID, paper_id: UUID, request: Request):
     ctx = project_context(request, project_id)
+    require_ai(request)
     return request.app.state.service.question_task(
         ctx, "evidence", QuestionRequest(question="证据提取", paper_ids=[paper_id]), key(request)
     )
@@ -49,9 +52,9 @@ def evidence_history(project_id: UUID, paper_id: UUID, request: Request):
 
 @router.post("/report-drafts", response_model=Task, status_code=202)
 def draft(project_id: UUID, data: QuestionRequest, request: Request):
-    return request.app.state.service.question_task(
-        project_context(request, project_id), "draft", data, key(request)
-    )
+    ctx = project_context(request, project_id)
+    require_ai(request)
+    return request.app.state.service.question_task(ctx, "draft", data, key(request))
 
 
 @router.post("/reports", response_model=ReportVersion, status_code=201)

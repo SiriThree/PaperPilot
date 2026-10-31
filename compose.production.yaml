@@ -1,0 +1,95 @@
+name: paperpilot-production
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE:?immutable PostgreSQL image required}
+    environment:
+      POSTGRES_DB: paperpilot_production
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_admin_password
+    secrets: [postgres_admin_password]
+    volumes: ["production-postgres:/var/lib/postgresql/data"]
+    networks: [database]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d paperpilot_production"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    mem_limit: 1g
+  setup:
+    image: ${BACKEND_IMAGE:?production backend image required}
+    user: "0:0"
+    entrypoint: ["python", "-m", "app.production_setup"]
+    profiles: [tools]
+    secrets: [postgres_admin_password]
+    volumes:
+      - runtime-secrets:/runtime
+      - ./.runtime/production:/state
+    networks: [database]
+    depends_on:
+      postgres:
+        condition: service_healthy
+  backend:
+    image: ${BACKEND_IMAGE:?production backend image required}
+    environment:
+      PAPERPILOT_ENV: production
+      PAPERPILOT_PRODUCTION_SECURITY_PROFILE: "1"
+      PAPERPILOT_A_MODE: persistent
+      PAPERPILOT_C_MODE: disabled
+      PAPERPILOT_D_MODE: real
+      PAPERPILOT_AUTH_MODE: credentials
+      PAPERPILOT_AUTH_DATABASE: isolated
+      PAPERPILOT_AUDIT_PREFLIGHT: required
+      PAPERPILOT_BUSINESS_PRIVILEGE_PREFLIGHT: required
+      PAPERPILOT_SECURITY_EXPERIMENTS: "0"
+      PAPERPILOT_PRODUCTION_CONFIG: /run/paperpilot/runtime.json
+      PAPERPILOT_STORAGE_DIR: /uploads
+      PAPERPILOT_ALLOWED_ORIGINS: https://localhost:${HTTPS_PORT:-8443}
+    volumes:
+      - runtime-secrets:/run/paperpilot:ro
+      - production-uploads:/uploads
+      - ./.runtime/production/evidence:/run/acceptance:ro
+    networks: [application, database, model-egress]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=10)"]
+      interval: 15s
+      timeout: 12s
+      retries: 5
+      start_period: 30s
+    mem_limit: 768m
+  proxy:
+    image: ${WEB_IMAGE:?production web image required}
+    ports: ["127.0.0.1:${HTTPS_PORT:-8443}:443"]
+    volumes: ["production-caddy:/data", "production-caddy-config:/config"]
+    networks: [application, edge]
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    mem_limit: 256m
+networks:
+  model-egress:
+    driver: bridge
+  edge:
+    driver: bridge
+  application:
+    internal: true
+  database:
+    internal: true
+volumes:
+  production-postgres:
+  production-uploads:
+  runtime-secrets:
+  production-caddy:
+  production-caddy-config:
+secrets:
+  postgres_admin_password:
+    file: ./.runtime/production/postgres-admin-password

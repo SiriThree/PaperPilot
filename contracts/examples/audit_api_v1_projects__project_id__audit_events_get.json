@@ -15,9 +15,9 @@
       "body": {
         "items": [
           {
-            "event_id": "d3e2326c-da48-45bd-b651-3c65f47f73ef",
-            "timestamp": "2026-10-26T07:44:45.985348Z",
-            "request_id": "dd90789e-1050-44d6-a73c-6212122097c9",
+            "event_id": "2e348cf3-cef8-47a1-a566-94565e670c64",
+            "timestamp": "2026-10-31T08:36:06.016449Z",
+            "request_id": "f43a0251-787f-46b3-93a0-23aa52d0798f",
             "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
             "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
             "action": "answer.completed",
@@ -26,12 +26,21 @@
             "policy_id": null,
             "execution_status": "completed",
             "duration_ms": 0.0,
-            "mock": true
+            "mock": true,
+            "details": {
+              "question": null,
+              "sql": null,
+              "resource_ids": [
+                "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+                "d37e1e91-62d6-407b-9566-60b4bd4396af"
+              ],
+              "resource_name": null
+            }
           },
           {
-            "event_id": "096d02b9-3a9c-40b1-a88d-6ae5032cd7ce",
-            "timestamp": "2026-10-26T07:44:45.868683Z",
-            "request_id": "dd90789e-1050-44d6-a73c-6212122097c9",
+            "event_id": "0e78eee8-7e4d-44d3-933f-eb1089768c7b",
+            "timestamp": "2026-10-31T08:36:05.907525Z",
+            "request_id": "f43a0251-787f-46b3-93a0-23aa52d0798f",
             "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
             "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
             "action": "answer.requested",
@@ -40,12 +49,21 @@
             "policy_id": null,
             "execution_status": "pending",
             "duration_ms": 0.0,
-            "mock": true
+            "mock": true,
+            "details": {
+              "question": "证据不足",
+              "sql": null,
+              "resource_ids": [
+                "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+                "d37e1e91-62d6-407b-9566-60b4bd4396af"
+              ],
+              "resource_name": null
+            }
           },
           {
-            "event_id": "bd0fc2a0-5045-4f62-b32b-b437eaff4354",
-            "timestamp": "2026-10-26T07:44:45.866693Z",
-            "request_id": "93e06368-c801-4fae-bad6-7dd47b6d9c25",
+            "event_id": "b32feb73-7e24-4788-a7df-0e3888d140c7",
+            "timestamp": "2026-10-31T08:36:05.883072Z",
+            "request_id": "364ca0df-abfb-43ec-9913-f7aaa35e7046",
             "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
             "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
             "action": "secure_query.finished",
@@ -53,13 +71,19 @@
             "decision": "undetermined",
             "policy_id": null,
             "execution_status": "failed",
-            "duration_ms": 0.0030999653972685337,
-            "mock": true
+            "duration_ms": 0.013699999726668466,
+            "mock": true,
+            "details": {
+              "question": "模拟网关故障",
+              "sql": null,
+              "resource_ids": [],
+              "resource_name": null
+            }
           },
           {
-            "event_id": "4e3f87ab-5891-4bd6-8736-2279822fe123",
-            "timestamp": "2026-10-26T07:44:45.866693Z",
-            "request_id": "93e06368-c801-4fae-bad6-7dd47b6d9c25",
+            "event_id": "5447901d-6c3c-42af-8b9d-2604d5bd62ee",
+            "timestamp": "2026-10-31T08:36:05.879023Z",
+            "request_id": "364ca0df-abfb-43ec-9913-f7aaa35e7046",
             "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
             "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
             "action": "secure_query.requested",
@@ -68,12 +92,18 @@
             "policy_id": null,
             "execution_status": "pending",
             "duration_ms": 0.0,
-            "mock": true
+            "mock": true,
+            "details": {
+              "question": "模拟网关故障",
+              "sql": null,
+              "resource_ids": [],
+              "resource_name": null
+            }
           },
           {
-            "event_id": "09a8b03f-561e-4b6b-80d5-13971916cea2",
-            "timestamp": "2026-10-26T07:44:45.864685Z",
-            "request_id": "98fb8c3d-c286-4224-8263-30bda5e216ff",
+            "event_id": "e7210825-2e19-496e-9dff-f133d679a3c6",
+            "timestamp": "2026-10-31T08:36:05.859430Z",
+            "request_id": "41aaa67f-a9f8-4df7-994b-488df5eb8d50",
             "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
             "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
             "action": "secure_query.finished",
@@ -81,13 +111,19 @@
             "decision": "undetermined",
             "policy_id": "mock-intents-v1",
             "execution_status": "failed",
-            "duration_ms": 0.012499978765845299,
-            "mock": true
+            "duration_ms": 0.320099999953527,
+            "mock": true,
+            "details": {
+              "question": "模拟执行失败",
+              "sql": null,
+              "resource_ids": [],
+              "resource_name": null
+            }
           },
           {
-            "event_id": "e6c635e8-9bbd-45d8-a084-9c79dcb8af32",
-            "timestamp": "2026-10-26T07:44:45.864685Z",
-            "request_id": "98fb8c3d-c286-4224-8263-30bda5e216ff",
+            "event_id": "00686270-4d0f-48db-af26-00e665f78b52",
+            "timestamp": "2026-10-31T08:36:05.850459Z",
+            "request_id": "41aaa67f-a9f8-4df7-994b-488df5eb8d50",
             "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
             "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
             "action": "secure_query.requested",
@@ -96,12 +132,18 @@
             "policy_id": null,
             "execution_status": "pending",
             "duration_ms": 0.0,
-            "mock": true
+            "mock": true,
+            "details": {
+              "question": "模拟执行失败",
+              "sql": null,
+              "resource_ids": [],
+              "resource_name": null
+            }
           },
           {
-            "event_id": "aa15f5a6-48fc-4617-a0a6-b0dda9f8219e",
-            "timestamp": "2026-10-26T07:44:45.862683Z",
-            "request_id": "bec67058-3777-486f-9502-05e9602338af",
+            "event_id": "5f6ff5c3-7857-4b16-8d8e-ef833b5ff6ef",
+            "timestamp": "2026-10-31T08:36:05.821649Z",
+            "request_id": "de3d1cdf-7a7e-4952-a46c-aec6f360dc12",
             "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
             "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
             "action": "secure_query.finished",
@@ -109,13 +151,19 @@
             "decision": "rejected",
             "policy_id": "mock-intents-v1",
             "execution_status": "not_executed",
-            "duration_ms": 0.016700010746717453,
-            "mock": true
+            "duration_ms": 0.2621000003273366,
+            "mock": true,
+            "details": {
+              "question": "不支持的问题",
+              "sql": null,
+              "resource_ids": [],
+              "resource_name": null
+            }
           },
           {
-            "event_id": "3f1d5c55-d4dd-44cb-b27f-120d408c602f",
-            "timestamp": "2026-10-26T07:44:45.862683Z",
-            "request_id": "bec67058-3777-486f-9502-05e9602338af",
+            "event_id": "3e40ea12-eb8a-4edb-bd65-5479ace92e28",
+            "timestamp": "2026-10-31T08:36:05.816568Z",
+            "request_id": "de3d1cdf-7a7e-4952-a46c-aec6f360dc12",
             "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
             "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
             "action": "secure_query.requested",
@@ -124,12 +172,18 @@
             "policy_id": null,
             "execution_status": "pending",
             "duration_ms": 0.0,
-            "mock": true
+            "mock": true,
+            "details": {
+              "question": "不支持的问题",
+              "sql": null,
+              "resource_ids": [],
+              "resource_name": null
+            }
           },
           {
-            "event_id": "80bdfacd-bf7c-4233-8dfc-76b54256bd9b",
-            "timestamp": "2026-10-26T07:44:45.858682Z",
-            "request_id": "707454ab-3bd8-4aee-bde9-291c562315a9",
+            "event_id": "f07ebfa5-4d74-46e0-bb9c-33b7c61d55c1",
+            "timestamp": "2026-10-31T08:36:05.781729Z",
+            "request_id": "3de89792-e307-4864-9ecf-a1efd91b336f",
             "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
             "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
             "action": "secure_query.finished",
@@ -137,13 +191,19 @@
             "decision": "allowed",
             "policy_id": "mock-intents-v1",
             "execution_status": "executed",
-            "duration_ms": 0.06120000034570694,
-            "mock": true
+            "duration_ms": 0.42380000013508834,
+            "mock": true,
+            "details": {
+              "question": "按年份统计论文数量",
+              "sql": null,
+              "resource_ids": [],
+              "resource_name": null
+            }
           },
           {
-            "event_id": "acaa6ad1-fba7-4717-82a6-bf44e0a897fe",
-            "timestamp": "2026-10-26T07:44:45.858682Z",
-            "request_id": "707454ab-3bd8-4aee-bde9-291c562315a9",
+            "event_id": "31163d4c-51f7-4f13-980d-75d44f246852",
+            "timestamp": "2026-10-31T08:36:05.778650Z",
+            "request_id": "3de89792-e307-4864-9ecf-a1efd91b336f",
             "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
             "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
             "action": "secure_query.requested",
@@ -152,12 +212,41 @@
             "policy_id": null,
             "execution_status": "pending",
             "duration_ms": 0.0,
-            "mock": true
+            "mock": true,
+            "details": {
+              "question": "按年份统计论文数量",
+              "sql": null,
+              "resource_ids": [],
+              "resource_name": null
+            }
           },
           {
-            "event_id": "13bd93f6-cbdc-4f3f-a568-fc64efc27876",
-            "timestamp": "2026-10-26T07:44:45.841468Z",
-            "request_id": "6240f08e-156c-4c92-9b37-c2eb3b9ccb38",
+            "event_id": "87efb7c0-dc51-4d90-961a-da01b438150b",
+            "timestamp": "2026-10-31T08:36:05.744401Z",
+            "request_id": "361af07d-0790-4247-889d-b4f1c776cd14",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "report.exported",
+            "resource_type": "report",
+            "decision": "allowed",
+            "policy_id": null,
+            "execution_status": "completed",
+            "duration_ms": 0.0,
+            "mock": true,
+            "details": {
+              "question": null,
+              "sql": null,
+              "resource_ids": [
+                "2cfe0d7f-52ba-48fa-b0e5-8f7fd460912b",
+                "3601a0c5-2b8d-4010-a3a8-7970214dca0e"
+              ],
+              "resource_name": "Mock 综述"
+            }
+          },
+          {
+            "event_id": "6aba5dd5-9afa-41be-bead-7174821b9f18",
+            "timestamp": "2026-10-31T08:36:05.662613Z",
+            "request_id": "9b22de84-d3eb-4131-8c9a-dcb4ad366cd1",
             "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
             "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
             "action": "report.saved",
@@ -166,26 +255,41 @@
             "policy_id": null,
             "execution_status": "completed",
             "duration_ms": 0.0,
-            "mock": true
+            "mock": true,
+            "details": {
+              "question": null,
+              "sql": null,
+              "resource_ids": [
+                "2cfe0d7f-52ba-48fa-b0e5-8f7fd460912b",
+                "3601a0c5-2b8d-4010-a3a8-7970214dca0e"
+              ],
+              "resource_name": "Mock 综述"
+            }
           },
           {
-            "event_id": "87b94e19-cead-4161-b376-687b02848f1a",
-            "timestamp": "2026-10-26T07:44:45.836305Z",
-            "request_id": "f5d16948-9aec-4d74-86b3-57aea1144ad4",
+            "event_id": "7e22543d-7de6-4bc5-b453-6c6275d0405d",
+            "timestamp": "2026-10-31T08:36:05.649359Z",
+            "request_id": "9b22de84-d3eb-4131-8c9a-dcb4ad366cd1",
             "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
             "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
-            "action": "draft.completed",
-            "resource_type": "draft",
+            "action": "report.save_requested",
+            "resource_type": "report",
             "decision": "allowed",
             "policy_id": null,
-            "execution_status": "completed",
+            "execution_status": "pending",
             "duration_ms": 0.0,
-            "mock": true
+            "mock": true,
+            "details": {
+              "question": null,
+              "sql": null,
+              "resource_ids": [],
+              "resource_name": "Mock 综述"
+            }
           },
           {
-            "event_id": "5bd3e073-47cb-441f-89db-dd905ed922b9",
-            "timestamp": "2026-10-26T07:44:45.832954Z",
-            "request_id": "a1c4f5e7-c22a-40c2-80e4-013d29fb09ca",
+            "event_id": "4effb019-af20-4d6b-b680-e1785de27dfa",
+            "timestamp": "2026-10-31T08:36:05.612997Z",
+            "request_id": "763588c2-ea6d-4570-9d4b-0999829e78e4",
             "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
             "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
             "action": "task.retry_requested",
@@ -194,12 +298,43 @@
             "policy_id": null,
             "execution_status": "pending",
             "duration_ms": 0.0,
-            "mock": true
+            "mock": true,
+            "details": {
+              "question": null,
+              "sql": null,
+              "resource_ids": [
+                "fe290145-d7f7-4e63-b020-5c486ea0f61a"
+              ],
+              "resource_name": null
+            }
           },
           {
-            "event_id": "e53a9ac2-88eb-4302-b1b9-24ca423137a3",
-            "timestamp": "2026-10-26T07:44:45.736570Z",
-            "request_id": "d46fe453-e2f3-461c-af97-71333b7cad42",
+            "event_id": "766070b8-cb4a-422d-8690-db7fe89d767a",
+            "timestamp": "2026-10-31T08:36:05.553747Z",
+            "request_id": "611e8d94-7737-4b54-a0ee-535c2c48ea06",
+            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
+            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
+            "action": "draft.completed",
+            "resource_type": "draft",
+            "decision": "allowed",
+            "policy_id": null,
+            "execution_status": "completed",
+            "duration_ms": 0.0,
+            "mock": true,
+            "details": {
+              "question": null,
+              "sql": null,
+              "resource_ids": [
+                "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+                "d37e1e91-62d6-407b-9566-60b4bd4396af"
+              ],
+              "resource_name": null
+            }
+          },
+          {
+            "event_id": "e6c7b9bd-8138-4098-8527-70ca112a6c36",
+            "timestamp": "2026-10-31T08:36:05.466163Z",
+            "request_id": "6e974afa-3833-4cee-95ef-aaf8a44c2b38",
             "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
             "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
             "action": "answer.requested",
@@ -208,12 +343,21 @@
             "policy_id": null,
             "execution_status": "pending",
             "duration_ms": 0.0,
-            "mock": true
+            "mock": true,
+            "details": {
+              "question": "模拟失败",
+              "sql": null,
+              "resource_ids": [
+                "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+                "d37e1e91-62d6-407b-9566-60b4bd4396af"
+              ],
+              "resource_name": null
+            }
           },
           {
-            "event_id": "05239c82-0702-4c0f-a3df-1d4addf8501e",
-            "timestamp": "2026-10-26T07:44:45.731870Z",
-            "request_id": "f5d16948-9aec-4d74-86b3-57aea1144ad4",
+            "event_id": "cdcdda10-5cc2-4038-85b8-0baca783cb9a",
+            "timestamp": "2026-10-31T08:36:05.426667Z",
+            "request_id": "611e8d94-7737-4b54-a0ee-535c2c48ea06",
             "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
             "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
             "action": "draft.requested",
@@ -222,12 +366,21 @@
             "policy_id": null,
             "execution_status": "pending",
             "duration_ms": 0.0,
-            "mock": true
+            "mock": true,
+            "details": {
+              "question": "文献综述",
+              "sql": null,
+              "resource_ids": [
+                "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+                "d37e1e91-62d6-407b-9566-60b4bd4396af"
+              ],
+              "resource_name": null
+            }
           },
           {
-            "event_id": "2f17a6e3-4033-4552-a1bb-7ef544dd7f9a",
-            "timestamp": "2026-10-26T07:44:45.723986Z",
-            "request_id": "e88d20f0-a1e9-48bb-8f4a-8839052cacca",
+            "event_id": "48515085-a484-4bdd-9253-0186c27bdc6f",
+            "timestamp": "2026-10-31T08:36:05.374471Z",
+            "request_id": "ecc26a5c-2f09-4de1-8f99-5957f774dafc",
             "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
             "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
             "action": "evidence.completed",
@@ -236,12 +389,20 @@
             "policy_id": null,
             "execution_status": "completed",
             "duration_ms": 0.0,
-            "mock": true
+            "mock": true,
+            "details": {
+              "question": null,
+              "sql": null,
+              "resource_ids": [
+                "babaff3e-8201-536d-aa17-ffb7e9b7b91d"
+              ],
+              "resource_name": null
+            }
           },
           {
-            "event_id": "7a20b26a-f4e7-4938-9e01-31c4e3ee74f1",
-            "timestamp": "2026-10-26T07:44:45.628175Z",
-            "request_id": "e88d20f0-a1e9-48bb-8f4a-8839052cacca",
+            "event_id": "6288ca15-4cac-47da-9fc9-c78bf33a8306",
+            "timestamp": "2026-10-31T08:36:05.273098Z",
+            "request_id": "ecc26a5c-2f09-4de1-8f99-5957f774dafc",
             "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
             "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
             "action": "evidence.requested",
@@ -250,12 +411,20 @@
             "policy_id": null,
             "execution_status": "pending",
             "duration_ms": 0.0,
-            "mock": true
+            "mock": true,
+            "details": {
+              "question": "证据提取",
+              "sql": null,
+              "resource_ids": [
+                "babaff3e-8201-536d-aa17-ffb7e9b7b91d"
+              ],
+              "resource_name": "合成示例：检索增强生成的证据核验"
+            }
           },
           {
-            "event_id": "4fcbe931-a69b-4917-8a19-e2ae6d034789",
-            "timestamp": "2026-10-26T07:44:45.618581Z",
-            "request_id": "ba919f52-89c4-449f-9aab-3fc8706398b2",
+            "event_id": "2aa00515-dd20-425a-9cc7-dca908a6c899",
+            "timestamp": "2026-10-31T08:36:05.260988Z",
+            "request_id": "b74077c8-f92f-46d0-8e69-d77a6d461a72",
             "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
             "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
             "action": "answer.completed",
@@ -264,38 +433,19 @@
             "policy_id": null,
             "execution_status": "completed",
             "duration_ms": 0.0,
-            "mock": true
-          },
-          {
-            "event_id": "b4ccbfeb-fb01-48c2-a876-51bc89f04baa",
-            "timestamp": "2026-10-26T07:44:45.532273Z",
-            "request_id": "ba919f52-89c4-449f-9aab-3fc8706398b2",
-            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
-            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
-            "action": "answer.requested",
-            "resource_type": "answer",
-            "decision": "allowed",
-            "policy_id": null,
-            "execution_status": "pending",
-            "duration_ms": 0.0,
-            "mock": true
-          },
-          {
-            "event_id": "519a62e2-9565-47fe-b9ae-bdf6a70da9ef",
-            "timestamp": "2026-10-26T07:44:45.520839Z",
-            "request_id": "0d3f4a89-3312-406d-bd0c-08b2a0aab5aa",
-            "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
-            "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
-            "action": "process.completed",
-            "resource_type": "process",
-            "decision": "allowed",
-            "policy_id": null,
-            "execution_status": "completed",
-            "duration_ms": 0.0,
-            "mock": true
+            "mock": true,
+            "details": {
+              "question": null,
+              "sql": null,
+              "resource_ids": [
+                "babaff3e-8201-536d-aa17-ffb7e9b7b91d",
+                "d37e1e91-62d6-407b-9566-60b4bd4396af"
+              ],
+              "resource_name": null
+            }
           }
         ],
-        "total": 23,
+        "total": 26,
         "offset": 0,
         "limit": 20,
         "mock": true
@@ -315,7 +465,7 @@
       "body": {
         "code": "UNAUTHENTICATED",
         "message": "请先登录",
-        "request_id": "4a45115c-12af-4764-b491-20e7dfc87520"
+        "request_id": "9b9c383b-fde1-482b-8b3d-7061275f1592"
       }
     }
   }

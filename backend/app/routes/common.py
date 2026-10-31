@@ -24,6 +24,11 @@ ERRORS = {
 }
 
 
+def require_ai(request):
+    if request.app.state.settings.c_mode == "disabled":
+        raise AppError(503, "AI_NOT_CONFIGURED", "当前生产部署未配置 AI，此入口不可用")
+
+
 def key(request: Request):
     value = request.headers.get("Idempotency-Key") or str(uuid4())
     if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", value):

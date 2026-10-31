@@ -1,0 +1,4 @@
+ARG CADDY_IMAGE=caddy:2-alpine
+FROM ${CADDY_IMAGE}
+COPY frontend/dist /srv
+COPY deploy/production/Caddyfile /etc/caddy/Caddyfile

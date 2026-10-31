@@ -4,7 +4,7 @@
   "mock": true,
   "success": {
     "request": {
-      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/reports/73221aa0-7669-4b73-9cd4-c323ca9f2a9b/versions/5cc0bff9-e108-4d93-83ac-0dcbbbbf30bc/text",
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/reports/2cfe0d7f-52ba-48fa-b0e5-8f7fd460912b/versions/3601a0c5-2b8d-4010-a3a8-7970214dca0e/text",
       "headers": {
         "X-PaperPilot-Client": "web"
       }
@@ -17,7 +17,7 @@
   },
   "error": {
     "request": {
-      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/reports/73221aa0-7669-4b73-9cd4-c323ca9f2a9b/versions/5cc0bff9-e108-4d93-83ac-0dcbbbbf30bc/text",
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/reports/2cfe0d7f-52ba-48fa-b0e5-8f7fd460912b/versions/3601a0c5-2b8d-4010-a3a8-7970214dca0e/text",
       "headers": {
         "X-PaperPilot-Client": "web"
       }
@@ -28,7 +28,7 @@
       "body": {
         "code": "UNAUTHENTICATED",
         "message": "请先登录",
-        "request_id": "80f622be-5296-4690-8dfd-bd73039593a7"
+        "request_id": "ad28625d-899a-41a2-8041-becb385c5416"
       }
     }
   }

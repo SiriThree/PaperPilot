@@ -114,7 +114,9 @@ def create_app(
 
             def enforce_business_privileges(connection):
                 try:
-                    verify_business_privileges(connection)
+                    verify_business_privileges(
+                        connection, project_audit_read=settings.environment == "production"
+                    )
                 except Exception:
                     raise AppError(503, "DATA_UNAVAILABLE", "业务数据库权限配置不可用") from None
 
@@ -143,7 +145,11 @@ def create_app(
     @asynccontextmanager
     async def lifespan(app):
         logging.getLogger("paperpilot").warning(
-            "DEVELOPMENT: adapter_modes a=%s c=%s d=%s; identity=%s; audit_preflight=%s; production_unverified",
+            (
+                "LOCAL PRODUCTION SECURITY: adapter_modes a=%s c=%s d=%s; identity=%s; audit_preflight=%s; AI disabled"
+                if settings.environment == "production"
+                else "DEVELOPMENT: adapter_modes a=%s c=%s d=%s; identity=%s; audit_preflight=%s; production_unverified"
+            ),
             settings.a_mode,
             settings.c_mode,
             settings.d_mode,
@@ -151,6 +157,7 @@ def create_app(
             settings.audit_preflight,
         )
         worker = None
+        production_outbox_task = None
         isolated_tasks = []
         try:
             if app.state.auth_boundary is not None:
@@ -176,8 +183,17 @@ def create_app(
                 for service in app.state.scoped_worker_services:
                     isolated_tasks.append(asyncio.create_task(service.worker()))
                 app.state.scoped_worker_tasks = isolated_tasks
+            if settings.environment == "production":
+                runner = getattr(app.state, "production_outbox_runner", None)
+                if not callable(runner):
+                    raise RuntimeError("Production outbox delivery is not registered")
+                production_outbox_task = asyncio.create_task(runner())
             yield
         finally:
+            if production_outbox_task is not None:
+                production_outbox_task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await production_outbox_task
             if app.state.security_experiments is not None:
                 await app.state.security_experiments.close()
             for task in isolated_tasks:

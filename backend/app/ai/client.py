@@ -4,7 +4,7 @@ import math
 import httpx
 from pydantic import ValidationError
 
-from app.ai.settings import AISettings
+from app.ai.settings import AISettings, ChatSettings
 from app.errors import AppError
 
 
@@ -19,7 +19,7 @@ class ModelClient:
     disabled, so a provider cannot redirect the Authorization header elsewhere.
     """
 
-    def __init__(self, settings: AISettings, *, transport=None):
+    def __init__(self, settings: AISettings | ChatSettings, *, transport=None):
         self.settings = settings
         self.transport = transport
 

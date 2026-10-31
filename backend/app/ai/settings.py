@@ -6,6 +6,55 @@ from urllib.parse import urlsplit
 
 
 @dataclass(frozen=True)
+class ChatSettings:
+    """Chat-only configuration; SQL generation does not need an embedding provider."""
+
+    base_url: str
+    api_key: str = field(repr=False)
+    chat_model: str
+    timeout_seconds: float = 45
+    token_limit_parameter: str = "max_tokens"
+    response_format: str = "json_schema"
+
+    def __post_init__(self):
+        url = urlsplit(self.base_url)
+        if (
+            url.scheme not in {"http", "https"}
+            or not url.hostname
+            or url.username
+            or url.password
+            or url.query
+            or url.fragment
+            or (url.scheme == "http" and url.hostname not in {"localhost", "127.0.0.1", "::1"})
+        ):
+            raise ValueError("Chat base URL must be HTTPS or loopback HTTP without credentials")
+        if any(not v.strip() or any(c in v for c in "\r\n") for v in (self.api_key, self.chat_model)):
+            raise ValueError("Chat credentials and model must be explicitly configured")
+        if not math.isfinite(self.timeout_seconds) or not 0 < self.timeout_seconds <= 90:
+            raise ValueError("Chat timeout must be between 0 and 90 seconds")
+        if self.token_limit_parameter not in {"max_tokens", "max_completion_tokens"}:
+            raise ValueError("Unsupported token limit parameter")
+        if self.response_format not in {"json_schema", "json_object"}:
+            raise ValueError("Unsupported model response format")
+
+    @classmethod
+    def from_env(cls, prefix="PAPERPILOT_AI_"):
+        from app.secret_config import secret_value
+
+        try:
+            return cls(
+                base_url=os.environ[prefix + "BASE_URL"].rstrip("/"),
+                api_key=secret_value(os.environ, prefix + "API_KEY"),
+                chat_model=os.environ[prefix + "CHAT_MODEL"],
+                timeout_seconds=float(os.getenv(prefix + "TIMEOUT_SECONDS", "45")),
+                token_limit_parameter=os.getenv(prefix + "TOKEN_LIMIT_PARAMETER", "max_tokens"),
+                response_format=os.getenv(prefix + "RESPONSE_FORMAT", "json_schema"),
+            )
+        except (KeyError, ValueError, TypeError, AttributeError):
+            raise RuntimeError("Invalid or missing chat model configuration; startup refused") from None
+
+
+@dataclass(frozen=True)
 class AISettings:
     base_url: str
     api_key: str = field(repr=False)

@@ -23,9 +23,16 @@
         "limitations": [
           "development_identity_only",
           "in_memory_data_lost_on_restart",
+          "in_memory_sessions_lost_on_restart",
+          "shared_auth_database",
           "synthetic_ai",
-          "no_real_sql_gateway"
-        ]
+          "no_real_sql_gateway",
+          "audit_preflight_disabled",
+          "business_privilege_preflight_disabled",
+          "shared_audit_read",
+          "security_executor_not_managed"
+        ],
+        "deployment": null
       }
     }
   },
@@ -42,7 +49,7 @@
       "body": {
         "code": "VALIDATION_ERROR",
         "message": "请求长度格式不正确",
-        "request_id": "ff50369a-7be7-4dd1-8df9-8a0d57ff859f"
+        "request_id": "f5dc7b89-4e45-4586-96e9-7839d118aee4"
       }
     }
   }

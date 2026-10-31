@@ -19,3 +19,4 @@ tmp/
 *.sqlite3-wal
 *.sqlite3-shm
 build/
+deliverables/

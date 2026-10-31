@@ -5702,6 +5702,16 @@
             },
             "type": "array",
             "title": "Limitations"
+          },
+          "deployment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProductionDeployment"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,
@@ -5963,6 +5973,112 @@
           "sources"
         ],
         "title": "ProcessResult"
+      },
+      "ProductionAcceptance": {
+        "properties": {
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Completed At"
+          },
+          "passed_checks": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Passed Checks"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "completed_at",
+          "passed_checks"
+        ],
+        "title": "ProductionAcceptance"
+      },
+      "ProductionDeployment": {
+        "properties": {
+          "environment": {
+            "type": "string",
+            "const": "production",
+            "title": "Environment"
+          },
+          "profile": {
+            "type": "string",
+            "const": "local_https_security",
+            "title": "Profile"
+          },
+          "deployment_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Deployment Id"
+          },
+          "source_fingerprint": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Source Fingerprint"
+          },
+          "runtime_checks_passed": {
+            "type": "boolean",
+            "title": "Runtime Checks Passed"
+          },
+          "ai_available": {
+            "type": "boolean",
+            "title": "Ai Available"
+          },
+          "statistics_sql_mode": {
+            "type": "string",
+            "enum": [
+              "template",
+              "model"
+            ],
+            "title": "Statistics Sql Mode",
+            "default": "template"
+          },
+          "statistics_model_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Statistics Model Name"
+          },
+          "sql_model_fingerprint": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sql Model Fingerprint"
+          },
+          "acceptance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProductionAcceptance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "environment",
+          "profile",
+          "deployment_id",
+          "source_fingerprint",
+          "runtime_checks_passed",
+          "ai_available"
+        ],
+        "title": "ProductionDeployment"
       },
       "Project": {
         "properties": {

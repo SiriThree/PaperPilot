@@ -1,6 +1,7 @@
 """Project authorization and mandatory audit gates; no SQL executor is enabled by default."""
 
 import asyncio
+import logging
 from collections.abc import Awaitable, Callable, Mapping
 from datetime import UTC, datetime
 from time import perf_counter
@@ -43,7 +44,11 @@ class SecurityAdapter:
             raise ValueError("Audit append must be callable")
         self.data = data
         if candidate_generator is not generate_candidate:
-            self.policy_id = "postgres-statistics-v2-injected"
+            self.policy_id = (
+                "postgres-statistics-v2-model"
+                if getattr(candidate_generator, "sql_source", None) == "model"
+                else "postgres-statistics-v2-injected"
+            )
         self._candidate_generator = candidate_generator
         self._query_executor = query_executor
         self._audit_append = audit_append
@@ -128,6 +133,19 @@ class SecurityAdapter:
     ) -> SecureQueryResult:
         try:
             candidate = await self._candidate_generator(ctx, question)
+        except AppError as error:
+            model_errors = {
+                "AI_TIMEOUT": "统计模型请求超时，未执行查询",
+                "AI_UNAVAILABLE": "统计模型连接失败、限流或暂不可用，未执行查询",
+                "AI_PROVIDER_ERROR": "模型服务拒绝请求，请检查地址、密钥、模型及结构化输出配置",
+                "AI_INVALID_RESPONSE": "模型响应不符合候选 SQL 的 JSON 结构，未执行查询",
+            }
+            if self.policy_id == "postgres-statistics-v2-model" and error.code in model_errors:
+                logging.getLogger("paperpilot").warning(
+                    "sql_model_failed code=%s request_id=%s", error.code, ctx.request_id
+                )
+                raise AppError(error.status, error.code, model_errors[error.code]) from None
+            raise AppError(503, "GATEWAY_UNAVAILABLE", "安全网关不可用，未执行查询") from None
         except Exception:
             raise AppError(503, "GATEWAY_UNAVAILABLE", "安全网关不可用，未执行查询") from None
         self._project_role(ctx)
@@ -201,11 +219,38 @@ def build_security(
     *,
     readers: Mapping[UUID, ReaderConfig] | None = None,
     audit_append: AuditAppend | None = None,
+    query_executor: QueryExecutor | None = None,
+    candidate_generator: CandidateGenerator | None = None,
 ) -> SecurityPort:
+    import os
+
     from app.security.executor import PostgresQueryExecutor
 
+    if readers is not None and query_executor is not None:
+        raise ValueError("Configure only one statistics executor")
+    mode = os.getenv("PAPERPILOT_SQL_GENERATOR", "template")
+    generator = candidate_generator if candidate_generator is not None else generate_candidate
+    if candidate_generator is not None and mode != "template":
+        raise ValueError("Configure SQL generation through only one composition path")
+    if mode == "model":
+        if os.getenv("PAPERPILOT_ENV") not in {"development", "test"}:
+            raise ValueError("Model SQL generation currently requires development/test mode")
+        from app.ai.client import ModelClient
+        from app.ai.settings import ChatSettings
+        from app.ai.sql_generation import ModelSQLGenerator
+        from app.security.sql_policy import SQL_BY_QUESTION
+
+        prefix = (
+            "PAPERPILOT_SQL_MODEL_"
+            if any(k.startswith("PAPERPILOT_SQL_MODEL_") for k in os.environ)
+            else "PAPERPILOT_AI_"
+        )
+        generator = ModelSQLGenerator(ModelClient(ChatSettings.from_env(prefix)), SQL_BY_QUESTION)
+    elif mode != "template":
+        raise ValueError("PAPERPILOT_SQL_GENERATOR must be template or model")
     return SecurityAdapter(
         data,
-        query_executor=PostgresQueryExecutor(readers) if readers is not None else None,
+        candidate_generator=generator,
+        query_executor=PostgresQueryExecutor(readers) if readers is not None else query_executor,
         audit_append=audit_append,
     )

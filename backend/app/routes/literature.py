@@ -7,7 +7,7 @@ from fastapi import APIRouter, File, Form, Request, UploadFile
 from app.adapters.ports import FileReference
 from app.auth import project_context
 from app.errors import AppError
-from app.routes.common import ERRORS, key, project_reader, project_writer
+from app.routes.common import ERRORS, key, project_reader, project_writer, require_ai
 from app.schemas import Acknowledgement, AuditDetails, PaperDetail, PaperList, Task, UploadResult
 
 router = APIRouter(prefix="/api/v1/projects/{project_id}", tags=["literature"], responses=ERRORS)
@@ -62,6 +62,7 @@ async def upload_paper(
     year: int | None = Form(None, ge=1000, le=3000),
 ):
     ctx = project_context(request, project_id)
+    require_ai(request)
     writer = project_writer(request, ctx)
     payload = await file.read(20 * 1024 * 1024 + 1)
     await file.close()

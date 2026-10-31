@@ -1,0 +1,33 @@
+{
+    admin off
+    skip_install_trust
+    auto_https disable_redirects
+    pki {
+        ca local {
+            name "PaperPilot Local Production CA"
+        }
+    }
+}
+
+https://localhost {
+    tls internal
+    encode gzip
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "same-origin"
+        -Server
+    }
+    handle /api/* {
+        reverse_proxy backend:8000 {
+            header_up -Forwarded
+            header_up X-Forwarded-For {remote_host}
+        }
+    }
+    handle {
+        root * /srv
+        try_files {path} /index.html
+        file_server
+    }
+}

@@ -5,7 +5,7 @@ import Feedback from './Feedback.vue'
 import AppIcon from './AppIcon.vue'
 type Group = { id: string; label: string; status: 'passed' | 'failed' | 'not_verified'; passed: number; failed: number; skipped: number; selectors: string[] }
 type Report = { schema_version: number; scope: string; environment: string; generated_at: string; commit: string; worktree_dirty: boolean; code_fingerprint: string; groups: Group[]; not_verified: string[]; source?: { verified: boolean; checkout: string; postgres_versions: string[]; image: string } }
-const props = defineProps<{ real?: boolean }>()
+const props = defineProps<{ real?: boolean; production?: boolean }>()
 const reportUrl = computed(() => props.real ? '/security-evidence-postgres.json' : '/security-evidence.json')
 const labels = computed(() => ({ passed: props.real ? '隔离 PostgreSQL 测试通过' : '应用层测试通过（Mock）', failed: '存在失败', not_verified: '未完成验证' }))
 const resource = useResource<Report | null>(null, async () => {
@@ -39,7 +39,8 @@ watch(() => props.real, () => { resource.data.value = null; resource.load() })
 </script>
 <template>
   <section class="work-panel security-evidence" aria-label="安全验证证据">
-    <div class="work-panel-heading"><span class="work-icon"><AppIcon name="shield" /></span><div><h2>验证证据</h2><p>离线测试记录，不是当前服务的实时探测</p></div></div>
+    <div class="work-panel-heading"><span class="work-icon"><AppIcon name="shield" /></span><div><h2>{{ production ? '历史回归测试证据' : '验证证据' }}</h2><p>离线测试记录，不是当前服务的实时探测</p></div></div>
+    <p v-if="production" class="evidence-environment">下列通过与未验收项针对报告当时的代码快照；当前部署状态以上方生产安全配置为准。</p>
     <Feedback :busy="resource.loading.value" :error="resource.error.value ? '验证报告不可用，当前不能确认测试结果。' : ''" retry-label="重新读取验证报告" @retry="resource.load" />
     <template v-if="resource.data.value && !resource.error.value"><p class="evidence-environment">{{ real ? resource.data.value.environment : '隔离 Mock 环境 · 应用层行为验证' }}</p><ul class="security-checks"><li v-for="group in resource.data.value.groups" :key="group.id"><span>{{ group.label }}</span><strong :class="`check-${group.status}`">{{ labels[group.status] }}</strong><small>{{ group.passed }} 通过 / {{ group.failed }} 失败 / {{ group.skipped }} 跳过</small></li></ul><dl class="evidence-run"><div><dt>执行时间</dt><dd><time :datetime="resource.data.value.generated_at">{{ new Date(resource.data.value.generated_at).toLocaleString('zh-CN') }}</time></dd></div><div><dt>版本</dt><dd>{{ resource.data.value.commit.slice(0, 7) }}{{ resource.data.value.worktree_dirty ? ' · 含未提交修改' : '' }}</dd></div><div><dt>代码指纹</dt><dd>{{ resource.data.value.code_fingerprint.slice(0, 12) }}</dd></div></dl><a :href="reportUrl" target="_blank" rel="noopener" class="evidence-download">查看实际测试记录 <AppIcon name="arrow" :size="13" /></a></template>
     <p v-else-if="!resource.loading.value" class="evidence-unrun">未取得有效报告 · 不展示通过结论</p>

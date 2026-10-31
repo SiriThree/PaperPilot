@@ -31,7 +31,7 @@ BUSINESS_TABLE_PRIVILEGES = {
 _ALLOWED_USER_COLUMNS = {"user_id", "username", "display_name"}
 
 
-def verify_business_privileges(connection):
+def verify_business_privileges(connection, *, project_audit_read=False):
     """Check effective grants, including column and inherited/PUBLIC grants."""
     identity = connection.execute(
         "SELECT current_user=session_user AS identity, rolcanlogin AND NOT "
@@ -63,9 +63,14 @@ def verify_business_privileges(connection):
     for row in rows:
         name = row["relname"]
         public = row["nspname"] == "public"
+        audit_view = project_audit_read and row["nspname"] == "paperpilot_audit" and name == "project_events"
         is_users = public and name == "users"
-        expected = BUSINESS_TABLE_PRIVILEGES.get(name, set()) if public else set()
-        if expected:
+        expected = (
+            {"SELECT"} if audit_view else BUSINESS_TABLE_PRIVILEGES.get(name, set()) if public else set()
+        )
+        if audit_view and row["relkind"] != "v":
+            raise PermissionError("Business audit view type invalid")
+        if expected and not audit_view:
             if row["relkind"] not in {"r", "p"}:
                 raise PermissionError("Business relation type invalid")
             found.add(name)

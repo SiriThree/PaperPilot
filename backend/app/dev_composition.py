@@ -69,7 +69,6 @@ def create_app(settings=None):
 
             if settings.security_execution == "candidate":
                 from app.data.database import ConnectionConfig
-                from app.security.adapter import SecurityAdapter
                 from app.security.restricted_executor import (
                     RestrictedExecutor,
                     RestrictedExecutorRouter,
@@ -100,7 +99,7 @@ def create_app(settings=None):
                 created.append(executor)
 
             def security_factory(data):
-                adapter = SecurityAdapter(data, query_executor=executor) if executor else build_security(data)
+                adapter = build_security(data, query_executor=executor)
                 created.append(adapter)
                 return adapter
 

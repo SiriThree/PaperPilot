@@ -67,6 +67,11 @@ async def secure_query(project_id: UUID, data: SecureQueryRequest, request: Requ
                 mock=request.app.state.settings.a_mode == "mock",
             )
         raise
+    if (
+        request.app.state.settings.environment == "production"
+        and project_id not in request.app.state.production_reader_projects
+    ):
+        raise AppError(503, "PROJECT_READER_NOT_PROVISIONED", "项目统计读取身份尚未供应，请联系部署管理员")
     result = await request.app.state.service.secure_query(ctx, data.question)
     response = JSONResponse(content=result.model_dump(mode="json"))
     if len(response.body) > 256 * 1024:

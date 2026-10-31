@@ -1,6 +1,7 @@
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlsplit
 
 
 @dataclass(frozen=True)
@@ -18,6 +19,7 @@ class Settings:
     auth_login_window_seconds: int = 300
     security_execution: str = "disabled"
     security_experiments: bool = False
+    production_security_profile: bool = False
     audit_preflight: str = "disabled"
     business_privilege_preflight: str = "disabled"
     audit_trusted_owner: str = ""
@@ -44,7 +46,7 @@ class Settings:
         if self.business_privilege_preflight not in {"disabled", "required"}:
             raise RuntimeError("Unsupported business privilege preflight mode")
         if self.business_privilege_preflight == "required" and (
-            self.environment != "test" or self.audit_preflight != "required"
+            self.environment not in {"test", "production"} or self.audit_preflight != "required"
         ):
             raise RuntimeError("Business grant preflight requires isolated test and audit preflight")
         if self.audit_preflight not in {"disabled", "required"}:
@@ -56,7 +58,7 @@ class Settings:
         if self.auth_database not in {"shared", "isolated"}:
             raise RuntimeError("Unsupported authentication database mode")
         if self.auth_database == "isolated" and (
-            self.environment != "test"
+            self.environment not in {"test", "production"}
             or self.auth_mode != "credentials"
             or self.a_mode not in {"persistent", "real"}
             or not self.auth_lock_owner.strip()
@@ -85,16 +87,49 @@ class Settings:
         if self.environment not in {"development", "test", "production"}:
             raise RuntimeError("Unsupported application environment")
         modes = (self.a_mode, self.c_mode, self.d_mode)
-        if self.a_mode not in {"mock", "persistent", "real"} or any(
-            m not in {"mock", "real"} for m in (self.c_mode, self.d_mode)
+        if (
+            self.a_mode not in {"mock", "persistent", "real"}
+            or self.c_mode not in {"mock", "real", "disabled"}
+            or self.d_mode not in {"mock", "real"}
         ):
             raise RuntimeError("A mode must be mock/persistent/real; C/D mode must be mock/real")
+        if self.c_mode == "disabled" and not (
+            self.environment == "production" and self.production_security_profile
+        ):
+            raise RuntimeError("Disabled AI is reserved for the explicit production security profile")
         if self.environment == "production" and "mock" in modes:
             raise RuntimeError("Production forbids Mock adapters")
         if self.environment == "production":
-            raise RuntimeError(
-                "Production authentication and deployment are not implemented; startup refused"
-            )
+            if not (
+                self.production_security_profile
+                and self.auth_mode == "credentials"
+                and self.auth_database == "isolated"
+                and self.auth_lock_owner.strip()
+                and self.a_mode in {"persistent", "real"}
+                and self.d_mode == "real"
+                and self.c_mode == "disabled"
+                and self.audit_preflight == "required"
+                and self.business_privilege_preflight == "required"
+                and self.audit_trusted_owner.strip()
+                and self.security_execution == "disabled"
+                and self.scoped_audit == "disabled"
+                and not self.security_experiments
+            ):
+                raise RuntimeError(
+                    "Production security profile requires isolated credentials, native security and mandatory privilege checks; startup refused"
+                )
+            for origin in self.allowed_origins:
+                parsed = urlsplit(origin)
+                if (
+                    parsed.scheme != "https"
+                    or parsed.hostname != "localhost"
+                    or parsed.username
+                    or parsed.password
+                    or parsed.path
+                    or parsed.query
+                    or parsed.fragment
+                ):
+                    raise RuntimeError("Local production requires an exact HTTPS localhost origin")
 
     @classmethod
     def from_env(cls):
@@ -112,6 +147,7 @@ class Settings:
             auth_login_window_seconds=int(os.getenv("PAPERPILOT_AUTH_LOGIN_WINDOW_SECONDS", "300")),
             security_execution=os.getenv("PAPERPILOT_SECURITY_EXECUTION", "disabled"),
             security_experiments=os.getenv("PAPERPILOT_SECURITY_EXPERIMENTS", "0") == "1",
+            production_security_profile=os.getenv("PAPERPILOT_PRODUCTION_SECURITY_PROFILE", "0") == "1",
             audit_preflight=os.getenv("PAPERPILOT_AUDIT_PREFLIGHT", "disabled"),
             business_privilege_preflight=os.getenv("PAPERPILOT_BUSINESS_PRIVILEGE_PREFLIGHT", "disabled"),
             audit_trusted_owner=os.getenv("PAPERPILOT_AUDIT_TRUSTED_OWNER", ""),

@@ -59,7 +59,14 @@ def create_adapters(
         except Exception:
             raise RuntimeError("Persistent DataPort readiness failed; no Mock fallback") from None
         data = data_binding.data
-    ai = _module(settings.c_mode, ai_factory, data, MockAI, AIPort, "C")
+    if settings.c_mode == "disabled":
+        from app.adapters.disabled_ai import DisabledAI
+
+        if ai_factory is not None:
+            raise RuntimeError("Disabled AI cannot register a provider")
+        ai = DisabledAI()
+    else:
+        ai = _module(settings.c_mode, ai_factory, data, MockAI, AIPort, "C")
     security = _module(settings.d_mode, security_factory, data, MockSecurity, SecurityPort, "D")
     logging.getLogger("paperpilot").info(
         "adapter_modes a=%s c=%s d=%s environment=%s",

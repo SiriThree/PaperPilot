@@ -13,7 +13,7 @@
       "status": 200,
       "content_type": "application/json",
       "body": {
-        "message": "已退出开发会话",
+        "message": "已退出会话",
         "mock": true
       }
     }
@@ -31,7 +31,7 @@
       "body": {
         "code": "UNAUTHENTICATED",
         "message": "请先登录",
-        "request_id": "aeaf1d10-5b3d-449b-94e6-535dc7304201"
+        "request_id": "b8528647-efdd-4ebc-904e-398c937cfd54"
       }
     }
   }

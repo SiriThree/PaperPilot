@@ -11,9 +11,11 @@ import WorkspaceSidebar from './components/WorkspaceSidebar.vue'
 const route = useRoute(), router = useRouter(), startupError = ref(''), connecting = ref(false), sessionNotice = ref('')
 const logoutAction = useAction()
 const sidebarOpen = ref(false), sidebarCollapsed = ref(false), modeDetailsOpen = ref(false)
+const production = computed(() => health.value?.deployment)
+const modelSQL = computed(() => health.value?.limitations.includes('statistics_sql_model') === true)
 const sectionNames: Record<string, string> = { papers: '文献工作台', research: '研究工作台', security: '查询与审计' }
 const pageTitle = computed(() => sectionNames[String(route.path.split('/').pop())] || '项目总览')
-const modeNote = computed(() => !health.value ? '暂未确认运行模式，请检查服务连接。' : persistentData.value ? '已注册数据适配器；持久化和重启恢复需由 A 实际验收。' : 'Mock 演示环境 · 合成数据，重启后丢失。')
+const modeNote = computed(() => production.value ? `本机 HTTPS 生产安全配置；密码会话、数据库身份与原生 SQL 权限经过运行预检。${modelSQL.value ? '统计查询已配置真实模型；文献处理 AI 尚未启用。' : '统计查询使用固定模板；文献处理 AI 尚未启用。'}` : !health.value ? '暂未确认运行模式，请检查服务连接。' : persistentData.value ? '已注册数据适配器；持久化和重启恢复需由 A 实际验收。' : 'Mock 演示环境 · 合成数据，重启后丢失。')
 function switchProject(value: string) {
   const section = String(route.path.split('/').pop())
   void router.push(`/projects/${value}/${sectionNames[section] ? section : 'papers'}`)
@@ -22,7 +24,7 @@ watch(() => route.path, () => { sidebarOpen.value = false })
 const projectId = computed(() => String(route.params.projectId || ''))
 const current = computed(() => projects.value.find(p => p.project_id === projectId.value))
 const isResearch = computed(() => route.path.endsWith('/research'))
-const modeLabel = computed(() => !health.value ? '运行模式未知' : Object.values(health.value.modes).every(mode => mode === 'mock') ? 'MOCK · 开发演示' : '适配器开发 · 待验收')
+const modeLabel = computed(() => production.value ? '本机 HTTPS · 生产安全配置' : !health.value ? '运行模式未知' : Object.values(health.value.modes).every(mode => mode === 'mock') ? 'MOCK · 开发演示' : '适配器开发 · 待验收')
 const unsubscribe = onUnauthorized(error => {
   if (user.value) { sessionNotice.value = `登录已失效，请重新登录；未自动重新提交任何操作。${error.requestId ? `请求编号：${error.requestId}` : ''}`; setIdentity(null) }
 })
@@ -65,7 +67,7 @@ async function logout() {
         </div>
         <div class="topbar-controls">
           <el-select v-if="projectId && projects.length" class="project-switcher mobile-project-switcher" :model-value="projectId" aria-label="切换项目" @change="switchProject"><el-option v-for="project in projects" :key="project.project_id" :value="project.project_id" :label="project.name" /></el-select>
-          <button class="environment-chip" aria-label="查看运行说明" :title="modeLabel" @click="modeDetailsOpen = true"><span class="status-dot" /><span>{{ !health ? '模式未知' : Object.values(health.modes).every(value => value === 'mock') ? '演示数据' : '适配器数据' }}</span><AppIcon name="info" :size="14" /></button>
+          <button class="environment-chip" aria-label="查看运行说明" :title="modeLabel" @click="modeDetailsOpen = true"><span class="status-dot" /><span>{{ production ? 'HTTPS 安全配置' : !health ? '模式未知' : Object.values(health.modes).every(value => value === 'mock') ? '演示数据' : '适配器数据' }}</span><AppIcon name="info" :size="14" /></button>
         </div>
       </header>
       <nav v-if="projectId && user" class="mobile-project-tabs" aria-label="项目快捷导航"><RouterLink :to="`/projects/${projectId}/papers`">文献</RouterLink><RouterLink :to="`/projects/${projectId}/research`">研究</RouterLink><RouterLink :to="`/projects/${projectId}/security`">查询与审计</RouterLink></nav>
@@ -75,13 +77,14 @@ async function logout() {
           <Feedback :error="logoutAction.error.value" />
           <el-alert v-if="sessionNotice && !user" :title="sessionNotice" type="warning" :closable="false" />
           <p v-if="booting" role="status">正在连接服务…</p>
+          <el-alert v-if="user && health?.modes.c === 'disabled'" :title="modelSQL ? '统计查询已配置真实模型，并经安全网关执行。文档解析、检索、问答和报告生成 AI 尚未启用。' : '统计查询使用固定模板。文档解析、检索、问答和报告生成 AI 尚未启用。'" type="info" :closable="false" />
         </div>
         <RouterView v-if="!booting && (!projectId || user)" :key="`${user?.user_id || 'guest'}:${route.path}`" />
       </main>
       <footer v-if="user && !isResearch" class="workspace-footer"><span>PaperPilot</span></footer>
     </div>
     <el-dialog v-model="modeDetailsOpen" title="当前运行说明" width="480px">
-      <div class="mode-details"><span class="mode-details-icon"><AppIcon name="shield" :size="28" /></span><h3>{{ modeLabel }}</h3><p>{{ modeNote }}</p><p>{{ health?.limitations.includes('development_identity_only') ? '开发身份不验证真实密码。' : '身份通过服务端会话验证。' }}当前注册模式不代表真实 AI 或 SQL 安全能力已通过验收。</p><p class="muted">具体结果仍需核对 Mock 与合成来源标记。正式数据持久化、AI 质量及安全能力由对应模块实际验收。</p></div>
+      <div class="mode-details"><span class="mode-details-icon"><AppIcon name="shield" :size="28" /></span><h3>{{ modeLabel }}</h3><p>{{ modeNote }}</p><template v-if="production"><p>当前部署的验收结果和最近运行检查见“查询与审计”。历史回归报告与当前部署验收分别展示。</p></template><template v-else><p>{{ health?.limitations.includes('development_identity_only') ? '开发身份不验证真实密码。' : '身份通过服务端会话验证。' }}当前注册模式不代表真实 AI 或 SQL 安全能力已通过验收。</p><p class="muted">具体结果仍需核对 Mock 与合成来源标记。正式数据持久化、AI 质量及安全能力由对应模块实际验收。</p></template></div>
     </el-dialog>
   </div>
 </template>

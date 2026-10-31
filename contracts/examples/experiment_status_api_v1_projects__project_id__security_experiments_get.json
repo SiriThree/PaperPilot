@@ -6,8 +6,7 @@
     "request": {
       "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/security-experiments",
       "headers": {
-        "X-PaperPilot-Client": "web",
-        "Origin": "http://127.0.0.1:5173"
+        "X-PaperPilot-Client": "web"
       }
     },
     "response": {
@@ -30,8 +29,7 @@
     "request": {
       "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/security-experiments",
       "headers": {
-        "X-PaperPilot-Client": "web",
-        "Origin": "http://127.0.0.1:5173"
+        "X-PaperPilot-Client": "web"
       }
     },
     "response": {
@@ -40,7 +38,7 @@
       "body": {
         "code": "UNAUTHENTICATED",
         "message": "请先登录",
-        "request_id": "986effa4-5b25-4c58-b52c-bd429e0eea9c"
+        "request_id": "91346193-d8d0-46d5-a961-342176dd8a80"
       }
     }
   }

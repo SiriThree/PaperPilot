@@ -1,6 +1,6 @@
 param(
     [switch]$Demo,
-    [ValidateRange(1024, 65535)][int]$Port = 8000
+    [ValidateRange(1024, 65535)][int]$Port = 8001
 )
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot

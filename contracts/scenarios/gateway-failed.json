@@ -14,7 +14,7 @@
       "message": "模拟执行失败，无真实 SQL 执行"
     },
     "policy_id": "mock-intents-v1",
-    "request_id": "98fb8c3d-c286-4224-8263-30bda5e216ff",
+    "request_id": "41aaa67f-a9f8-4df7-994b-488df5eb8d50",
     "mock": true
   }
 }

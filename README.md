@@ -27,7 +27,7 @@
 
 ## 当前运行边界
 
-**开发模式可显式选择 Mock，统一组合入口可注册 PostgreSQL、真实 AI 与 D 策略适配器。已实现基于 PostgreSQL 的凭据认证；正式认证、数据库安全权限及生产部署尚未完成验收，生产模式拒绝启动。真实 SQL 执行默认关闭，候选执行器只允许明确的隔离测试配置。历史 SQLite 实验保留。**
+**开发模式可显式选择 Mock。成员 D 另提供[本机 HTTPS 生产安全配置](docs/production-security-deployment.md)：PostgreSQL 凭据认证、独立数据库身份与原生统计查询，可显式接入统计 SQL 模型；C 文献处理 AI 仍禁用。默认开发入口与隔离候选执行器的限制保留。历史 SQLite 实验保留。**
 
 ## 技术栈
 
@@ -71,6 +71,8 @@ Linux/macOS 将 `.venv\Scripts\python.exe` 换成 `.venv/bin/python`，将 `npm.
 
 ## 环境变量和适配器
 
+成员 D 的统计查询可显式接入 C 的模型客户端，配置、启动与验收边界见 [模型生成统计 SQL](docs/member-d-model-sql.md)。默认仍使用固定模板；模型候选必须通过同一 AST 允许清单和受限执行。
+
 变量清单见 `.env.example`。默认三个适配器均为 `mock`，只监听本机。程序读取进程环境变量，**不会自动加载 `.env` 文件**；复制示例文件不会自动改变配置。
 
 ```powershell
@@ -83,10 +85,10 @@ $env:PAPERPILOT_D_MODE = 'mock'
 
 - 使用 `app.dev_composition:create_app` 统一入口时，A/C/D 根据显式模式注册；连接、初始化或健康检查失败即拒绝启动，无自动回退。直接使用 `app.main:create_app` 时真实适配器需显式注入。
 - PostgreSQL 需显式提供连接配置、执行迁移并初始化账户；应用不会自动迁移、创建演示账号或启动 outbox 投递器。
-- `PAPERPILOT_AUTH_MODE=development` 仅供开发，`credentials` 为 PostgreSQL 凭据认证；生产模式仍明确拒绝启动。
+- `PAPERPILOT_AUTH_MODE=development` 仅供开发，`credentials` 为 PostgreSQL 凭据认证；生产启动必须使用上述专用 HTTPS 组合及完整安全配置。
 - 没有从真实模式静默回退到 Mock 的路径。
 - 密钥只能通过未来真实适配器的环境配置提供；不得提交本地配置、令牌或真实账户信息。
-- Cookie 使用 HttpOnly、SameSite=Strict；凭据模式状态变更还要求可信来源和 CSRF 令牌。来源通过 `PAPERPILOT_ALLOWED_ORIGINS` 明确配置，不允许通配符。生产 TLS 和 Secure Cookie 尚未验收。
+- Cookie 使用 HttpOnly、SameSite=Strict；凭据模式状态变更还要求可信来源和 CSRF 令牌。来源通过 `PAPERPILOT_ALLOWED_ORIGINS` 明确配置，不允许通配符。本机 HTTPS 配置已验收 TLS 和 Secure Cookie，公网部署不在该验收范围内。
 
 ## Mock 演示流程
 

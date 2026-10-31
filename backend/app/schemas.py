@@ -350,8 +350,27 @@ class AuditList(Schema):
     mock: bool = True
 
 
+class ProductionAcceptance(Schema):
+    completed_at: datetime
+    passed_checks: int = Field(ge=1)
+
+
+class ProductionDeployment(Schema):
+    environment: Literal["production"]
+    profile: Literal["local_https_security"]
+    deployment_id: UUID
+    source_fingerprint: str = Field(pattern=r"^[a-f0-9]{64}$")
+    runtime_checks_passed: bool
+    ai_available: bool
+    statistics_sql_mode: Literal["template", "model"] = "template"
+    statistics_model_name: str | None = None
+    sql_model_fingerprint: str | None = Field(None, pattern=r"^[a-f0-9]{64}$")
+    acceptance: ProductionAcceptance | None = None
+
+
 class Health(Schema):
     status: Literal["ok"] = "ok"
     modes: dict[str, str]
     mock: bool
     limitations: list[str]
+    deployment: ProductionDeployment | None = None

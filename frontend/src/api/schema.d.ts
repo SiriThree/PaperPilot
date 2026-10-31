@@ -600,6 +600,7 @@ export interface components {
             mock: boolean;
             /** Limitations */
             limitations: string[];
+            deployment?: components["schemas"]["ProductionDeployment"] | null;
         };
         /** Identity */
         Identity: {
@@ -714,6 +715,51 @@ export interface components {
              * @default true
              */
             mock: boolean;
+        };
+        /** ProductionAcceptance */
+        ProductionAcceptance: {
+            /**
+             * Completed At
+             * Format: date-time
+             */
+            completed_at: string;
+            /** Passed Checks */
+            passed_checks: number;
+        };
+        /** ProductionDeployment */
+        ProductionDeployment: {
+            /**
+             * Environment
+             * @constant
+             */
+            environment: "production";
+            /**
+             * Profile
+             * @constant
+             */
+            profile: "local_https_security";
+            /**
+             * Deployment Id
+             * Format: uuid
+             */
+            deployment_id: string;
+            /** Source Fingerprint */
+            source_fingerprint: string;
+            /** Runtime Checks Passed */
+            runtime_checks_passed: boolean;
+            /** Ai Available */
+            ai_available: boolean;
+            /**
+             * Statistics Sql Mode
+             * @default template
+             * @enum {string}
+             */
+            statistics_sql_mode: "template" | "model";
+            /** Statistics Model Name */
+            statistics_model_name?: string | null;
+            /** Sql Model Fingerprint */
+            sql_model_fingerprint?: string | null;
+            acceptance?: components["schemas"]["ProductionAcceptance"] | null;
         };
         /** Project */
         Project: {

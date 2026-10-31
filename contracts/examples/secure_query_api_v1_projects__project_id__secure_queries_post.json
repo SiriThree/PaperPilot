@@ -34,7 +34,7 @@
         ],
         "reason": null,
         "policy_id": "mock-intents-v1",
-        "request_id": "707454ab-3bd8-4aee-bde9-291c562315a9",
+        "request_id": "3de89792-e307-4864-9ecf-a1efd91b336f",
         "mock": true
       }
     }
@@ -55,7 +55,7 @@
       "body": {
         "code": "UNAUTHENTICATED",
         "message": "请先登录",
-        "request_id": "ffca0033-89bb-4a03-bd37-0f8df772ca4d"
+        "request_id": "19543c6a-8fe2-4e8f-8429-19352b39c0f4"
       }
     }
   }
