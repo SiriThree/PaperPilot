@@ -1,0 +1,2806 @@
+{
+  "exported_at": "2026-10-29T13:25:20+00:00",
+  "schema_version": 7,
+  "table_count": 29,
+  "source": "PostgreSQL pg_catalog / information_schema 导出快照；行数为导出时刻值，非实时",
+  "tables": [
+    {
+      "name": "audit_events",
+      "group": "一致性与审计",
+      "description": "审计事件；追加写 + 事件指纹去重，业务入口不可修改或删除。",
+      "row_count": 16,
+      "columns": [
+        {
+          "name": "event_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "timestamp",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "request_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "actor_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "action",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "resource_type",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "decision",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "execution_status",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "policy_id",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "duration_ms",
+          "type": "double precision",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "mock",
+          "type": "boolean",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "event_fingerprint",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "audit_events_duration_ms_check",
+          "definition": "CHECK (((duration_ms >= (0)::double precision) AND (duration_ms <> 'NaN'::double precision) AND (duration_ms <> 'Infinity'::double precision)))"
+        },
+        {
+          "kind": "check",
+          "name": "audit_events_event_fingerprint_check",
+          "definition": "CHECK (((event_fingerprint)::text ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "audit_events_actor_id_fkey",
+          "definition": "FOREIGN KEY (actor_id) REFERENCES users(user_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "audit_events_project_id_fkey",
+          "definition": "FOREIGN KEY (project_id) REFERENCES projects(project_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "audit_events_pkey",
+          "definition": "PRIMARY KEY (event_id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "audit_events_pkey",
+          "definition": "CREATE UNIQUE INDEX audit_events_pkey ON public.audit_events USING btree (event_id)"
+        },
+        {
+          "name": "project_audit_page",
+          "definition": "CREATE INDEX project_audit_page ON public.audit_events USING btree (project_id, \"timestamp\" DESC, event_id DESC)"
+        }
+      ]
+    },
+    {
+      "name": "auth_login_limits",
+      "group": "身份与协作",
+      "description": "跨 worker 共享的登录限速窗口（迁移 005）；成功与失败均计数，超限返回 429。",
+      "row_count": 0,
+      "columns": [
+        {
+          "name": "peer_hash",
+          "type": "bytea",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "window_start",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "attempts",
+          "type": "integer",
+          "nullable": false,
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "auth_login_limits_attempts_check",
+          "definition": "CHECK ((attempts > 0))"
+        },
+        {
+          "kind": "check",
+          "name": "auth_login_limits_peer_hash_check",
+          "definition": "CHECK ((octet_length(peer_hash) = 32))"
+        },
+        {
+          "kind": "primary_key",
+          "name": "auth_login_limits_pkey",
+          "definition": "PRIMARY KEY (peer_hash)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "auth_login_limits_pkey",
+          "definition": "CREATE UNIQUE INDEX auth_login_limits_pkey ON public.auth_login_limits USING btree (peer_hash)"
+        },
+        {
+          "name": "auth_login_limits_window",
+          "definition": "CREATE INDEX auth_login_limits_window ON public.auth_login_limits USING btree (window_start)"
+        }
+      ]
+    },
+    {
+      "name": "auth_sessions",
+      "group": "身份与协作",
+      "description": "凭据认证的会话存储（令牌摘要、空闲/绝对过期、停用撤销）；开发身份模式不使用。",
+      "row_count": 0,
+      "columns": [
+        {
+          "name": "token_hash",
+          "type": "bytea",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "last_seen_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "expires_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "revoked_at",
+          "type": "timestamptz",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "auth_sessions_token_hash_check",
+          "definition": "CHECK ((octet_length(token_hash) = 32))"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "auth_sessions_user_id_fkey",
+          "definition": "FOREIGN KEY (user_id) REFERENCES users(user_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "auth_sessions_pkey",
+          "definition": "PRIMARY KEY (token_hash)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "auth_sessions_expiry",
+          "definition": "CREATE INDEX auth_sessions_expiry ON public.auth_sessions USING btree (expires_at)"
+        },
+        {
+          "name": "auth_sessions_pkey",
+          "definition": "CREATE UNIQUE INDEX auth_sessions_pkey ON public.auth_sessions USING btree (token_hash)"
+        },
+        {
+          "name": "auth_sessions_user",
+          "definition": "CREATE INDEX auth_sessions_user ON public.auth_sessions USING btree (user_id)"
+        }
+      ]
+    },
+    {
+      "name": "authors",
+      "group": "文献与内容",
+      "description": "作者书目信息。",
+      "row_count": 0,
+      "columns": [
+        {
+          "name": "author_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "foreign_key",
+          "name": "authors_project_id_fkey",
+          "definition": "FOREIGN KEY (project_id) REFERENCES projects(project_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "authors_pkey",
+          "definition": "PRIMARY KEY (author_id)"
+        },
+        {
+          "kind": "unique",
+          "name": "authors_project_id_author_id_key",
+          "definition": "UNIQUE (project_id, author_id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "authors_pkey",
+          "definition": "CREATE UNIQUE INDEX authors_pkey ON public.authors USING btree (author_id)"
+        },
+        {
+          "name": "authors_project_id_author_id_key",
+          "definition": "CREATE UNIQUE INDEX authors_project_id_author_id_key ON public.authors USING btree (project_id, author_id)"
+        }
+      ]
+    },
+    {
+      "name": "chunk_embeddings",
+      "group": "向量与索引",
+      "description": "片段向量；不定维 vector + 模型版本，换模型须重建索引。",
+      "row_count": 0,
+      "columns": [
+        {
+          "name": "chunk_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "model_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "dimensions",
+          "type": "integer",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "embedding",
+          "type": "vector",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "chunk_embeddings_check",
+          "definition": "CHECK ((vector_dims(embedding) = dimensions))"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "chunk_embeddings_project_id_chunk_id_fkey",
+          "definition": "FOREIGN KEY (project_id, chunk_id) REFERENCES chunks(project_id, chunk_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "chunk_embeddings_project_id_model_id_dimensions_fkey",
+          "definition": "FOREIGN KEY (project_id, model_id, dimensions) REFERENCES embedding_models(project_id, model_id, dimensions)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "chunk_embeddings_pkey",
+          "definition": "PRIMARY KEY (chunk_id, model_id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "chunk_embeddings_pkey",
+          "definition": "CREATE UNIQUE INDEX chunk_embeddings_pkey ON public.chunk_embeddings USING btree (chunk_id, model_id)"
+        }
+      ]
+    },
+    {
+      "name": "chunks",
+      "group": "文献与内容",
+      "description": "处理产出的来源片段（页码 + 摘录）；不可变触发器保护，检索与引用定位的基本单位。",
+      "row_count": 10,
+      "columns": [
+        {
+          "name": "chunk_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "paper_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "page_number",
+          "type": "integer",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "excerpt",
+          "type": "varchar(4000)",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "content",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "synthetic",
+          "type": "boolean",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "chunks_excerpt_check",
+          "definition": "CHECK (((length((excerpt)::text) >= 1) AND (length((excerpt)::text) <= 4000)))"
+        },
+        {
+          "kind": "check",
+          "name": "chunks_page_number_check",
+          "definition": "CHECK ((page_number >= 1))"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "chunks_project_id_paper_id_fkey",
+          "definition": "FOREIGN KEY (project_id, paper_id) REFERENCES project_papers(project_id, paper_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "chunks_pkey",
+          "definition": "PRIMARY KEY (chunk_id)"
+        },
+        {
+          "kind": "unique",
+          "name": "chunks_project_id_chunk_id_key",
+          "definition": "UNIQUE (project_id, chunk_id)"
+        },
+        {
+          "kind": "unique",
+          "name": "chunks_project_id_paper_id_chunk_id_key",
+          "definition": "UNIQUE (project_id, paper_id, chunk_id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "chunks_pkey",
+          "definition": "CREATE UNIQUE INDEX chunks_pkey ON public.chunks USING btree (chunk_id)"
+        },
+        {
+          "name": "chunks_project_id_chunk_id_key",
+          "definition": "CREATE UNIQUE INDEX chunks_project_id_chunk_id_key ON public.chunks USING btree (project_id, chunk_id)"
+        },
+        {
+          "name": "chunks_project_id_paper_id_chunk_id_key",
+          "definition": "CREATE UNIQUE INDEX chunks_project_id_paper_id_chunk_id_key ON public.chunks USING btree (project_id, paper_id, chunk_id)"
+        }
+      ]
+    },
+    {
+      "name": "embedding_models",
+      "group": "向量与索引",
+      "description": "版本化 embedding 模型登记；真实模型维度待 C 确认。",
+      "row_count": 0,
+      "columns": [
+        {
+          "name": "model_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "provider",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "model_name",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "revision",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "dimensions",
+          "type": "integer",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "distance_metric",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "embedding_models_dimensions_check",
+          "definition": "CHECK ((dimensions > 0))"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "embedding_models_project_id_fkey",
+          "definition": "FOREIGN KEY (project_id) REFERENCES projects(project_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "embedding_models_pkey",
+          "definition": "PRIMARY KEY (model_id)"
+        },
+        {
+          "kind": "unique",
+          "name": "embedding_models_project_id_model_id_dimensions_key",
+          "definition": "UNIQUE (project_id, model_id, dimensions)"
+        },
+        {
+          "kind": "unique",
+          "name": "embedding_models_project_id_provider_model_name_revision_key",
+          "definition": "UNIQUE (project_id, provider, model_name, revision)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "embedding_models_pkey",
+          "definition": "CREATE UNIQUE INDEX embedding_models_pkey ON public.embedding_models USING btree (model_id)"
+        },
+        {
+          "name": "embedding_models_project_id_model_id_dimensions_key",
+          "definition": "CREATE UNIQUE INDEX embedding_models_project_id_model_id_dimensions_key ON public.embedding_models USING btree (project_id, model_id, dimensions)"
+        },
+        {
+          "name": "embedding_models_project_id_provider_model_name_revision_key",
+          "definition": "CREATE UNIQUE INDEX embedding_models_project_id_provider_model_name_revision_key ON public.embedding_models USING btree (project_id, provider, model_name, revision)"
+        }
+      ]
+    },
+    {
+      "name": "evidence_fields",
+      "group": "任务与结果",
+      "description": "证据五字段（研究问题/方法/结果/结论/局限），各自带状态与支撑来源。",
+      "row_count": 10,
+      "columns": [
+        {
+          "name": "task_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "field_name",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "text",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "evidence_fields_check",
+          "definition": "CHECK (((status <> 'pending_verification'::text) OR ((text IS NOT NULL) AND (length(text) > 0))))"
+        },
+        {
+          "kind": "check",
+          "name": "evidence_fields_field_name_check",
+          "definition": "CHECK ((field_name = ANY (ARRAY['research_question'::text, 'method'::text, 'results'::text, 'conclusion'::text, 'limitations'::text])))"
+        },
+        {
+          "kind": "check",
+          "name": "evidence_fields_status_check",
+          "definition": "CHECK ((status = ANY (ARRAY['not_mentioned'::text, 'insufficient_evidence'::text, 'pending_verification'::text])))"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "evidence_fields_project_id_task_id_fkey",
+          "definition": "FOREIGN KEY (project_id, task_id) REFERENCES task_results(project_id, task_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "evidence_fields_pkey",
+          "definition": "PRIMARY KEY (task_id, field_name)"
+        },
+        {
+          "kind": "t",
+          "name": "evidence_field_inserted",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "kind": "unique",
+          "name": "evidence_fields_project_id_task_id_field_name_key",
+          "definition": "UNIQUE (project_id, task_id, field_name)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "evidence_fields_pkey",
+          "definition": "CREATE UNIQUE INDEX evidence_fields_pkey ON public.evidence_fields USING btree (task_id, field_name)"
+        },
+        {
+          "name": "evidence_fields_project_id_task_id_field_name_key",
+          "definition": "CREATE UNIQUE INDEX evidence_fields_project_id_task_id_field_name_key ON public.evidence_fields USING btree (project_id, task_id, field_name)"
+        }
+      ]
+    },
+    {
+      "name": "idempotency_records",
+      "group": "一致性与审计",
+      "description": "幂等键账本（用户+项目+操作+键）；相同键不同载荷 409，演示期无限保留。",
+      "row_count": 16,
+      "columns": [
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "operation",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "key",
+          "type": "varchar(128)",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "request_fingerprint",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "response_snapshot",
+          "type": "jsonb",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "paper_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "task_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "version_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "expires_at",
+          "type": "timestamptz",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "idempotency_records_check",
+          "definition": "CHECK ((((operation = 'upload'::text) AND (paper_id IS NOT NULL) AND (task_id IS NOT NULL) AND (version_id IS NULL)) OR ((operation = ANY (ARRAY['process'::text, 'answer'::text, 'evidence'::text, 'draft'::text])) AND (paper_id IS NULL) AND (task_id IS NOT NULL) AND (version_id IS NULL)) OR ((operation = 'report-save'::text) AND (paper_id IS NULL) AND (task_id IS NULL) AND (version_id IS NOT NULL))))"
+        },
+        {
+          "kind": "check",
+          "name": "idempotency_records_expires_at_check",
+          "definition": "CHECK ((expires_at IS NULL))"
+        },
+        {
+          "kind": "check",
+          "name": "idempotency_records_key_check",
+          "definition": "CHECK (((key)::text ~ '^[A-Za-z0-9_-]{1,128}$'::text))"
+        },
+        {
+          "kind": "check",
+          "name": "idempotency_records_operation_check",
+          "definition": "CHECK ((operation = ANY (ARRAY['upload'::text, 'process'::text, 'answer'::text, 'evidence'::text, 'draft'::text, 'report-save'::text])))"
+        },
+        {
+          "kind": "check",
+          "name": "idempotency_records_request_fingerprint_check",
+          "definition": "CHECK (((request_fingerprint)::text ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "idempotency_records_project_id_fkey",
+          "definition": "FOREIGN KEY (project_id) REFERENCES projects(project_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "idempotency_records_project_id_paper_id_fkey",
+          "definition": "FOREIGN KEY (project_id, paper_id) REFERENCES project_papers(project_id, paper_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "idempotency_records_project_id_task_id_fkey",
+          "definition": "FOREIGN KEY (project_id, task_id) REFERENCES tasks(project_id, task_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "idempotency_records_project_id_version_id_fkey",
+          "definition": "FOREIGN KEY (project_id, version_id) REFERENCES report_versions(project_id, version_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "idempotency_records_user_id_fkey",
+          "definition": "FOREIGN KEY (user_id) REFERENCES users(user_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "idempotency_records_pkey",
+          "definition": "PRIMARY KEY (user_id, project_id, operation, key)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idempotency_records_pkey",
+          "definition": "CREATE UNIQUE INDEX idempotency_records_pkey ON public.idempotency_records USING btree (user_id, project_id, operation, key)"
+        }
+      ]
+    },
+    {
+      "name": "outbox_events",
+      "group": "一致性与审计",
+      "description": "领域事件 outbox；由独立投递器按至少一次语义投递，event_id 供审计去重。",
+      "row_count": 26,
+      "columns": [
+        {
+          "name": "event_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "actor_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "request_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "payload",
+          "type": "jsonb",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "delivery_attempts",
+          "type": "integer",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "next_attempt_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "published_at",
+          "type": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "last_error_code",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "last_attempt_at",
+          "type": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "dead_lettered_at",
+          "type": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "retry_base_attempts",
+          "type": "integer",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "retry_attempts",
+          "type": "integer",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "claim_token",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "delivery_lease_until",
+          "type": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "manual_replays",
+          "type": "integer",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "last_replayed_at",
+          "type": "timestamptz",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "outbox_events_check",
+          "definition": "CHECK (((retry_base_attempts >= 0) AND (retry_base_attempts <= delivery_attempts)))"
+        },
+        {
+          "kind": "check",
+          "name": "outbox_events_delivery_attempts_check",
+          "definition": "CHECK ((delivery_attempts >= 0))"
+        },
+        {
+          "kind": "check",
+          "name": "outbox_events_manual_replays_check",
+          "definition": "CHECK ((manual_replays >= 0))"
+        },
+        {
+          "kind": "check",
+          "name": "outbox_events_retry_attempts_check",
+          "definition": "CHECK ((retry_attempts >= 0))"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "outbox_events_actor_id_fkey",
+          "definition": "FOREIGN KEY (actor_id) REFERENCES users(user_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "outbox_events_project_id_fkey",
+          "definition": "FOREIGN KEY (project_id) REFERENCES projects(project_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "outbox_events_pkey",
+          "definition": "PRIMARY KEY (event_id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "outbox_dead_letters",
+          "definition": "CREATE INDEX outbox_dead_letters ON public.outbox_events USING btree (dead_lettered_at, event_id) WHERE (dead_lettered_at IS NOT NULL)"
+        },
+        {
+          "name": "outbox_due_live",
+          "definition": "CREATE INDEX outbox_due_live ON public.outbox_events USING btree (next_attempt_at, created_at) WHERE ((published_at IS NULL) AND (dead_lettered_at IS NULL))"
+        },
+        {
+          "name": "outbox_events_pkey",
+          "definition": "CREATE UNIQUE INDEX outbox_events_pkey ON public.outbox_events USING btree (event_id)"
+        },
+        {
+          "name": "outbox_redelivery",
+          "definition": "CREATE INDEX outbox_redelivery ON public.outbox_events USING btree (next_attempt_at, created_at) WHERE (published_at IS NULL)"
+        }
+      ]
+    },
+    {
+      "name": "outbox_requeue_history",
+      "group": "一致性与审计",
+      "description": "outbox 死信重放的不可变操作历史（迁移 004）；重投保留原事件 ID，只记录操作员对账声明。",
+      "row_count": 0,
+      "columns": [
+        {
+          "name": "requeue_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "event_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "requested_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "database_user",
+          "type": "name",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "prior_attempts",
+          "type": "integer",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "prior_error_code",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "prior_dead_lettered_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "unknown_reconciled",
+          "type": "boolean",
+          "nullable": false,
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "foreign_key",
+          "name": "outbox_requeue_history_event_id_fkey",
+          "definition": "FOREIGN KEY (event_id) REFERENCES outbox_events(event_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "outbox_requeue_history_pkey",
+          "definition": "PRIMARY KEY (requeue_id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "outbox_requeue_history_event",
+          "definition": "CREATE INDEX outbox_requeue_history_event ON public.outbox_requeue_history USING btree (event_id, requested_at)"
+        },
+        {
+          "name": "outbox_requeue_history_pkey",
+          "definition": "CREATE UNIQUE INDEX outbox_requeue_history_pkey ON public.outbox_requeue_history USING btree (requeue_id)"
+        }
+      ]
+    },
+    {
+      "name": "paper_authors",
+      "group": "文献与内容",
+      "description": "论文-作者关联，保持书目顺序。",
+      "row_count": 0,
+      "columns": [
+        {
+          "name": "paper_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "author_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "author_order",
+          "type": "integer",
+          "nullable": false,
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "paper_authors_author_order_check",
+          "definition": "CHECK ((author_order >= 1))"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "paper_authors_project_id_author_id_fkey",
+          "definition": "FOREIGN KEY (project_id, author_id) REFERENCES authors(project_id, author_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "paper_authors_project_id_paper_id_fkey",
+          "definition": "FOREIGN KEY (project_id, paper_id) REFERENCES project_papers(project_id, paper_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "paper_authors_pkey",
+          "definition": "PRIMARY KEY (paper_id, author_id)"
+        },
+        {
+          "kind": "unique",
+          "name": "paper_authors_paper_id_author_order_key",
+          "definition": "UNIQUE (paper_id, author_order)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "paper_authors_paper_id_author_order_key",
+          "definition": "CREATE UNIQUE INDEX paper_authors_paper_id_author_order_key ON public.paper_authors USING btree (paper_id, author_order)"
+        },
+        {
+          "name": "paper_authors_pkey",
+          "definition": "CREATE UNIQUE INDEX paper_authors_pkey ON public.paper_authors USING btree (paper_id, author_id)"
+        }
+      ]
+    },
+    {
+      "name": "paper_topics",
+      "group": "文献与内容",
+      "description": "论文-主题关联。",
+      "row_count": 0,
+      "columns": [
+        {
+          "name": "paper_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "topic_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "foreign_key",
+          "name": "paper_topics_project_id_paper_id_fkey",
+          "definition": "FOREIGN KEY (project_id, paper_id) REFERENCES project_papers(project_id, paper_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "paper_topics_project_id_topic_id_fkey",
+          "definition": "FOREIGN KEY (project_id, topic_id) REFERENCES topics(project_id, topic_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "paper_topics_pkey",
+          "definition": "PRIMARY KEY (paper_id, topic_id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "paper_topics_pkey",
+          "definition": "CREATE UNIQUE INDEX paper_topics_pkey ON public.paper_topics USING btree (paper_id, topic_id)"
+        }
+      ]
+    },
+    {
+      "name": "papers",
+      "group": "文献与内容",
+      "description": "每次导入独立的书目元数据；metadata_id 从不作为公开 paper_id 返回。",
+      "row_count": 6,
+      "columns": [
+        {
+          "name": "metadata_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "title",
+          "type": "varchar(200)",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "year",
+          "type": "integer",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "papers_title_check",
+          "definition": "CHECK (((length((title)::text) >= 1) AND (length((title)::text) <= 200)))"
+        },
+        {
+          "kind": "check",
+          "name": "papers_year_check",
+          "definition": "CHECK (((year IS NULL) OR ((year >= 1000) AND (year <= 3000))))"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "papers_project_id_fkey",
+          "definition": "FOREIGN KEY (project_id) REFERENCES projects(project_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "papers_pkey",
+          "definition": "PRIMARY KEY (metadata_id)"
+        },
+        {
+          "kind": "t",
+          "name": "papers_metadata_paired",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "kind": "unique",
+          "name": "papers_project_id_metadata_id_key",
+          "definition": "UNIQUE (project_id, metadata_id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "papers_pkey",
+          "definition": "CREATE UNIQUE INDEX papers_pkey ON public.papers USING btree (metadata_id)"
+        },
+        {
+          "name": "papers_project_id_metadata_id_key",
+          "definition": "CREATE UNIQUE INDEX papers_project_id_metadata_id_key ON public.papers USING btree (project_id, metadata_id)"
+        }
+      ]
+    },
+    {
+      "name": "process_indexes",
+      "group": "向量与索引",
+      "description": "process 结果与模型/维度/索引指纹的不可变提交关系（迁移 002 新增，真实 C 的原子索引提交面）。",
+      "row_count": 0,
+      "columns": [
+        {
+          "name": "task_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "model_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "dimensions",
+          "type": "integer",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "fingerprint",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "process_indexes_fingerprint_check",
+          "definition": "CHECK (((fingerprint)::text ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "process_indexes_project_id_model_id_dimensions_fkey",
+          "definition": "FOREIGN KEY (project_id, model_id, dimensions) REFERENCES embedding_models(project_id, model_id, dimensions)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "process_indexes_project_id_task_id_fkey",
+          "definition": "FOREIGN KEY (project_id, task_id) REFERENCES task_results(project_id, task_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "process_indexes_pkey",
+          "definition": "PRIMARY KEY (task_id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "process_indexes_pkey",
+          "definition": "CREATE UNIQUE INDEX process_indexes_pkey ON public.process_indexes USING btree (task_id)"
+        }
+      ]
+    },
+    {
+      "name": "project_members",
+      "group": "身份与协作",
+      "description": "项目成员关系；部分唯一索引保证每项目至多一位 owner，移除普通成员即物理删除此行。",
+      "row_count": 2,
+      "columns": [
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "role",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "joined_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "project_members_role_check",
+          "definition": "CHECK ((role = ANY (ARRAY['owner'::text, 'member'::text])))"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "project_members_project_id_fkey",
+          "definition": "FOREIGN KEY (project_id) REFERENCES projects(project_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "project_members_user_id_fkey",
+          "definition": "FOREIGN KEY (user_id) REFERENCES users(user_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "project_members_pkey",
+          "definition": "PRIMARY KEY (project_id, user_id)"
+        },
+        {
+          "kind": "unique",
+          "name": "project_members_project_id_user_id_role_key",
+          "definition": "UNIQUE (project_id, user_id, role)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "one_owner_per_project",
+          "definition": "CREATE UNIQUE INDEX one_owner_per_project ON public.project_members USING btree (project_id) WHERE (role = 'owner'::text)"
+        },
+        {
+          "name": "project_members_pkey",
+          "definition": "CREATE UNIQUE INDEX project_members_pkey ON public.project_members USING btree (project_id, user_id)"
+        },
+        {
+          "name": "project_members_project_id_user_id_role_key",
+          "definition": "CREATE UNIQUE INDEX project_members_project_id_user_id_role_key ON public.project_members USING btree (project_id, user_id, role)"
+        }
+      ]
+    },
+    {
+      "name": "project_papers",
+      "group": "文献与内容",
+      "description": "项目×论文关联（paper_id 即一次导入身份）；移出为软删除（removed_at），项目内摘要唯一。",
+      "row_count": 6,
+      "columns": [
+        {
+          "name": "paper_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "metadata_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "imported_by",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "digest",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "storage_key",
+          "type": "varchar(1024)",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "nullable": false,
+          "default": "'pending'::text"
+        },
+        {
+          "name": "index_state",
+          "type": "text",
+          "nullable": false,
+          "default": "'pending'::text"
+        },
+        {
+          "name": "active_process_task_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "removed_at",
+          "type": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "project_papers_digest_check",
+          "definition": "CHECK (((digest)::text ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "kind": "check",
+          "name": "project_papers_index_state_check",
+          "definition": "CHECK ((index_state = ANY (ARRAY['pending'::text, 'ready'::text, 'failed'::text, 'mock_only'::text])))"
+        },
+        {
+          "kind": "check",
+          "name": "project_papers_status_check",
+          "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'processing'::text, 'searchable'::text, 'failed'::text])))"
+        },
+        {
+          "kind": "check",
+          "name": "project_papers_storage_key_check",
+          "definition": "CHECK (((length((storage_key)::text) >= 1) AND (length((storage_key)::text) <= 1024)))"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "project_papers_imported_by_fkey",
+          "definition": "FOREIGN KEY (imported_by) REFERENCES users(user_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "project_papers_metadata",
+          "definition": "FOREIGN KEY (project_id, metadata_id) REFERENCES papers(project_id, metadata_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "project_papers_project_id_fkey",
+          "definition": "FOREIGN KEY (project_id) REFERENCES projects(project_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "project_papers_pkey",
+          "definition": "PRIMARY KEY (paper_id)"
+        },
+        {
+          "kind": "t",
+          "name": "project_paper_state",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "kind": "unique",
+          "name": "project_papers_digest_unique",
+          "definition": "UNIQUE (project_id, digest)"
+        },
+        {
+          "kind": "unique",
+          "name": "project_papers_metadata_id_key",
+          "definition": "UNIQUE (metadata_id)"
+        },
+        {
+          "kind": "unique",
+          "name": "project_papers_paper_unique",
+          "definition": "UNIQUE (project_id, paper_id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "live_project_papers",
+          "definition": "CREATE INDEX live_project_papers ON public.project_papers USING btree (project_id) WHERE (removed_at IS NULL)"
+        },
+        {
+          "name": "project_papers_digest_unique",
+          "definition": "CREATE UNIQUE INDEX project_papers_digest_unique ON public.project_papers USING btree (project_id, digest)"
+        },
+        {
+          "name": "project_papers_metadata_id_key",
+          "definition": "CREATE UNIQUE INDEX project_papers_metadata_id_key ON public.project_papers USING btree (metadata_id)"
+        },
+        {
+          "name": "project_papers_paper_unique",
+          "definition": "CREATE UNIQUE INDEX project_papers_paper_unique ON public.project_papers USING btree (project_id, paper_id)"
+        },
+        {
+          "name": "project_papers_pkey",
+          "definition": "CREATE UNIQUE INDEX project_papers_pkey ON public.project_papers USING btree (paper_id)"
+        }
+      ]
+    },
+    {
+      "name": "projects",
+      "group": "身份与协作",
+      "description": "研究项目；负责人不可变，与 owner 成员关系同事务创建。",
+      "row_count": 1,
+      "columns": [
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "name",
+          "type": "varchar(100)",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "description",
+          "type": "varchar(1000)",
+          "nullable": false,
+          "default": "''::character varying"
+        },
+        {
+          "name": "owner_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "owner_role",
+          "type": "text",
+          "nullable": false,
+          "default": "'owner'::text"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "projects_name_check",
+          "definition": "CHECK (((length((name)::text) >= 1) AND (length((name)::text) <= 100)))"
+        },
+        {
+          "kind": "check",
+          "name": "projects_owner_role_check",
+          "definition": "CHECK ((owner_role = 'owner'::text))"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "projects_owner_id_fkey",
+          "definition": "FOREIGN KEY (owner_id) REFERENCES users(user_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "projects_owner_is_member",
+          "definition": "FOREIGN KEY (project_id, owner_id, owner_role) REFERENCES project_members(project_id, user_id, role) DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "kind": "primary_key",
+          "name": "projects_pkey",
+          "definition": "PRIMARY KEY (project_id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "projects_pkey",
+          "definition": "CREATE UNIQUE INDEX projects_pkey ON public.projects USING btree (project_id)"
+        }
+      ]
+    },
+    {
+      "name": "report_version_sources",
+      "group": "报告与版本",
+      "description": "保存时的引用快照副本；论文移出后旧版本报告仍可完整回读当时来源。",
+      "row_count": 5,
+      "columns": [
+        {
+          "name": "version_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "citation_id",
+          "type": "varchar(32)",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "ordinal",
+          "type": "integer",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "paper_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "chunk_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "page_number",
+          "type": "integer",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "excerpt",
+          "type": "varchar(4000)",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "synthetic",
+          "type": "boolean",
+          "nullable": false,
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "report_version_sources_citation_id_check",
+          "definition": "CHECK (((length((citation_id)::text) >= 1) AND (length((citation_id)::text) <= 32)))"
+        },
+        {
+          "kind": "check",
+          "name": "report_version_sources_excerpt_check",
+          "definition": "CHECK (((length((excerpt)::text) >= 1) AND (length((excerpt)::text) <= 4000)))"
+        },
+        {
+          "kind": "check",
+          "name": "report_version_sources_ordinal_check",
+          "definition": "CHECK ((ordinal >= 1))"
+        },
+        {
+          "kind": "check",
+          "name": "report_version_sources_page_number_check",
+          "definition": "CHECK ((page_number >= 1))"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "report_version_sources_project_id_paper_id_chunk_id_fkey",
+          "definition": "FOREIGN KEY (project_id, paper_id, chunk_id) REFERENCES chunks(project_id, paper_id, chunk_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "report_version_sources_project_id_version_id_fkey",
+          "definition": "FOREIGN KEY (project_id, version_id) REFERENCES report_versions(project_id, version_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "report_version_sources_pkey",
+          "definition": "PRIMARY KEY (version_id, citation_id)"
+        },
+        {
+          "kind": "unique",
+          "name": "report_version_sources_version_id_ordinal_key",
+          "definition": "UNIQUE (version_id, ordinal)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "report_version_sources_pkey",
+          "definition": "CREATE UNIQUE INDEX report_version_sources_pkey ON public.report_version_sources USING btree (version_id, citation_id)"
+        },
+        {
+          "name": "report_version_sources_version_id_ordinal_key",
+          "definition": "CREATE UNIQUE INDEX report_version_sources_version_id_ordinal_key ON public.report_version_sources USING btree (version_id, ordinal)"
+        }
+      ]
+    },
+    {
+      "name": "report_versions",
+      "group": "报告与版本",
+      "description": "不可变报告版本；(report_id, number) 唯一，base_version_id 乐观并发控制。",
+      "row_count": 2,
+      "columns": [
+        {
+          "name": "version_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "report_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "number",
+          "type": "integer",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "base_version_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "title",
+          "type": "varchar(200)",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "research_question",
+          "type": "varchar(2000)",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "body",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "created_by",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "report_versions_body_check",
+          "definition": "CHECK (((length(body) >= 1) AND (length(body) <= 100000)))"
+        },
+        {
+          "kind": "check",
+          "name": "report_versions_check",
+          "definition": "CHECK ((((number = 1) AND (base_version_id IS NULL)) OR ((number > 1) AND (base_version_id IS NOT NULL))))"
+        },
+        {
+          "kind": "check",
+          "name": "report_versions_number_check",
+          "definition": "CHECK ((number >= 1))"
+        },
+        {
+          "kind": "check",
+          "name": "report_versions_research_question_check",
+          "definition": "CHECK (((length((research_question)::text) >= 1) AND (length((research_question)::text) <= 2000)))"
+        },
+        {
+          "kind": "check",
+          "name": "report_versions_title_check",
+          "definition": "CHECK (((length((title)::text) >= 1) AND (length((title)::text) <= 200)))"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "report_versions_created_by_fkey",
+          "definition": "FOREIGN KEY (created_by) REFERENCES users(user_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "report_versions_project_id_report_id_base_version_id_fkey",
+          "definition": "FOREIGN KEY (project_id, report_id, base_version_id) REFERENCES report_versions(project_id, report_id, version_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "report_versions_project_id_report_id_fkey",
+          "definition": "FOREIGN KEY (project_id, report_id) REFERENCES reports(project_id, report_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "report_versions_pkey",
+          "definition": "PRIMARY KEY (version_id)"
+        },
+        {
+          "kind": "t",
+          "name": "report_version_chained",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "kind": "unique",
+          "name": "report_versions_project_id_report_id_version_id_key",
+          "definition": "UNIQUE (project_id, report_id, version_id)"
+        },
+        {
+          "kind": "unique",
+          "name": "report_versions_project_id_version_id_key",
+          "definition": "UNIQUE (project_id, version_id)"
+        },
+        {
+          "kind": "unique",
+          "name": "report_versions_report_id_number_key",
+          "definition": "UNIQUE (report_id, number)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "one_child_per_base",
+          "definition": "CREATE UNIQUE INDEX one_child_per_base ON public.report_versions USING btree (report_id, base_version_id) WHERE (base_version_id IS NOT NULL)"
+        },
+        {
+          "name": "report_versions_pkey",
+          "definition": "CREATE UNIQUE INDEX report_versions_pkey ON public.report_versions USING btree (version_id)"
+        },
+        {
+          "name": "report_versions_project_id_report_id_version_id_key",
+          "definition": "CREATE UNIQUE INDEX report_versions_project_id_report_id_version_id_key ON public.report_versions USING btree (project_id, report_id, version_id)"
+        },
+        {
+          "name": "report_versions_project_id_version_id_key",
+          "definition": "CREATE UNIQUE INDEX report_versions_project_id_version_id_key ON public.report_versions USING btree (project_id, version_id)"
+        },
+        {
+          "name": "report_versions_report_id_number_key",
+          "definition": "CREATE UNIQUE INDEX report_versions_report_id_number_key ON public.report_versions USING btree (report_id, number)"
+        }
+      ]
+    },
+    {
+      "name": "reports",
+      "group": "报告与版本",
+      "description": "报告容器；current_version_id 指向最新版本，旧版本永不覆盖。",
+      "row_count": 1,
+      "columns": [
+        {
+          "name": "report_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "created_by",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "current_version_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "foreign_key",
+          "name": "reports_created_by_fkey",
+          "definition": "FOREIGN KEY (created_by) REFERENCES users(user_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "reports_current_version",
+          "definition": "FOREIGN KEY (project_id, report_id, current_version_id) REFERENCES report_versions(project_id, report_id, version_id) DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "reports_project_id_fkey",
+          "definition": "FOREIGN KEY (project_id) REFERENCES projects(project_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "reports_pkey",
+          "definition": "PRIMARY KEY (report_id)"
+        },
+        {
+          "kind": "t",
+          "name": "report_pointer_current",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "kind": "unique",
+          "name": "reports_project_id_report_id_key",
+          "definition": "UNIQUE (project_id, report_id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "reports_pkey",
+          "definition": "CREATE UNIQUE INDEX reports_pkey ON public.reports USING btree (report_id)"
+        },
+        {
+          "name": "reports_project_id_report_id_key",
+          "definition": "CREATE UNIQUE INDEX reports_project_id_report_id_key ON public.reports USING btree (project_id, report_id)"
+        }
+      ]
+    },
+    {
+      "name": "result_sources",
+      "group": "任务与结果",
+      "description": "结果引用的来源快照，按 scope+ordinal 保序。",
+      "row_count": 16,
+      "columns": [
+        {
+          "name": "task_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "scope",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "citation_id",
+          "type": "varchar(32)",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "field_name",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "ordinal",
+          "type": "integer",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "paper_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "chunk_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "page_number",
+          "type": "integer",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "excerpt",
+          "type": "varchar(4000)",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "synthetic",
+          "type": "boolean",
+          "nullable": false,
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "result_sources_check",
+          "definition": "CHECK (((field_name IS NULL) = (scope = 'root'::text)))"
+        },
+        {
+          "kind": "check",
+          "name": "result_sources_check1",
+          "definition": "CHECK (((field_name IS NULL) OR (scope = field_name)))"
+        },
+        {
+          "kind": "check",
+          "name": "result_sources_citation_id_check",
+          "definition": "CHECK (((length((citation_id)::text) >= 1) AND (length((citation_id)::text) <= 32)))"
+        },
+        {
+          "kind": "check",
+          "name": "result_sources_excerpt_check",
+          "definition": "CHECK (((length((excerpt)::text) >= 1) AND (length((excerpt)::text) <= 4000)))"
+        },
+        {
+          "kind": "check",
+          "name": "result_sources_ordinal_check",
+          "definition": "CHECK ((ordinal >= 1))"
+        },
+        {
+          "kind": "check",
+          "name": "result_sources_page_number_check",
+          "definition": "CHECK ((page_number >= 1))"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "result_sources_project_id_paper_id_chunk_id_fkey",
+          "definition": "FOREIGN KEY (project_id, paper_id, chunk_id) REFERENCES chunks(project_id, paper_id, chunk_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "result_sources_project_id_task_id_field_name_fkey",
+          "definition": "FOREIGN KEY (project_id, task_id, field_name) REFERENCES evidence_fields(project_id, task_id, field_name)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "result_sources_project_id_task_id_fkey",
+          "definition": "FOREIGN KEY (project_id, task_id) REFERENCES task_results(project_id, task_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "result_sources_pkey",
+          "definition": "PRIMARY KEY (task_id, scope, citation_id)"
+        },
+        {
+          "kind": "unique",
+          "name": "result_sources_task_id_scope_ordinal_key",
+          "definition": "UNIQUE (task_id, scope, ordinal)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "result_sources_parent",
+          "definition": "CREATE INDEX result_sources_parent ON public.result_sources USING btree (project_id, task_id, scope, ordinal)"
+        },
+        {
+          "name": "result_sources_pkey",
+          "definition": "CREATE UNIQUE INDEX result_sources_pkey ON public.result_sources USING btree (task_id, scope, citation_id)"
+        },
+        {
+          "name": "result_sources_task_id_scope_ordinal_key",
+          "definition": "CREATE UNIQUE INDEX result_sources_task_id_scope_ordinal_key ON public.result_sources USING btree (task_id, scope, ordinal)"
+        }
+      ]
+    },
+    {
+      "name": "schema_migrations",
+      "group": "一致性与审计",
+      "description": "迁移账本（版本 + SHA-256 校验和 + 应用时间）；迁移器据此幂等并拒绝未知库。",
+      "row_count": 7,
+      "columns": [
+        {
+          "name": "version",
+          "type": "integer",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "checksum",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "applied_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "primary_key",
+          "name": "schema_migrations_pkey",
+          "definition": "PRIMARY KEY (version)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "schema_migrations_pkey",
+          "definition": "CREATE UNIQUE INDEX schema_migrations_pkey ON public.schema_migrations USING btree (version)"
+        }
+      ]
+    },
+    {
+      "name": "task_attempts",
+      "group": "任务与结果",
+      "description": "worker 领取与租约记录；部分唯一索引保证每任务至多一个在途尝试，过期租约可被恢复领取。",
+      "row_count": 8,
+      "columns": [
+        {
+          "name": "task_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "attempt_no",
+          "type": "integer",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "actor_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "request_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "claimed_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "lease_expires_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "finished_at",
+          "type": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "error_code",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "error_message",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "task_attempts_attempt_no_check",
+          "definition": "CHECK ((attempt_no >= 1))"
+        },
+        {
+          "kind": "check",
+          "name": "task_attempts_check",
+          "definition": "CHECK ((lease_expires_at > claimed_at))"
+        },
+        {
+          "kind": "check",
+          "name": "task_attempts_check1",
+          "definition": "CHECK (((status = 'processing'::text) = (finished_at IS NULL)))"
+        },
+        {
+          "kind": "check",
+          "name": "task_attempts_status_check",
+          "definition": "CHECK ((status = ANY (ARRAY['processing'::text, 'succeeded'::text, 'failed'::text, 'expired'::text])))"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "task_attempts_actor_id_fkey",
+          "definition": "FOREIGN KEY (actor_id) REFERENCES users(user_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "task_attempts_project_id_task_id_fkey",
+          "definition": "FOREIGN KEY (project_id, task_id) REFERENCES tasks(project_id, task_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "task_attempts_pkey",
+          "definition": "PRIMARY KEY (task_id, attempt_no)"
+        },
+        {
+          "kind": "unique",
+          "name": "task_attempts_project_id_task_id_attempt_no_key",
+          "definition": "UNIQUE (project_id, task_id, attempt_no)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "lease_recovery",
+          "definition": "CREATE INDEX lease_recovery ON public.task_attempts USING btree (lease_expires_at) WHERE (status = 'processing'::text)"
+        },
+        {
+          "name": "one_processing_attempt",
+          "definition": "CREATE UNIQUE INDEX one_processing_attempt ON public.task_attempts USING btree (task_id) WHERE (status = 'processing'::text)"
+        },
+        {
+          "name": "task_attempts_pkey",
+          "definition": "CREATE UNIQUE INDEX task_attempts_pkey ON public.task_attempts USING btree (task_id, attempt_no)"
+        },
+        {
+          "name": "task_attempts_project_id_task_id_attempt_no_key",
+          "definition": "CREATE UNIQUE INDEX task_attempts_project_id_task_id_attempt_no_key ON public.task_attempts USING btree (project_id, task_id, attempt_no)"
+        }
+      ]
+    },
+    {
+      "name": "task_papers",
+      "group": "任务与结果",
+      "description": "任务-论文多对多关联。",
+      "row_count": 8,
+      "columns": [
+        {
+          "name": "task_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "paper_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "foreign_key",
+          "name": "task_papers_project_id_paper_id_fkey",
+          "definition": "FOREIGN KEY (project_id, paper_id) REFERENCES project_papers(project_id, paper_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "task_papers_project_id_task_id_fkey",
+          "definition": "FOREIGN KEY (project_id, task_id) REFERENCES tasks(project_id, task_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "task_papers_pkey",
+          "definition": "PRIMARY KEY (task_id, paper_id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "task_papers_pkey",
+          "definition": "CREATE UNIQUE INDEX task_papers_pkey ON public.task_papers USING btree (task_id, paper_id)"
+        }
+      ]
+    },
+    {
+      "name": "task_results",
+      "group": "任务与结果",
+      "description": "四类任务共享的稳定结果容器；论文 searchable 状态由此派生，不存可悬空 result_ref。",
+      "row_count": 7,
+      "columns": [
+        {
+          "name": "task_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "kind",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "committed_attempt",
+          "type": "integer",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "paper_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "evidence_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "payload",
+          "type": "jsonb",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "result_fingerprint",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "task_results_check",
+          "definition": "CHECK ((((kind = 'process'::text) AND (paper_id IS NOT NULL) AND (evidence_id IS NULL)) OR ((kind = 'evidence'::text) AND (paper_id IS NOT NULL) AND (evidence_id IS NOT NULL)) OR ((kind = ANY (ARRAY['answer'::text, 'draft'::text])) AND (paper_id IS NULL) AND (evidence_id IS NULL))))"
+        },
+        {
+          "kind": "check",
+          "name": "task_results_committed_attempt_check",
+          "definition": "CHECK ((committed_attempt >= 1))"
+        },
+        {
+          "kind": "check",
+          "name": "task_results_result_fingerprint_check",
+          "definition": "CHECK (((result_fingerprint)::text ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "task_results_project_id_paper_id_fkey",
+          "definition": "FOREIGN KEY (project_id, paper_id) REFERENCES project_papers(project_id, paper_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "task_results_project_id_task_id_committed_attempt_fkey",
+          "definition": "FOREIGN KEY (project_id, task_id, committed_attempt) REFERENCES task_attempts(project_id, task_id, attempt_no)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "task_results_project_id_task_id_kind_fkey",
+          "definition": "FOREIGN KEY (project_id, task_id, kind) REFERENCES tasks(project_id, task_id, kind)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "task_results_task_id_fkey",
+          "definition": "FOREIGN KEY (task_id) REFERENCES tasks(task_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "task_results_pkey",
+          "definition": "PRIMARY KEY (task_id)"
+        },
+        {
+          "kind": "t",
+          "name": "evidence_result_inserted",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "kind": "t",
+          "name": "task_result_inserted",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "kind": "unique",
+          "name": "task_results_project_id_paper_id_task_id_key",
+          "definition": "UNIQUE (project_id, paper_id, task_id)"
+        },
+        {
+          "kind": "unique",
+          "name": "task_results_project_id_task_id_key",
+          "definition": "UNIQUE (project_id, task_id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "evidence_by_paper",
+          "definition": "CREATE INDEX evidence_by_paper ON public.task_results USING btree (project_id, paper_id) WHERE (kind = 'evidence'::text)"
+        },
+        {
+          "name": "evidence_id_global",
+          "definition": "CREATE UNIQUE INDEX evidence_id_global ON public.task_results USING btree (evidence_id) WHERE (evidence_id IS NOT NULL)"
+        },
+        {
+          "name": "task_results_pkey",
+          "definition": "CREATE UNIQUE INDEX task_results_pkey ON public.task_results USING btree (task_id)"
+        },
+        {
+          "name": "task_results_project_id_paper_id_task_id_key",
+          "definition": "CREATE UNIQUE INDEX task_results_project_id_paper_id_task_id_key ON public.task_results USING btree (project_id, paper_id, task_id)"
+        },
+        {
+          "name": "task_results_project_id_task_id_key",
+          "definition": "CREATE UNIQUE INDEX task_results_project_id_task_id_key ON public.task_results USING btree (project_id, task_id)"
+        }
+      ]
+    },
+    {
+      "name": "tasks",
+      "group": "任务与结果",
+      "description": "process/answer/evidence/draft 四类任务；按 task_id+attempts 条件提交，拒绝迟到写入。",
+      "row_count": 8,
+      "columns": [
+        {
+          "name": "task_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "actor_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "request_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "kind",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "attempts",
+          "type": "integer",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "payload",
+          "type": "jsonb",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "payload_fingerprint",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "error_code",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "error_message",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "recovery_failures",
+          "type": "integer",
+          "nullable": false,
+          "default": "0"
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "tasks_attempts_check",
+          "definition": "CHECK ((attempts >= 0))"
+        },
+        {
+          "kind": "check",
+          "name": "tasks_check",
+          "definition": "CHECK (((status = 'failed'::text) = ((error_code IS NOT NULL) AND (error_message IS NOT NULL))))"
+        },
+        {
+          "kind": "check",
+          "name": "tasks_check1",
+          "definition": "CHECK (((status <> 'processing'::text) OR (attempts >= 1)))"
+        },
+        {
+          "kind": "check",
+          "name": "tasks_kind_check",
+          "definition": "CHECK ((kind = ANY (ARRAY['process'::text, 'answer'::text, 'evidence'::text, 'draft'::text])))"
+        },
+        {
+          "kind": "check",
+          "name": "tasks_payload_fingerprint_check",
+          "definition": "CHECK (((payload_fingerprint)::text ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "kind": "check",
+          "name": "tasks_recovery_failures_check",
+          "definition": "CHECK ((recovery_failures >= 0))"
+        },
+        {
+          "kind": "check",
+          "name": "tasks_status_check",
+          "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'processing'::text, 'succeeded'::text, 'failed'::text])))"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "tasks_actor_id_fkey",
+          "definition": "FOREIGN KEY (actor_id) REFERENCES users(user_id)"
+        },
+        {
+          "kind": "foreign_key",
+          "name": "tasks_project_id_fkey",
+          "definition": "FOREIGN KEY (project_id) REFERENCES projects(project_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "tasks_pkey",
+          "definition": "PRIMARY KEY (task_id)"
+        },
+        {
+          "kind": "t",
+          "name": "task_status_changed",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "kind": "unique",
+          "name": "tasks_project_id_task_id_key",
+          "definition": "UNIQUE (project_id, task_id)"
+        },
+        {
+          "kind": "unique",
+          "name": "tasks_project_id_task_id_kind_key",
+          "definition": "UNIQUE (project_id, task_id, kind)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "pending_task_claim",
+          "definition": "CREATE INDEX pending_task_claim ON public.tasks USING btree (created_at, task_id) WHERE (status = 'pending'::text)"
+        },
+        {
+          "name": "tasks_pkey",
+          "definition": "CREATE UNIQUE INDEX tasks_pkey ON public.tasks USING btree (task_id)"
+        },
+        {
+          "name": "tasks_project_id_task_id_key",
+          "definition": "CREATE UNIQUE INDEX tasks_project_id_task_id_key ON public.tasks USING btree (project_id, task_id)"
+        },
+        {
+          "name": "tasks_project_id_task_id_kind_key",
+          "definition": "CREATE UNIQUE INDEX tasks_project_id_task_id_kind_key ON public.tasks USING btree (project_id, task_id, kind)"
+        }
+      ]
+    },
+    {
+      "name": "topics",
+      "group": "文献与内容",
+      "description": "研究主题词；by_topic 统计的数据源之一。",
+      "row_count": 0,
+      "columns": [
+        {
+          "name": "topic_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "project_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "foreign_key",
+          "name": "topics_project_id_fkey",
+          "definition": "FOREIGN KEY (project_id) REFERENCES projects(project_id)"
+        },
+        {
+          "kind": "primary_key",
+          "name": "topics_pkey",
+          "definition": "PRIMARY KEY (topic_id)"
+        },
+        {
+          "kind": "unique",
+          "name": "topics_project_id_name_key",
+          "definition": "UNIQUE (project_id, name)"
+        },
+        {
+          "kind": "unique",
+          "name": "topics_project_id_topic_id_key",
+          "definition": "UNIQUE (project_id, topic_id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "topics_pkey",
+          "definition": "CREATE UNIQUE INDEX topics_pkey ON public.topics USING btree (topic_id)"
+        },
+        {
+          "name": "topics_project_id_name_key",
+          "definition": "CREATE UNIQUE INDEX topics_project_id_name_key ON public.topics USING btree (project_id, name)"
+        },
+        {
+          "name": "topics_project_id_topic_id_key",
+          "definition": "CREATE UNIQUE INDEX topics_project_id_topic_id_key ON public.topics USING btree (project_id, topic_id)"
+        }
+      ]
+    },
+    {
+      "name": "users",
+      "group": "身份与协作",
+      "description": "唯一业务用户来源；正式密码摘要与会话结构待 A/B/D 冻结。",
+      "row_count": 3,
+      "columns": [
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "username",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "display_name",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "password_hash",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "nullable": false,
+          "default": "false"
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "check",
+          "name": "users_username_check",
+          "definition": "CHECK (((length((username)::text) >= 1) AND (length((username)::text) <= 64)))"
+        },
+        {
+          "kind": "primary_key",
+          "name": "users_pkey",
+          "definition": "PRIMARY KEY (user_id)"
+        },
+        {
+          "kind": "unique",
+          "name": "users_username_key",
+          "definition": "UNIQUE (username)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "users_pkey",
+          "definition": "CREATE UNIQUE INDEX users_pkey ON public.users USING btree (user_id)"
+        },
+        {
+          "name": "users_username_key",
+          "definition": "CREATE UNIQUE INDEX users_username_key ON public.users USING btree (username)"
+        }
+      ]
+    }
+  ]
+}

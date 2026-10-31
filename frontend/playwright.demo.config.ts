@@ -13,7 +13,7 @@ export default defineConfig({
   fullyParallel: false, workers: 1, timeout: 30000,
   use: { baseURL: `http://127.0.0.1:${webPort}`, headless: true, viewport: { width: 1440, height: 1000 } },
   webServer: [
-    { command: `"${python}" -m uvicorn app.demo:create_demo_app --factory --app-dir backend --host 127.0.0.1 --port ${apiPort} --no-access-log`, cwd: '..', url: `http://127.0.0.1:${apiPort}/api/v1/health`, reuseExistingServer: false, env: { PAPERPILOT_ENV: 'test', PAPERPILOT_A_MODE: 'mock', PAPERPILOT_C_MODE: 'mock', PAPERPILOT_D_MODE: 'mock', PAPERPILOT_STORAGE_DIR: path.join(storage, 'uploads'), PAPERPILOT_ALLOWED_ORIGINS: `http://127.0.0.1:${webPort}` } },
+    { command: `"${python}" -m uvicorn app.demo:create_demo_app --factory --app-dir backend --host 127.0.0.1 --port ${apiPort} --no-access-log`, cwd: '..', url: `http://127.0.0.1:${apiPort}/api/v1/health`, reuseExistingServer: false, env: { PAPERPILOT_ENV: 'test', PAPERPILOT_AUTH_MODE: 'development', PAPERPILOT_A_MODE: 'mock', PAPERPILOT_C_MODE: 'mock', PAPERPILOT_D_MODE: 'mock', PAPERPILOT_STORAGE_DIR: path.join(storage, 'uploads'), PAPERPILOT_ALLOWED_ORIGINS: `http://127.0.0.1:${webPort}` } },
     { command: `npm run dev -- --port ${webPort}`, url: `http://127.0.0.1:${webPort}`, reuseExistingServer: false, env: { PAPERPILOT_PROXY_TARGET: `http://127.0.0.1:${apiPort}` } },
   ],
 })

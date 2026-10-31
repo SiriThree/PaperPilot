@@ -4,7 +4,7 @@
   "mock": true,
   "success": {
     "request": {
-      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/tasks/704dc935-e3b7-4d78-ba57-95b1b955a3d3",
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/tasks/5ae644c1-4c88-40d1-bd19-6905389c8131",
       "headers": {
         "X-PaperPilot-Client": "web"
       }
@@ -13,27 +13,27 @@
       "status": 200,
       "content_type": "application/json",
       "body": {
-        "task_id": "704dc935-e3b7-4d78-ba57-95b1b955a3d3",
+        "task_id": "5ae644c1-4c88-40d1-bd19-6905389c8131",
         "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
-        "request_id": "0d3f4a89-3312-406d-bd0c-08b2a0aab5aa",
+        "request_id": "553f9817-983f-4699-8ddd-592dd2c0f1ba",
         "kind": "process",
         "status": "succeeded",
-        "created_at": "2026-10-26T07:44:45.427143Z",
-        "updated_at": "2026-10-26T07:44:45.520839Z",
+        "created_at": "2026-10-29T02:42:54.745900Z",
+        "updated_at": "2026-10-29T02:42:54.875340Z",
         "attempts": 1,
         "error": null,
         "result_ref": {
           "resource_type": "paper",
-          "resource_id": "59425cf9-b899-488b-8a32-f84e416f816f"
+          "resource_id": "895c9a15-a1a7-4f6c-bdd1-451c1bb77c09"
         },
         "result": {
           "kind": "process",
-          "paper_id": "59425cf9-b899-488b-8a32-f84e416f816f",
+          "paper_id": "895c9a15-a1a7-4f6c-bdd1-451c1bb77c09",
           "sources": [
             {
               "citation_id": "1",
-              "paper_id": "59425cf9-b899-488b-8a32-f84e416f816f",
-              "chunk_id": "fed4cfab-4134-4b34-9963-b9eca4d85688",
+              "paper_id": "895c9a15-a1a7-4f6c-bdd1-451c1bb77c09",
+              "chunk_id": "fc11b844-1a6d-4b8e-b204-b1ff633af648",
               "page_number": 1,
               "excerpt": "【Mock 合成片段】上传已进入模拟处理流程；此内容不是从 PDF 提取的原文。",
               "synthetic": true
@@ -47,7 +47,7 @@
   },
   "error": {
     "request": {
-      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/tasks/704dc935-e3b7-4d78-ba57-95b1b955a3d3",
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/tasks/5ae644c1-4c88-40d1-bd19-6905389c8131",
       "headers": {
         "X-PaperPilot-Client": "web"
       }
@@ -58,7 +58,7 @@
       "body": {
         "code": "UNAUTHENTICATED",
         "message": "请先登录",
-        "request_id": "644aa522-07b6-4103-b55b-118f3bfa050b"
+        "request_id": "d54429b0-1d80-46d4-b267-bdccd3bd4a0b"
       }
     }
   }

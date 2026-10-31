@@ -4,7 +4,7 @@
   "mock": true,
   "success": {
     "request": {
-      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/tasks/0c1e6643-4936-4cb7-89c6-71d42e838d4d/retry",
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/tasks/17d6c15b-5aaf-4b49-a875-174085e03f69/retry",
       "headers": {
         "X-PaperPilot-Client": "web"
       }
@@ -13,13 +13,13 @@
       "status": 202,
       "content_type": "application/json",
       "body": {
-        "task_id": "0c1e6643-4936-4cb7-89c6-71d42e838d4d",
+        "task_id": "17d6c15b-5aaf-4b49-a875-174085e03f69",
         "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
-        "request_id": "a1c4f5e7-c22a-40c2-80e4-013d29fb09ca",
+        "request_id": "a9695385-b774-4f10-8bd3-570d59cfa890",
         "kind": "answer",
         "status": "pending",
-        "created_at": "2026-10-26T07:44:45.736570Z",
-        "updated_at": "2026-10-26T07:44:45.832954Z",
+        "created_at": "2026-10-29T02:42:55.144937Z",
+        "updated_at": "2026-10-29T02:42:55.279476Z",
         "attempts": 1,
         "error": null,
         "result_ref": null,
@@ -30,7 +30,7 @@
   },
   "error": {
     "request": {
-      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/tasks/0c1e6643-4936-4cb7-89c6-71d42e838d4d/retry",
+      "path": "/api/v1/projects/d4e338d6-16c6-5fa4-b1a8-8b24baf9280f/tasks/17d6c15b-5aaf-4b49-a875-174085e03f69/retry",
       "headers": {
         "X-PaperPilot-Client": "web"
       }
@@ -41,7 +41,7 @@
       "body": {
         "code": "UNAUTHENTICATED",
         "message": "请先登录",
-        "request_id": "95096234-d2f2-4206-a4a2-b4e416833e55"
+        "request_id": "371163b1-3f03-4bd8-b4a0-1dea32c125b5"
       }
     }
   }

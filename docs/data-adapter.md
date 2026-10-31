@@ -1,5 +1,7 @@
 # 成员 A 正式数据适配器实现记录（2026-10-27）
 
+2026-10-29 演示基线补充：`scripts/manage_postgres.py` 新增 `seed-demo-project`（可重复演示项目种子，幂等键 + 确定性 UUIDv5，重复执行零重复行），`controlled_statistics` 新增附加 `overview` 意图（项目范围 metric/value 汇总，AB-1 三意图之外的扩展，HTTP 暴露待 B/D 评审）。数据结构与组件方案见[项目概览统计](member-a-overview-stats.md)，生命周期行为见[文献管理交互与生命周期](member-a-literature-ux.md)；验证用例 `backend/tests/test_demo_seed_postgres.py`。
+
 2026-10-28 合并集成补充：保留 001/AB-1 的 24 表基线，新增 `002_process_indexes.sql`（第 25 张表 process_indexes）与 `003_recovery.sql`，应用当前要求 schema version 3。真实 C 使用私有原子索引提交，默认普通 process 仍为 mock_only；见[持久化索引与明确重建](persistent-index.md)、[任务/outbox 有界恢复](runtime-recovery.md)、[非管理员业务登录](business-login.md)。下文为 A 初始交付记录，后续行为以上述补充及实际迁移为准。
 
 本文件记录 PostgreSQL 16 + pgvector 正式 DataPort 的落地结果、使用方式与验证证据。设计依据为 [数据字典](data-model/04-data-dictionary.md) 与 [最终模型](data-model/03-resolved-model.md)；接口语义以 [AB-1](ab-data-contract.md) 为准，未做任何修改。基准为 member-a 分支 `0f22730` 之上的本地提交（尚未推送）。

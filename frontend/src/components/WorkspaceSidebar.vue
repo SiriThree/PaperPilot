@@ -10,13 +10,14 @@ const router = useRouter()
 const pid = computed(() => String(route.params.projectId || ''))
 function switchProject(value: string) {
   const section = route.path.split('/').pop()
-  void router.push({ path: `/projects/${value}/${['papers', 'research', 'security'].includes(section || '') ? section : 'papers'}`, query: route.query.view === 'report' ? { view: 'report' } : {} })
+  void router.push({ path: `/projects/${value}/${['papers', 'research', 'security', 'dictionary'].includes(section || '') ? section : 'papers'}`, query: route.query.view === 'report' ? { view: 'report' } : {} })
 }
 const sections = [
   { path: 'papers', name: '文献', label: '文献库', icon: 'book' },
   { path: 'research', name: '研究', label: '研究工作台', icon: 'file' },
   { path: 'research?view=report', name: '报告', label: '报告', icon: 'save' },
   { path: 'security', name: '查询与审计', label: '查询与审计', icon: 'shield' },
+  { path: 'dictionary', name: '数据字典', label: '数据字典', icon: 'folder' },
 ]
 </script>
 <template>

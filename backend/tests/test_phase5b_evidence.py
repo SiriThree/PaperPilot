@@ -1,6 +1,7 @@
 """A PostgreSQL + C RealAI with a controlled model; never a real-model quality test."""
 
 import json
+from dataclasses import replace
 from types import SimpleNamespace
 from uuid import UUID, uuid4
 

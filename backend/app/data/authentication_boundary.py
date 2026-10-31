@@ -63,6 +63,10 @@ class AuthenticationBoundary:
                 if not row or not all(row.values()):
                     raise PermissionError("Business credential privileges invalid")
             with self.authentication.transaction() as connection:
+                if connection.execute(
+                    "SELECT EXISTS(SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE left(n.nspname,3)<>'pg_' AND n.nspname<>'information_schema' AND CASE WHEN c.relkind='S' THEN has_sequence_privilege(c.oid,'USAGE,SELECT,UPDATE') ELSE false END) AS unsafe"
+                ).fetchone()["unsafe"]:
+                    raise PermissionError("Authentication sequence privileges invalid")
                 row = connection.execute(
                     "SELECT current_user=session_user AND current_user=%s AS identity, "
                     "rolcanlogin AND NOT (rolsuper OR rolbypassrls OR rolcreatedb OR rolcreaterole OR rolreplication OR rolinherit) AS role_ok, "
