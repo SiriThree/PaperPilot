@@ -80,6 +80,9 @@ class RealAI:
         self, data: DataPort, settings: AISettings, *, reader: LocalPDFReader, client=None, embedder=None
     ):
         self.data, self.settings, self.reader = data, settings, reader
+        from app.ai.lexical_index import LexicalCache
+
+        self.lexical_cache = LexicalCache(settings.lexical_cache_mb * 1024**2)
         if settings.active_chunk_strategy == "sentence-token-v2":
             try:
                 from app.ai.chunking import SentenceTokenChunker
@@ -109,6 +112,24 @@ class RealAI:
                     embedding_api_key=None,
                 )
             )
+
+    async def astart(self):
+        start = getattr(self.embedder, "astart", None)
+        if callable(start):
+            await start()
+
+    async def aclose(self):
+        close = getattr(self.embedder, "aclose", None)
+        if callable(close):
+            await close()
+        self.lexical_cache.clear()
+
+    async def _query_vector(self, text):
+        embedder = self.embedder or self.client
+        query = getattr(embedder, "embed_query", None)
+        if callable(query):
+            return await query(text)
+        return (await embedder.embed([text]))[0]
 
     @asynccontextmanager
     async def _operation(self):
@@ -240,7 +261,7 @@ class RealAI:
                             s.model_copy(update={"citation_id": str(i)}) for i, (_, s) in enumerate(corpus)
                         ]
                         vectors = await asyncio.to_thread(stored, ctx, self._index_model(), sources)
-                        query_vector = (await (self.embedder or self.client).embed([query.query]))[0]
+                        query_vector = await self._query_vector(query.query)
                     else:
                         embedded = await (self.embedder or self.client).embed([query.query, *documents])
                         query_vector, vectors = embedded[0], embedded[1:]
@@ -275,7 +296,7 @@ class RealAI:
                 await asyncio.to_thread(self.data.paper, ctx, paper_id)
         vector = None
         if query.query.strip() and paper_ids != frozenset() and query.mode != "keyword":
-            vector = (await (self.embedder or self.client).embed([query.query]))[0]
+            vector = await self._query_vector(query.query)
         hits = await asyncio.to_thread(self._rank_indexed, ctx, query, paper_ids, vector, deadline)
         # Recheck current membership/active source after the snapshot and model wait.
         await asyncio.to_thread(self._validate_sources, ctx, [h.source for h in hits])
@@ -295,7 +316,15 @@ class RealAI:
                 if query.mode != "keyword"
                 else []
             )
-            lexical = bm25_topk(query.query, snapshot.documents, budget) if query.mode != "semantic" else []
+            lexical = []
+            if query.mode != "semantic":
+                lexical = (
+                    self.lexical_cache.search(snapshot, query.query, budget)
+                    if self.settings.lexical_backend == "inverted"
+                    and callable(getattr(snapshot, "lexical_versions", None))
+                    and callable(getattr(snapshot, "lexical_documents", None))
+                    else bm25_topk(query.query, snapshot.documents, budget)
+                )
             if query.mode == "keyword":
                 scores = lexical
             elif query.mode == "semantic":

@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import socket
+import ssl
 import subprocess
 import sys
 import time
@@ -17,12 +18,12 @@ from urllib.request import urlopen
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def ready(url, process):
+def ready(url, process, tls_context=None):
     for _ in range(150):
         if process.poll() is not None:
             raise RuntimeError("Owned service stopped; inspect its local log")
         try:
-            with urlopen(url, timeout=1) as response:
+            with urlopen(url, timeout=1, context=tls_context) as response:
                 if response.status == 200:
                     return
         except OSError:
@@ -42,17 +43,34 @@ def main():
     parser.add_argument("--api-port", type=int, default=18801)
     parser.add_argument("--web-port", type=int, default=15174)
     parser.add_argument(
+        "--tls-cert", type=Path, help="Prepared local TLS certificate; defaults to state/tls/localhost.crt"
+    )
+    parser.add_argument(
+        "--tls-key", type=Path, help="Prepared local TLS private key; defaults to state/tls/localhost.key"
+    )
+    parser.add_argument(
         "--chunk-strategy", choices=["auto", "character-v1", "sentence-token-v2"], default="auto"
     )
     parser.add_argument("--chunk-tokens", type=int, default=384)
     parser.add_argument("--chunk-token-overlap", type=int, default=48)
+    parser.add_argument("--lexical-backend", choices=["streaming", "inverted"], default="inverted")
+    parser.add_argument("--lexical-cache-mb", type=int, default=256)
+    parser.add_argument("--query-embedding-worker", choices=["oneshot", "resident"], default="resident")
+    parser.add_argument("--embedding-queue-size", type=int, default=16)
     parser.add_argument(
         "--api-workers", type=int, default=1, help="Temporary import workers; use one for UI demos"
     )
     args = parser.parse_args()
     if not 1 <= args.api_workers <= 8:
         parser.error("Use between one and eight API workers")
+    if not 1 <= args.lexical_cache_mb <= 2048 or not 1 <= args.embedding_queue_size <= 256:
+        parser.error("Invalid lexical cache or embedding queue budget")
     state = args.state_dir.resolve(strict=True)
+    certificate = (args.tls_cert or state / "tls/localhost.crt").resolve()
+    private_key = (args.tls_key or state / "tls/localhost.key").resolve()
+    if not certificate.is_file() or not private_key.is_file():
+        parser.error("Credential login requires HTTPS; prepare --tls-cert and --tls-key first")
+    tls_context = ssl.create_default_context(cafile=str(certificate))
     database = json.loads((state / "database.json").read_text())
     model = json.loads(args.model_manifest.read_text())
     provider_config = json.loads(args.provider_config.read_text())
@@ -66,7 +84,7 @@ def main():
         with socket.socket() as probe:
             probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             probe.bind(("127.0.0.1", port))
-    api_url, web_url = f"http://127.0.0.1:{args.api_port}", f"http://127.0.0.1:{args.web_port}"
+    api_url, web_url = f"https://127.0.0.1:{args.api_port}", f"https://127.0.0.1:{args.web_port}"
     environment = dict(
         os.environ,
         PAPERPILOT_ENV="development",
@@ -83,7 +101,7 @@ def main():
         PAPERPILOT_DATA_PASSWORD="",
         PAPERPILOT_DATA_PASSWORD_FILE=database["password_file"],
         PAPERPILOT_DATA_DBNAME=database["dbname"],
-        PAPERPILOT_ALLOWED_ORIGINS=f"{web_url},http://localhost:{args.web_port},{api_url}",
+        PAPERPILOT_ALLOWED_ORIGINS=f"{web_url},https://localhost:{args.web_port},{api_url}",
         PAPERPILOT_STORAGE_DIR=str(state / "uploads"),
         PAPERPILOT_AI_BASE_URL=provider["baseUrl"],
         PAPERPILOT_AI_API_KEY=provider["apiKey"],
@@ -99,7 +117,14 @@ def main():
         PAPERPILOT_AI_CHUNK_STRATEGY=args.chunk_strategy,
         PAPERPILOT_AI_CHUNK_TOKENS=str(args.chunk_tokens),
         PAPERPILOT_AI_CHUNK_TOKEN_OVERLAP=str(args.chunk_token_overlap),
+        PAPERPILOT_AI_LEXICAL_BACKEND=args.lexical_backend,
+        PAPERPILOT_AI_LEXICAL_CACHE_MB=str(args.lexical_cache_mb),
+        PAPERPILOT_AI_QUERY_EMBEDDING_WORKER=args.query_embedding_worker,
+        PAPERPILOT_AI_EMBEDDING_QUEUE_SIZE=str(args.embedding_queue_size),
         PAPERPILOT_PROXY_TARGET=api_url,
+        PAPERPILOT_DEV_TLS_CERT=str(certificate),
+        PAPERPILOT_DEV_TLS_KEY=str(private_key),
+        NODE_EXTRA_CA_CERTS=str(certificate),
     )
     commands = [
         (
@@ -119,6 +144,10 @@ def main():
                 "--workers",
                 str(args.api_workers),
                 "--no-access-log",
+                "--ssl-certfile",
+                str(certificate),
+                "--ssl-keyfile",
+                str(private_key),
             ],
             ROOT,
             api_url + "/api/v1/health",
@@ -151,7 +180,7 @@ def main():
             )
             children.append(process)
             if url:
-                ready(url, process)
+                ready(url, process, tls_context)
         preview = {
             "url": web_url,
             "api_url": api_url,
@@ -166,6 +195,11 @@ def main():
             "chunk_strategy": args.chunk_strategy,
             "chunk_tokens": args.chunk_tokens,
             "chunk_token_overlap": args.chunk_token_overlap,
+            "lexical_backend": args.lexical_backend,
+            "lexical_cache_mb": args.lexical_cache_mb,
+            "query_embedding_worker": args.query_embedding_worker,
+            "embedding_queue_size": args.embedding_queue_size,
+            "tls_certificate": str(certificate),
         }
         (state / "preview.json").write_text(json.dumps(preview, indent=2) + "\n")
         print(json.dumps(preview), flush=True)

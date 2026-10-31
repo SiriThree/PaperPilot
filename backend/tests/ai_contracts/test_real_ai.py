@@ -389,6 +389,7 @@ def test_local_inference_process_is_reaped_on_timeout(real, tmp_path, monkeypatc
         embedding_model="local-fixture",
         local_model_dir=tmp_path,
         chunk_strategy="character-v1",
+        query_embedding_worker="oneshot",
     )
     embedding = LocalEmbeddings(settings)
 

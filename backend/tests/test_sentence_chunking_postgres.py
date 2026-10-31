@@ -70,6 +70,10 @@ def test_rechunk_same_embedding_model_preserves_old_sources_and_replays_atomical
             old_ai = RealAI(data, settings, reader=LocalPDFReader(tmp_path), client=client, embedder=client)
             old, old_index = asyncio.run(old_ai.process_indexed(ctx, job.task.task_id, file))
             data.complete_indexed_job(job, old, old_index)
+            # Warm the derived lexical index before reindexing the same paper.
+            assert asyncio.run(
+                old_ai.search_scoped(ctx, SearchRequest(query="evidence", mode="keyword"), [pid])
+            ).items
             with database.transaction() as c:
                 old_payload = c.execute(
                     "SELECT payload FROM task_results WHERE task_id=%s", (job.task.task_id,)
@@ -95,6 +99,12 @@ def test_rechunk_same_embedding_model_preserves_old_sources_and_replays_atomical
             data.complete_indexed_job(next_job, new, new_index)
             data.complete_indexed_job(next_job, new, new_index)
             assert data.sources(ctx, pid) == new.sources
+            refreshed = asyncio.run(
+                old_ai.search_scoped(ctx, SearchRequest(query="evidence", mode="keyword"), [pid])
+            )
+            assert refreshed.items and all(
+                h.source.chunk_id in {s.chunk_id for s in new.sources} for h in refreshed.items
+            )
             with database.transaction() as c:
                 assert c.execute("SELECT count(*) AS n FROM embedding_models").fetchone()["n"] == 1
                 assert c.execute("SELECT count(*) AS n FROM process_indexes").fetchone()["n"] == 2

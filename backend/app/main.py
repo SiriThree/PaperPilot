@@ -153,6 +153,9 @@ def create_app(
         worker = None
         isolated_tasks = []
         try:
+            ai_start = getattr(adapters.ai, "astart", None)
+            if callable(ai_start):
+                await ai_start()
             if app.state.auth_boundary is not None:
                 app.state.auth_boundary.ready()
             if scoped_system_audit is not None and not scoped_system_audit.ready():
@@ -191,6 +194,12 @@ def create_app(
                 worker.cancel()
                 with suppress(asyncio.CancelledError):
                     await worker
+            ai_close = getattr(adapters.ai, "aclose", None)
+            if callable(ai_close):
+                try:
+                    await ai_close()
+                except Exception:
+                    logger.warning("ai_adapter_shutdown_failed")
             for scoped_worker in reversed(scoped_workers):
                 try:
                     scoped_worker.close()
