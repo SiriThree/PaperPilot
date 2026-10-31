@@ -18,7 +18,7 @@ from psycopg.rows import dict_row
 from app.errors import AppError
 
 MIGRATIONS = Path(__file__).parent / "migrations"
-EXPECTED_VERSION = 7
+EXPECTED_VERSION = 8
 
 # Both files were released on a parallel branch under versions also used by
 # the authentication/outbox branch. Keep their original bytes as trusted

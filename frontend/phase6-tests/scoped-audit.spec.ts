@@ -42,6 +42,7 @@ test('Phase 6.7 credential session, restricted SQL and scoped audit', async ({ p
     await page.getByRole('button', { name: '登录', exact: true }).click()
     await expect(page.getByRole('heading', { name: '你的研究项目' })).toBeVisible()
     await page.goto(`/projects/${project}/security`)
+    await expect(page.getByText('凭据认证', { exact: true })).toBeVisible()
     const executedResponse = page.waitForResponse(r => r.url().endsWith('/secure-queries') && r.request().method() === 'POST')
     await page.getByRole('button', { name: '提交查询', exact: true }).click()
     const executed = await (await executedResponse).json()
@@ -83,7 +84,10 @@ test('Phase 6.7 credential session, restricted SQL and scoped audit', async ({ p
     expect((await page.request.post('/api/v1/auth/logout', { headers })).status()).toBe(200)
     expect((await page.request.post('/api/v1/auth/login', { headers, data: { username: 'alice', password } })).status()).toBe(200)
     await page.goto(`/projects/${project}/security`)
-    await expect(page.getByRole('button', { name: '查看运行说明' })).toContainText('适配器开发')
+    await page.getByRole('button', { name: '查看运行说明' }).click()
+    const modeDialog = page.getByRole('dialog', { name: '当前运行说明' })
+    await expect(modeDialog).toContainText('适配器开发 · 待验收')
+    await modeDialog.getByRole('button', { name: 'Close this dialog' }).click()
     await writeFile(path.join(faultDir, 'fault-request'), 'ready')
     let injected = false
     for (let i = 0; i < 200; i++) {

@@ -402,6 +402,17 @@ export interface components {
              */
             mock: boolean;
         };
+        /** AuditDetails */
+        AuditDetails: {
+            /** Question */
+            question?: string | null;
+            /** Sql */
+            sql?: string | null;
+            /** Resource Ids */
+            resource_ids?: string[];
+            /** Resource Name */
+            resource_name?: string | null;
+        };
         /** AuditEvent */
         AuditEvent: {
             /**
@@ -440,6 +451,7 @@ export interface components {
              * @default true
              */
             mock: boolean;
+            details?: components["schemas"]["AuditDetails"] | null;
         };
         /** AuditList */
         AuditList: {

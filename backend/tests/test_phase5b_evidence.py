@@ -30,7 +30,7 @@ def test_target_sources_survive_global_top_50_and_report_snapshot(isolated_datab
             calls.append(json.loads(json.loads(request.content)["messages"][1]["content"]))
         return model_response(request)
 
-    ai_settings = replace(configuration(), embedding_revision="phase5b-fixture-v1")
+    ai_settings = configuration(embedding_revision="phase5b-fixture-v1")
     app = create_app(
         Settings(environment="test", a_mode="persistent", c_mode="real", storage_dir=storage),
         data_binding=compose_data_binding(config, DataSettings()),

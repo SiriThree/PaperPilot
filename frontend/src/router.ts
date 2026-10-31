@@ -3,6 +3,7 @@ import ProjectsPage from './pages/ProjectsPage.vue'
 import PapersPage from './pages/PapersPage.vue'
 import ResearchPage from './pages/ResearchPage.vue'
 import SecurityPage from './pages/SecurityPage.vue'
+import DictionaryPage from './pages/DictionaryPage.vue'
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -11,6 +12,7 @@ export const router = createRouter({
     { path: '/projects/:projectId/papers', component: PapersPage },
     { path: '/projects/:projectId/research', component: ResearchPage },
     { path: '/projects/:projectId/security', component: SecurityPage },
+    { path: '/projects/:projectId/dictionary', component: DictionaryPage },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 })

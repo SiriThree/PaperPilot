@@ -22,6 +22,7 @@
           "action": "contract.gateway",
           "actor_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
           "decision": "allowed",
+          "details": null,
           "duration_ms": 0.0,
           "event_id": "00000000-0000-0000-0000-00000000000a",
           "execution_status": "executed",

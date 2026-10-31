@@ -20,7 +20,7 @@ from app.secret_config import secret_value
 
 # PostgreSQL 16 pg_get_viewdef(..., false) with search_path fixed to pg_catalog,
 # derived from the version-controlled candidate migration, not deployment state.
-VIEW_SHA256 = "6314adf0b595906a71c7aaa6bdc9a8a68b41f6704a1465bc34fee12a86af00d6"
+VIEW_SHA256 = "147b0e5e162fa7e8736c1dd4f19578c1fb25bd7b00771bb2d0ea659952bf1ab3"
 _SOURCE = Path(__file__).parents[1] / "security/migrations/003_candidate_scoped_audit.sql"
 
 
@@ -222,6 +222,7 @@ def verify_scoped_audit(connection, config: ScopedAuditConfig):
                     "policy_id",
                     "duration_ms",
                     "mock",
+                    "details",
                 ],
                 ["project_id", "user_id", "role"],
                 ["user_id", "disabled"],

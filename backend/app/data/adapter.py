@@ -29,6 +29,7 @@ from app.data.database import PostgresDatabase
 from app.data.settings import DataSettings
 from app.errors import AppError
 from app.schemas import (
+    AuditDetails,
     AuditEvent,
     AuditList,
     EvidenceField,
@@ -156,7 +157,7 @@ class PostgresData:
             ),
         )
 
-    def _outbox(self, action, *, ctx, resource_type, resource_id, execution_status="succeeded"):
+    def _outbox(self, action, *, ctx, resource_type, resource_id, execution_status="succeeded", details=None):
         self._db.execute(
             "INSERT INTO outbox_events(event_id, project_id, actor_id, request_id, payload)"
             " VALUES(%s,%s,%s,%s,%s::jsonb)",
@@ -174,6 +175,9 @@ class PostgresData:
                         "execution_status": execution_status,
                         "duration_ms": 0,
                         "mock": False,
+                        "details": (details or AuditDetails(resource_ids=[resource_id])).model_dump(
+                            mode="json"
+                        ),
                     }
                 ),
             ),
@@ -772,7 +776,7 @@ class PostgresData:
             self._paper(job.context, pid)
         result = normalize_result(job.task.kind, result)
         if stored.task.status == "succeeded" and fingerprint(stored.task.result) == fingerprint(result):
-            # Mock process results cannot have indexed commits; scoped Mock workers need no index grants.
+            # Mock results have no vector index; restricted Mock workers need no index-table grant.
             saved = (
                 self._one("SELECT fingerprint FROM process_indexes WHERE task_id=%s", (job.task.task_id,))
                 if job.task.kind == "process" and not result.mock
@@ -848,6 +852,15 @@ class PostgresData:
             resource_type="task",
             resource_id=job.task.task_id,
             execution_status="succeeded",
+            details=AuditDetails(
+                resource_ids=job.payload["paper_ids"][:50],
+                resource_name={
+                    "process": "PDF 解析与索引",
+                    "evidence": "论文证据提取",
+                    "answer": "文献问答",
+                    "draft": "报告草稿生成",
+                }[job.task.kind],
+            ),
         )
 
     def _commit_index(self, job, index):
@@ -1054,6 +1067,15 @@ class PostgresData:
             resource_type="task",
             resource_id=job.task.task_id,
             execution_status="failed",
+            details=AuditDetails(
+                resource_ids=job.payload["paper_ids"][:50],
+                resource_name={
+                    "process": "PDF 解析与索引",
+                    "evidence": "论文证据提取",
+                    "answer": "文献问答",
+                    "draft": "报告草稿生成",
+                }[job.task.kind],
+            ),
         )
 
     # ---- reports -----------------------------------------------------------
@@ -1226,6 +1248,57 @@ class PostgresData:
                 (ctx.project_id,),
             )
             return ["paper_id", "title"], [dict(row) for row in rows]
+        if intent == "overview":
+            # A-side extension (docs/member-a-overview-stats.md): one project-scoped
+            # metric/value summary for the project home area. Additive beyond the
+            # frozen AB-1 intent set; HTTP exposure awaits B/D review.
+            row = self._one(
+                """
+                SELECT
+                  (SELECT count(*) FROM project_papers pp
+                    WHERE pp.project_id=%s AND pp.removed_at IS NULL) AS papers_total,
+                  (SELECT count(*) FROM project_papers pp
+                    WHERE pp.project_id=%s AND pp.removed_at IS NULL AND pp.status='searchable')
+                    AS papers_searchable,
+                  (SELECT count(*) FROM project_papers pp
+                    WHERE pp.project_id=%s AND pp.removed_at IS NULL AND pp.status='processing')
+                    AS papers_processing,
+                  (SELECT count(*) FROM project_papers pp
+                    WHERE pp.project_id=%s AND pp.removed_at IS NULL AND pp.status='failed')
+                    AS papers_failed,
+                  (SELECT count(*) FROM project_papers pp
+                    WHERE pp.project_id=%s AND pp.removed_at IS NULL AND pp.status='pending')
+                    AS papers_pending,
+                  (SELECT count(*) FROM chunks c
+                    WHERE c.project_id=%s AND EXISTS (
+                      SELECT 1 FROM project_papers pp WHERE pp.project_id=c.project_id
+                      AND pp.paper_id=c.paper_id AND pp.removed_at IS NULL)) AS chunks_total,
+                  (SELECT count(DISTINCT tr.paper_id) FROM task_results tr
+                    WHERE tr.project_id=%s AND tr.kind='evidence' AND EXISTS (
+                      SELECT 1 FROM project_papers pp WHERE pp.project_id=tr.project_id
+                      AND pp.paper_id=tr.paper_id AND pp.removed_at IS NULL))
+                    AS papers_with_evidence,
+                  (SELECT count(*) FROM reports r WHERE r.project_id=%s) AS reports,
+                  (SELECT count(*) FROM report_versions rv WHERE rv.project_id=%s)
+                    AS report_versions,
+                  (SELECT count(*) FROM project_members m WHERE m.project_id=%s)
+                    AS members_total
+                """,
+                (ctx.project_id,) * 10,
+            )
+            metrics = [
+                "papers_total",
+                "papers_searchable",
+                "papers_processing",
+                "papers_failed",
+                "papers_pending",
+                "chunks_total",
+                "papers_with_evidence",
+                "reports",
+                "report_versions",
+                "members_total",
+            ]
+            return ["metric", "value"], [{"metric": name, "value": int(row[name])} for name in metrics]
         raise AppError(400, "UNSUPPORTED_INTENT", "不支持的统计意图")
 
     # ---- audit ---------------------------------------------------------------
@@ -1257,7 +1330,7 @@ class PostgresData:
         self._db.execute(
             "INSERT INTO audit_events(event_id, timestamp, request_id, actor_id, project_id,"
             " action, resource_type, decision, execution_status, policy_id, duration_ms, mock,"
-            " event_fingerprint) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            " event_fingerprint, details) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)",
             (
                 event.event_id,
                 event.timestamp,
@@ -1272,6 +1345,7 @@ class PostgresData:
                 event.duration_ms,
                 event.mock,
                 digest,
+                event.details.model_dump_json() if event.details is not None else None,
             ),
         )
 
@@ -1310,7 +1384,7 @@ class PostgresData:
         total = self._one("SELECT count(*) AS total" + where, values)["total"]
         rows = self._rows(
             "SELECT event_id, timestamp, request_id, actor_id, project_id, action, resource_type,"
-            " decision, execution_status, policy_id, duration_ms, mock"
+            " decision, execution_status, policy_id, duration_ms, mock, details"
             + where
             + " ORDER BY timestamp DESC, event_id DESC LIMIT %s OFFSET %s",
             (*values, limit, offset),
@@ -1330,6 +1404,7 @@ class PostgresData:
                     execution_status=row["execution_status"],
                     duration_ms=row["duration_ms"],
                     mock=row["mock"],
+                    details=row["details"],
                 )
                 for row in rows
             ],

@@ -170,6 +170,7 @@ def test_normal_questions_are_allowed_but_never_executed(data, ctx, monkeypatch,
     response = asyncio.run(build_security(data).execute(ctx, question))
     assert (response.decision, response.execution_status) == ("allowed", "not_executed")
     assert response.reason.code == "QUERY_EXECUTION_DISABLED"
+    assert response.policy_id.endswith("-template")
     assert response.request_id == ctx.request_id and response.mock is False
     assert not response.rows and not response.columns
     assert "SELECT" not in response.model_dump_json()
@@ -185,6 +186,7 @@ def test_injected_candidate_generator_cannot_bypass_validation(data, ctx, candid
     response = asyncio.run(security.execute(ctx, "统计论文"))
     assert (response.decision, response.execution_status) == ("rejected", "not_executed")
     assert response.reason.code == "SQL_POLICY_REJECTED" and not response.rows
+    assert response.policy_id.endswith("-injected")
     assert "SELECT" not in response.model_dump_json()
 
 

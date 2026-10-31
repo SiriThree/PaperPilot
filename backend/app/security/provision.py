@@ -153,8 +153,9 @@ def create_login(connection, role, password, *, project_id=None, business=False,
         elif kind == "audit":
             grants = [
                 "GRANT USAGE ON SCHEMA public TO {}",
+                "GRANT USAGE ON SCHEMA paperpilot_audit TO {}",
+                "GRANT EXECUTE ON FUNCTION paperpilot_audit.event_fingerprint(uuid) TO {}",
                 "GRANT INSERT ON public.audit_events TO {}",
-                "GRANT SELECT(event_id,event_fingerprint) ON public.audit_events TO {}",
                 "GRANT SELECT(user_id) ON public.users TO {}",
                 "GRANT SELECT(project_id) ON public.projects TO {}",
             ]
@@ -169,6 +170,9 @@ def create_login(connection, role, password, *, project_id=None, business=False,
         else:
             grants = [
                 "GRANT USAGE ON SCHEMA public TO {}",
+                "GRANT USAGE ON SCHEMA paperpilot_audit TO {}",
+                "GRANT EXECUTE ON FUNCTION paperpilot_audit.event_fingerprint(uuid) TO {}",
+                "GRANT SELECT ON paperpilot_audit.project_events TO {}",
                 "GRANT SELECT ON "
                 + ",".join("public." + t for t in BUSINESS_READ_TABLES.split(","))
                 + " TO {}",
@@ -242,6 +246,8 @@ def revoke_login(connection, role):
             ]
         elif kind == "audit":
             statements = [
+                "REVOKE EXECUTE ON FUNCTION paperpilot_audit.event_fingerprint(uuid) FROM {}",
+                "REVOKE ALL ON SCHEMA paperpilot_audit FROM {}",
                 "REVOKE INSERT ON public.audit_events FROM {}",
                 "REVOKE SELECT(event_id,event_fingerprint) ON public.audit_events FROM {}",
                 "REVOKE SELECT(user_id) ON public.users FROM {}",
@@ -256,6 +262,9 @@ def revoke_login(connection, role):
             ]
         else:
             statements = [
+                "REVOKE EXECUTE ON FUNCTION paperpilot_audit.event_fingerprint(uuid) FROM {}",
+                "REVOKE ALL ON paperpilot_audit.project_events FROM {}",
+                "REVOKE ALL ON SCHEMA paperpilot_audit FROM {}",
                 "REVOKE ALL ON ALL TABLES IN SCHEMA public FROM {}",
                 "REVOKE ALL ON SCHEMA public FROM {}",
             ]

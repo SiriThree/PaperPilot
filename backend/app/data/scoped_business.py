@@ -134,7 +134,7 @@ WORKER_INSERT_COLUMNS = {
     }
 }
 WORKER_UPDATE_COLUMNS = {
-    "tasks": {"status", "attempts", "updated_at", "recovery_failures"},
+    "tasks": {"status", "attempts", "recovery_failures", "updated_at"},
     "task_attempts": {"status", "finished_at"},
     "project_papers": {"status", "updated_at"},
 }
