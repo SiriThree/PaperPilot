@@ -1,0 +1,109 @@
+{
+  "checked_at": "2026-10-31T10:36:50.508598+00:00",
+  "control_after_team_sync": {
+    "passed": 684,
+    "skipped": 480
+  },
+  "regular_pytest": {
+    "passed": 717,
+    "skipped": 480,
+    "warnings": 1,
+    "seconds": 11.17
+  },
+  "explicit_disposable_postgres": {
+    "passed": 13,
+    "opt_ins": [
+      "PAPERPILOT_RETRIEVAL_POSTGRES_TEST=1",
+      "PAPERPILOT_CHUNKING_POSTGRES_TEST=1"
+    ],
+    "warm_lexical_cache_reindex_history_checked": true
+  },
+  "ruff": "passed",
+  "frontend_build": "passed",
+  "browser": {
+    "url": "https://127.0.0.1:15178",
+    "httpsLogin": true,
+    "secureHttpOnlySession": true,
+    "wholeProjectSearch": [
+      {
+        "mode": "keyword",
+        "hits": 10,
+        "status": 200
+      },
+      {
+        "mode": "semantic",
+        "hits": 10,
+        "status": 200
+      },
+      {
+        "mode": "hybrid",
+        "hits": 10,
+        "status": 200
+      }
+    ],
+    "sourceNavigation": true,
+    "sourceExact": true,
+    "pageErrors": []
+  },
+  "standalone_index_diagnostic": {
+    "paper_indexes": 300,
+    "accounted_mib": 147.056001663208,
+    "fallbacks": 0,
+    "one_query_worker_reused": true,
+    "samples": [
+      {
+        "query": "q01",
+        "mode": "keyword",
+        "seconds": 2.974668543000007,
+        "hits": 10,
+        "index_mib": 147.056001663208,
+        "paper_builds": 300,
+        "fallbacks": 0
+      },
+      {
+        "query": "q03",
+        "mode": "keyword",
+        "seconds": 0.020022905000132596,
+        "hits": 10,
+        "index_mib": 147.056001663208,
+        "paper_builds": 300,
+        "fallbacks": 0
+      },
+      {
+        "query": "q11",
+        "mode": "semantic",
+        "seconds": 0.33413435800002844,
+        "hits": 10,
+        "index_mib": 147.056001663208,
+        "paper_builds": 300,
+        "fallbacks": 0
+      },
+      {
+        "query": "q21",
+        "mode": "hybrid",
+        "seconds": 0.22808998300001804,
+        "hits": 10,
+        "index_mib": 147.056001663208,
+        "paper_builds": 300,
+        "fallbacks": 0
+      },
+      {
+        "query": "q01",
+        "mode": "keyword",
+        "seconds": 0.04101138499981971,
+        "hits": 10,
+        "index_mib": 147.056001663208,
+        "paper_builds": 300,
+        "fallbacks": 0
+      }
+    ]
+  },
+  "baseline_commit_preserved": "15437271b39860975e613c3c4fee4e4cad7ed39a",
+  "team_main_synced": "0d94a38",
+  "notes": [
+    "Skipped tests include explicitly isolated database/security configurations; they are not counted as passed.",
+    "Protocol fixture unit tests are separate from the real 300-paper HTTP and vector checks.",
+    "Browser screenshot with original excerpts and TLS private keys remain local.",
+    "Standalone stage timings exclude HTTP; use benchmark.json for paired HTTPS comparisons."
+  ]
+}
