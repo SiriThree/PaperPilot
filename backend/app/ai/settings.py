@@ -77,10 +77,12 @@ class AISettings:
 
     @classmethod
     def from_env(cls):
+        from app.secrets import read_secret
+
         try:
             return cls(
                 base_url=os.environ["PAPERPILOT_AI_BASE_URL"].rstrip("/"),
-                api_key=os.environ["PAPERPILOT_AI_API_KEY"],
+                api_key=read_secret("PAPERPILOT_AI_API_KEY"),
                 chat_model=os.environ["PAPERPILOT_AI_CHAT_MODEL"],
                 embedding_model=os.environ["PAPERPILOT_AI_EMBEDDING_MODEL"],
                 embedding_dimensions=int(os.environ["PAPERPILOT_AI_EMBEDDING_DIMENSIONS"]),
@@ -89,7 +91,10 @@ class AISettings:
                 min_similarity=float(os.getenv("PAPERPILOT_AI_MIN_SIMILARITY", "0.2")),
                 embedding_backend=os.getenv("PAPERPILOT_AI_EMBEDDING_BACKEND", "remote"),
                 embedding_base_url=os.getenv("PAPERPILOT_AI_EMBEDDING_BASE_URL") or None,
-                embedding_api_key=os.getenv("PAPERPILOT_AI_EMBEDDING_API_KEY") or None,
+                embedding_api_key=read_secret("PAPERPILOT_AI_EMBEDDING_API_KEY")
+                if os.getenv("PAPERPILOT_AI_EMBEDDING_API_KEY")
+                or os.getenv("PAPERPILOT_AI_EMBEDDING_API_KEY_FILE")
+                else None,
                 local_model_dir=Path(os.environ["PAPERPILOT_AI_LOCAL_MODEL_DIR"])
                 if os.getenv("PAPERPILOT_AI_LOCAL_MODEL_DIR")
                 else None,

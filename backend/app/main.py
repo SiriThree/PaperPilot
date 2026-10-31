@@ -338,6 +338,13 @@ def create_app(
                 and not (identity_path or scoped_read or scoped_upload or scoped_report)
             ):
                 denied = (503, "DATA_UNAVAILABLE", "项目隔离测试模式暂不支持此操作")
+        if (
+            settings.auth_mode == "credentials"
+            and settings.environment == "development"
+            and request.url.scheme != "https"
+            and request.url.path != "/api/v1/health"
+        ):
+            denied = (403, "HTTPS_REQUIRED", "密码认证要求 HTTPS 连接")
         if request.method not in {"GET", "HEAD", "OPTIONS"}:
             origin = request.headers.get("Origin")
             if settings.auth_mode == "credentials":

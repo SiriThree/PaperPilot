@@ -1305,12 +1305,16 @@ class PostgresData:
 
     @operation(write=True)
     def append_audit(self, event):
+        self._append_audit(event)
+
+    def _existing_audit_fingerprint(self, event_id):
+        return self._one("SELECT paperpilot_audit.event_fingerprint(%s) AS event_fingerprint", (event_id,))
+
+    def _append_audit(self, event):
         if event.timestamp.tzinfo is None:
             raise invalid()
         digest = fingerprint(event)
-        existing = self._one(
-            "SELECT paperpilot_audit.event_fingerprint(%s) AS event_fingerprint", (event.event_id,)
-        )
+        existing = self._existing_audit_fingerprint(event.event_id)
         if existing and existing["event_fingerprint"] is not None:
             if existing["event_fingerprint"] == digest:
                 return
