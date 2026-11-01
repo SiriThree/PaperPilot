@@ -88,7 +88,7 @@ class RealAI:
                 from app.ai.chunking import SentenceTokenChunker
 
                 SentenceTokenChunker(
-                    settings.local_model_dir, settings.chunk_tokens, settings.chunk_token_overlap
+                    settings.active_chunk_tokenizer_dir, settings.chunk_tokens, settings.chunk_token_overlap
                 )
             except Exception:
                 raise RuntimeError(

@@ -1,0 +1,27 @@
+{
+  "models": {
+    "http_status": 200,
+    "matching_model_ids": [
+      "text-embedding-3-large"
+    ]
+  },
+  "embeddings": {
+    "http_status": 200,
+    "seconds": 1.811,
+    "model": "text-embedding-3-large",
+    "count": 2,
+    "dimensions": [
+      3072,
+      3072
+    ],
+    "indexes": [
+      0,
+      1
+    ],
+    "usage": {
+      "prompt_tokens": 19,
+      "total_tokens": 19
+    },
+    "finite": true
+  }
+}

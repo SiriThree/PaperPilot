@@ -150,8 +150,7 @@ def snapshot(args):
         "filesystem_total_bytes": disk.total,
         "limitations": [
             "Not a relevance benchmark: questions have no human relevance judgments.",
-            "Current retrieval rejects more than 1000 candidate chunks (AI_CORPUS_LIMIT).",
-            "No full-corpus latency or throughput result is claimed.",
+            "This snapshot verifies stored data; query latency and throughput require separate measurements.",
         ],
     }
     save_state(args.output_dir / "summary.json", summary)

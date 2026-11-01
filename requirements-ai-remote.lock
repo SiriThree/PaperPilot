@@ -1,0 +1,7 @@
+# Optional remote OpenAI-compatible embeddings (Python 3.13.2 validation).
+-r requirements.lock
+charset-normalizer==3.5.2
+regex==2026.9.29
+requests==2.34.2
+tiktoken==0.14.0
+urllib3==2.8.0

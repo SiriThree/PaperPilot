@@ -1,7 +1,8 @@
-"""Start an operator-prepared local PostgreSQL/SJTU/BGE development workspace.
+"""Start an operator-prepared PostgreSQL workspace with independent model providers.
 
-No migrations, password resets or downloads happen here. Configuration and secret
-files remain under .runtime; only the three child processes are stopped on exit.
+No migrations or password resets happen here. Prepare model/tokenizer assets
+before startup; configuration and secrets stay in local files. Only the three
+child processes are stopped on exit.
 """
 
 import argparse
@@ -16,6 +17,40 @@ import time
 from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def embedding_environment(config_path, model_manifest):
+    # Explicitly clear inherited provider secrets, so switching back to local BGE
+    # cannot accidentally leave the previous remote endpoint active.
+    environment = {
+        "PAPERPILOT_AI_EMBEDDING_BASE_URL": "",
+        "PAPERPILOT_AI_EMBEDDING_API_KEY": "",
+        "PAPERPILOT_AI_EMBEDDING_API_KEY_FILE": "",
+        "PAPERPILOT_AI_CHUNK_TOKENIZER_DIR": "",
+    }
+    if config_path is not None:
+        config = json.loads(config_path.read_text())
+        environment.update(
+            PAPERPILOT_AI_EMBEDDING_BACKEND="remote",
+            PAPERPILOT_AI_EMBEDDING_BASE_URL=config["base_url"],
+            PAPERPILOT_AI_EMBEDDING_API_KEY_FILE=str(Path(config["api_key_file"]).resolve(strict=True)),
+            PAPERPILOT_AI_EMBEDDING_MODEL=config["model"],
+            PAPERPILOT_AI_EMBEDDING_DIMENSIONS=str(config["dimensions"]),
+            PAPERPILOT_AI_EMBEDDING_REVISION=config["revision"],
+            PAPERPILOT_AI_LOCAL_MODEL_DIR="",
+            PAPERPILOT_AI_CHUNK_TOKENIZER_DIR=str(Path(config["chunk_tokenizer_dir"]).resolve(strict=True))
+            if config.get("chunk_tokenizer_dir") else "",
+        )
+    else:
+        model = json.loads(model_manifest.read_text())
+        environment.update(
+            PAPERPILOT_AI_EMBEDDING_BACKEND="fastembed",
+            PAPERPILOT_AI_EMBEDDING_MODEL=model["model"],
+            PAPERPILOT_AI_EMBEDDING_DIMENSIONS=str(model["dimensions"]),
+            PAPERPILOT_AI_LOCAL_MODEL_DIR=model["model_dir"],
+            PAPERPILOT_AI_EMBEDDING_REVISION=Path(model["model_dir"]).name,
+        )
+    return environment
 
 
 def ready(url, process, tls_context=None):
@@ -35,6 +70,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--state-dir", type=Path, default=ROOT / ".runtime/real-demo")
     parser.add_argument("--model-manifest", type=Path, default=ROOT / ".runtime/ai-model.json")
+    parser.add_argument(
+        "--embedding-config", type=Path,
+        help="Independent remote embedding configuration, referencing an API key file; overrides local model",
+    )
     parser.add_argument(
         "--provider-config", type=Path, required=True, help="Trusted local provider configuration"
     )
@@ -72,7 +111,10 @@ def main():
         parser.error("Credential login requires HTTPS; prepare --tls-cert and --tls-key first")
     tls_context = ssl.create_default_context(cafile=str(certificate))
     database = json.loads((state / "database.json").read_text())
-    model = json.loads(args.model_manifest.read_text())
+    embeddings = embedding_environment(args.embedding_config, args.model_manifest)
+    chunk_strategy = args.chunk_strategy
+    if chunk_strategy == "auto" and embeddings["PAPERPILOT_AI_CHUNK_TOKENIZER_DIR"]:
+        chunk_strategy = "sentence-token-v2"
     provider_config = json.loads(args.provider_config.read_text())
     # OpenClaw's existing provider registry or a standalone {baseUrl, apiKey} file.
     provider = (
@@ -108,13 +150,8 @@ def main():
         PAPERPILOT_AI_API_KEY_FILE="",
         PAPERPILOT_AI_CHAT_MODEL=args.chat_model,
         PAPERPILOT_AI_RESPONSE_FORMAT="json_object",
-        PAPERPILOT_AI_EMBEDDING_BACKEND="fastembed",
-        PAPERPILOT_AI_EMBEDDING_MODEL=model["model"],
-        PAPERPILOT_AI_EMBEDDING_DIMENSIONS=str(model["dimensions"]),
-        PAPERPILOT_AI_LOCAL_MODEL_DIR=model["model_dir"],
-        PAPERPILOT_AI_EMBEDDING_REVISION=Path(model["model_dir"]).name,
         PAPERPILOT_AI_TIMEOUT_SECONDS="90",
-        PAPERPILOT_AI_CHUNK_STRATEGY=args.chunk_strategy,
+        PAPERPILOT_AI_CHUNK_STRATEGY=chunk_strategy,
         PAPERPILOT_AI_CHUNK_TOKENS=str(args.chunk_tokens),
         PAPERPILOT_AI_CHUNK_TOKEN_OVERLAP=str(args.chunk_token_overlap),
         PAPERPILOT_AI_LEXICAL_BACKEND=args.lexical_backend,
@@ -126,6 +163,7 @@ def main():
         PAPERPILOT_DEV_TLS_KEY=str(private_key),
         NODE_EXTRA_CA_CERTS=str(certificate),
     )
+    environment.update(embeddings)
     commands = [
         (
             "backend",
@@ -184,7 +222,10 @@ def main():
         preview = {
             "url": web_url,
             "api_url": api_url,
-            "mode": "persistent-postgresql-real-sjtu-real-bge-security-policy",
+            "mode": "persistent-postgresql-real-models-security-policy",
+            "embedding_backend": embeddings["PAPERPILOT_AI_EMBEDDING_BACKEND"],
+            "embedding_model": embeddings["PAPERPILOT_AI_EMBEDDING_MODEL"],
+            "embedding_dimensions": int(embeddings["PAPERPILOT_AI_EMBEDDING_DIMENSIONS"]),
             "username": database["login_username"],
             "password_file": database["login_password_file"],
             "backend_pid": children[0].pid,
@@ -192,7 +233,7 @@ def main():
             "frontend_pid": children[2].pid,
             "stop_file": str(stop),
             "api_workers": args.api_workers,
-            "chunk_strategy": args.chunk_strategy,
+            "chunk_strategy": chunk_strategy,
             "chunk_tokens": args.chunk_tokens,
             "chunk_token_overlap": args.chunk_token_overlap,
             "lexical_backend": args.lexical_backend,

@@ -1,0 +1,13 @@
+{
+  "checked_at": "2026-11-01T06:28:23.170645+00:00",
+  "catalog_sha256": "a63a06a1d04405152afab944ee6d187b02f5f6e347cbdacfc25d61d7f19930ad",
+  "paper_count": 300,
+  "inputs": 20986,
+  "encoding": "cl100k_base",
+  "tiktoken": "0.14.0",
+  "total_input_tokens": 6097993,
+  "max_input_tokens": 1926,
+  "input_limit": 8192,
+  "over_limit": 0,
+  "note": "Preflight of actual original-text excerpts, not provider billing telemetry."
+}

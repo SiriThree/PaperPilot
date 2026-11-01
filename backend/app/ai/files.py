@@ -45,7 +45,7 @@ class LocalPDFReader:
             options = [
                 json.dumps(
                     {
-                        "tokenizer_dir": str(settings.local_model_dir.resolve()),
+                        "tokenizer_dir": str(settings.active_chunk_tokenizer_dir.resolve()),
                         "target_tokens": settings.chunk_tokens,
                         "overlap_tokens": settings.chunk_token_overlap,
                         "title": title,
