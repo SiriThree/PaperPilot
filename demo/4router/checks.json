@@ -1,0 +1,55 @@
+{
+  "verified_at": "2026-11-01T07:45:03.146841+00:00",
+  "code_commit": "7514b2144fa98dbf129131111d0578c100cdc920",
+  "unit": {
+    "passed": 726,
+    "skipped": 480
+  },
+  "explicit_disposable_postgresql": {
+    "passed": 13
+  },
+  "ruff": "passed",
+  "pip_check": "passed",
+  "packages": {
+    "tiktoken": "0.14.0",
+    "tokenizers": "0.23.3",
+    "pysbd": "0.3.4",
+    "pypdf": "6.21.3",
+    "httpx": "0.28.1",
+    "psycopg": "3.3.6"
+  },
+  "import_policy": {
+    "final_api_workers": 2,
+    "max_pending": 2,
+    "serialize_above_chunks": 100,
+    "operator_attempt_cap": 3,
+    "client_automatic_retries": false
+  },
+  "demo_api_workers": 1,
+  "real_papers": 300,
+  "vectors": 20986,
+  "dimensions": 3072,
+  "all_attempts": [
+    {
+      "status": "failed",
+      "error_code": "AI_UNAVAILABLE",
+      "count": 4
+    },
+    {
+      "status": "failed",
+      "error_code": "TASK_TIMEOUT",
+      "count": 16
+    },
+    {
+      "status": "succeeded",
+      "error_code": null,
+      "count": 300
+    }
+  ],
+  "browser": "passed",
+  "source_audit": "passed",
+  "bge_baseline_unchanged": true,
+  "import_idempotency": "passed",
+  "relevance_assessment": "not measured",
+  "latency_benchmark": "not performed for the new provider"
+}

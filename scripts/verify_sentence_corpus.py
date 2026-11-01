@@ -27,6 +27,11 @@ def verify(args):
     project = state["projects"][catalog["projects"][0]["key"]]
     entries = project["papers"]
     budget = TokenBudget(args.tokenizer_dir)
+    embedding_encoding = None
+    if args.embedding_encoding:
+        import tiktoken
+
+        embedding_encoding = tiktoken.get_encoding(args.embedding_encoding)
     if budget.fingerprint != comparison["policy"]["tokenizer_sha256"]:
         raise ValueError("Tokenizer differs from the audited snapshot")
     cache_key = hashlib.sha256((comparison["code_sha256"] + comparison["policy_id"]).encode()).hexdigest()[
@@ -51,7 +56,7 @@ def verify(args):
         grouped[row["paper_id"]].append(row)
     if set(grouped) != {entry["paper_id"] for entry in entries.values()}:
         raise ValueError("Active database papers differ from the import manifest")
-    all_ids, max_tokens = set(), 0
+    all_ids, max_tokens, max_embedding_tokens, total_embedding_tokens = set(), 0, 0, 0
     for paper in catalog["papers"]:
         entry = entries[paper["key"]]
         expected = json.loads((cache / (paper["key"] + ".json")).read_text())
@@ -74,6 +79,12 @@ def verify(args):
             if count > budget.max_tokens:
                 raise ValueError("Committed embedding input exceeds the prepared model limit")
             max_tokens = max(max_tokens, count)
+            if embedding_encoding is not None:
+                embedding_tokens = len(embedding_encoding.encode_ordinary(row["title"] + "\n" + row["excerpt"]))
+                if not 0 < embedding_tokens <= 8192:
+                    raise ValueError("Committed input exceeds the OpenAI embedding model limit")
+                max_embedding_tokens = max(max_embedding_tokens, embedding_tokens)
+                total_embedding_tokens += embedding_tokens
     result = {
         "verified_at": datetime.now(UTC).isoformat(),
         "catalog_sha256": hashlib.sha256(args.catalog.read_bytes()).hexdigest(),
@@ -88,6 +99,15 @@ def verify(args):
         "synthetic_sources": 0,
         "database_read_only": True,
     }
+    if embedding_encoding is not None:
+        result.update(
+            chunk_tokenizer_max_input_tokens=max_tokens,
+            chunk_tokenizer_input_limit=budget.max_tokens,
+            embedding_encoding=args.embedding_encoding,
+            max_actual_embedding_input_tokens=max_embedding_tokens,
+            model_input_limit=8192,
+            total_embedding_input_tokens=total_embedding_tokens,
+        )
     save_state(args.output, result)
     print(json.dumps(result))
 
@@ -100,6 +120,7 @@ def main():
     parser.add_argument("--import-state", type=Path, required=True)
     parser.add_argument("--database-config", type=Path, required=True)
     parser.add_argument("--tokenizer-dir", type=Path, required=True)
+    parser.add_argument("--embedding-encoding", choices=["cl100k_base"])
     parser.add_argument("--output", type=Path, default=ROOT / "demo/chunking-v2/ingestion-check.json")
     verify(parser.parse_args())
 

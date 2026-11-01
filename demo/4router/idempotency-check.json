@@ -1,0 +1,21 @@
+{
+  "verified_at": "2026-11-01T07:45:03.146555+00:00",
+  "before": {
+    "papers": 300,
+    "chunks": 20986,
+    "embeddings": 20986,
+    "indexes": 300,
+    "tasks": 300,
+    "attempts": 320
+  },
+  "after": {
+    "papers": 300,
+    "chunks": 20986,
+    "embeddings": 20986,
+    "indexes": 300,
+    "tasks": 300,
+    "attempts": 320
+  },
+  "unchanged": true,
+  "new_attempts": 0
+}

@@ -2,6 +2,8 @@
 
 C 实现位于 `backend/app/ai/`，交付五个 async AIPort 方法与 `build_ai(data: DataPort) -> AIPort`。公开 Schema、HTTP API、AB-1、前端及任务/报告持久化保持原有边界。默认启动仍为 Mock，真实 C 必须显式注册；配置缺失、解析失败、供应商失败均不回退。
 
+替换本地 BGE 的 4router `text-embedding-3-large` 配置、3072 维新索引和独立 tokenizer 说明见 [远端嵌入](remote-embeddings.md)。下文原本地方案及历史交付记录保留供对照。
+
 开发基线为 B 的 PR #3 已合入后的 `main@4770732`。同步检查中，A 的 PR #1（`member-a@808ced9`）和 D 的 PR #2 仍为草稿；C 不提前合入或修改同学的实现。已对 C 提交与当前 A 分支执行三方合并检查，无文本冲突；这不等同于真实 PostgreSQL 联调。合并前应重新 fetch 核对。
 
 ## 安装与启动

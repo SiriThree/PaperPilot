@@ -186,3 +186,18 @@ def test_strategy_configuration_requires_matching_local_tokenizer(tokenizer_dire
         configuration(chunk_tokens=32, chunk_token_overlap=32)
     with pytest.raises(ValueError, match="token budget"):
         SentenceTokenChunker(tokenizer_directory, 80, 8)
+
+
+def test_remote_embeddings_can_preserve_the_independent_sentence_policy(tokenizer_directory, tmp_path):
+    with build_harness(tmp_path=tmp_path) as harness:
+        common = dict(chunk_strategy="sentence-token-v2", chunk_tokens=32, chunk_token_overlap=8)
+        local = configuration(
+            embedding_backend="fastembed", local_model_dir=tokenizer_directory, **common
+        )
+        remote = configuration(chunk_tokenizer_dir=tokenizer_directory, **common)
+        results = []
+        for settings in [local, remote]:
+            ai = RealAI(harness.data, settings, reader=LocalPDFReader(tmp_path), embedder=SimpleNamespace())
+            results.append(asyncio.run(ai.process(harness.ctx, harness.task_id, harness.file)))
+        assert results[0] == results[1]
+        assert remote.local_model_dir is None

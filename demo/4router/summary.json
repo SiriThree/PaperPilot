@@ -1,0 +1,204 @@
+{
+  "version": "rag300-sentence-v2",
+  "verified_at": "2026-11-01T07:41:43.481062+00:00",
+  "code_commit": "7514b2144fa98dbf129131111d0578c100cdc920",
+  "catalog_sha256": "a63a06a1d04405152afab944ee6d187b02f5f6e347cbdacfc25d61d7f19930ad",
+  "domain": "Retrieval-Augmented Generation in NLP",
+  "paper_count": 300,
+  "distinct_arxiv_ids": 300,
+  "distinct_pdf_sha256": 300,
+  "years": {
+    "2020": 1,
+    "2021": 2,
+    "2022": 2,
+    "2023": 17,
+    "2024": 252,
+    "2025": 26
+  },
+  "pdf_bytes": 514105919,
+  "uploaded_pdf_bytes": 514105919,
+  "pages": 5031,
+  "pages_with_text": 5030,
+  "chunks": 20986,
+  "synthetic_chunks": 0,
+  "embeddings": 20986,
+  "min_dimensions": 3072,
+  "max_dimensions": 3072,
+  "process_indexes": 300,
+  "tasks": [
+    {
+      "kind": "process",
+      "status": "succeeded",
+      "count": 300
+    }
+  ],
+  "task_attempts": [
+    {
+      "status": "failed",
+      "error_code": "AI_UNAVAILABLE",
+      "count": 4
+    },
+    {
+      "status": "failed",
+      "error_code": "TASK_TIMEOUT",
+      "count": 16
+    },
+    {
+      "status": "succeeded",
+      "error_code": null,
+      "count": 300
+    }
+  ],
+  "packages": {
+    "pypdf": "6.21.3",
+    "fastembed": "0.9.1",
+    "onnxruntime": "1.31.1",
+    "psycopg": "3.3.6"
+  },
+  "embedding_models": [
+    {
+      "provider": "https://4router.net/v1",
+      "model_name": "text-embedding-3-large",
+      "revision": "4router-text-embedding-3-large-20261101-d3072-v1",
+      "dimensions": 3072,
+      "distance_metric": "cosine"
+    }
+  ],
+  "chunking": {
+    "strategy": "sentence-token-v2",
+    "pysbd": "0.3.4",
+    "tokenizer_sha256": "7be03536eed91e4dcb928088e15f7286977603cc59b0be7d54a3c37fe645b86a",
+    "target_tokens": 384,
+    "overlap_tokens": 48,
+    "max_input_tokens": 512,
+    "max_excerpt_chars": 4000
+  },
+  "postgresql": "16.15",
+  "pgvector": "0.8.7",
+  "schema_version": 8,
+  "database_bytes": 399563799,
+  "relations": [
+    {
+      "relname": "audit_events",
+      "bytes": 1081344
+    },
+    {
+      "relname": "auth_login_limits",
+      "bytes": 49152
+    },
+    {
+      "relname": "auth_sessions",
+      "bytes": 98304
+    },
+    {
+      "relname": "authors",
+      "bytes": 24576
+    },
+    {
+      "relname": "chunk_embeddings",
+      "bytes": 293650432
+    },
+    {
+      "relname": "chunks",
+      "bytes": 50077696
+    },
+    {
+      "relname": "embedding_models",
+      "bytes": 65536
+    },
+    {
+      "relname": "evidence_fields",
+      "bytes": 24576
+    },
+    {
+      "relname": "idempotency_records",
+      "bytes": 663552
+    },
+    {
+      "relname": "outbox_events",
+      "bytes": 647168
+    },
+    {
+      "relname": "outbox_requeue_history",
+      "bytes": 24576
+    },
+    {
+      "relname": "paper_authors",
+      "bytes": 16384
+    },
+    {
+      "relname": "paper_topics",
+      "bytes": 8192
+    },
+    {
+      "relname": "papers",
+      "bytes": 163840
+    },
+    {
+      "relname": "process_indexes",
+      "bytes": 163840
+    },
+    {
+      "relname": "project_members",
+      "bytes": 65536
+    },
+    {
+      "relname": "project_papers",
+      "bytes": 327680
+    },
+    {
+      "relname": "projects",
+      "bytes": 32768
+    },
+    {
+      "relname": "report_version_sources",
+      "bytes": 24576
+    },
+    {
+      "relname": "report_versions",
+      "bytes": 49152
+    },
+    {
+      "relname": "reports",
+      "bytes": 16384
+    },
+    {
+      "relname": "result_sources",
+      "bytes": 29679616
+    },
+    {
+      "relname": "schema_migrations",
+      "bytes": 24576
+    },
+    {
+      "relname": "task_attempts",
+      "bytes": 212992
+    },
+    {
+      "relname": "task_papers",
+      "bytes": 106496
+    },
+    {
+      "relname": "task_results",
+      "bytes": 12623872
+    },
+    {
+      "relname": "tasks",
+      "bytes": 335872
+    },
+    {
+      "relname": "topics",
+      "bytes": 32768
+    },
+    {
+      "relname": "users",
+      "bytes": 49152
+    }
+  ],
+  "filesystem_free_bytes": 120876777472,
+  "filesystem_total_bytes": 421606629376,
+  "limitations": [
+    "Not a relevance benchmark: questions have no human relevance judgments.",
+    "This snapshot verifies stored data; query latency and throughput require separate measurements."
+  ]
+}

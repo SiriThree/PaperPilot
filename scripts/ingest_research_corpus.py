@@ -11,6 +11,7 @@ import hashlib
 import json
 from pathlib import Path
 import sys
+import ssl
 import time
 
 import httpx
@@ -58,7 +59,9 @@ def import_corpus(args):
     password = args.password_file.read_text().strip()
     if not password:
         raise ValueError("Empty credential file")
-    with httpx.Client(base_url=args.api_base, timeout=60, trust_env=False) as client:
+    tls_ca = getattr(args, "tls_ca", None)
+    verify = ssl.create_default_context(cafile=str(tls_ca)) if tls_ca else True
+    with httpx.Client(base_url=args.api_base, timeout=60, trust_env=False, verify=verify) as client:
         identity = authenticate(client, args.username, password, args.origin)
         marker = f"[paperpilot-real-corpus:{catalog['version']}:{project['key']}]"
         matches = [
@@ -189,6 +192,7 @@ def main():
     parser.add_argument("--pdf-dir", type=Path, default=ROOT / ".runtime/corpus300/papers")
     parser.add_argument("--api-base", default="http://127.0.0.1:18802")
     parser.add_argument("--origin", default="http://127.0.0.1:15175")
+    parser.add_argument("--tls-ca", type=Path, help="Trust a prepared local HTTPS CA/certificate")
     parser.add_argument("--username", default="alice")
     parser.add_argument("--password-file", type=Path, required=True)
     parser.add_argument("--state", type=Path, default=ROOT / ".runtime/corpus300/import-state.json")

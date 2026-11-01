@@ -1,0 +1,13 @@
+{
+  "verified_at": "2026-11-01T07:41:50.767103+00:00",
+  "snapshot": {
+    "database": "paperpilot_chunking_v2",
+    "papers": 300,
+    "chunks": 20986,
+    "indexes": 300,
+    "embeddings": 20986,
+    "vector_content_digest": "465b2c2b693065141a614944755a569e",
+    "source_content_digest": "ec5a20081d8fbeba6dd090bc301793e3"
+  },
+  "unchanged": true
+}

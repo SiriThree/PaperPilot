@@ -19,15 +19,27 @@ class ModelClient:
     disabled, so a provider cannot redirect the Authorization header elsewhere.
     """
 
-    def __init__(self, settings: AISettings, *, transport=None):
+    def __init__(self, settings: AISettings, *, transport=None, proxy=None):
         self.settings = settings
         self.transport = transport
+        self.proxy = proxy
+        self.embedding_encoding = None
+        if settings.embedding_backend == "remote" and settings.embedding_model in {
+            "text-embedding-3-small", "text-embedding-3-large", "text-embedding-ada-002"
+        }:
+            try:
+                import tiktoken
+
+                self.embedding_encoding = tiktoken.get_encoding("cl100k_base")
+            except Exception:
+                raise RuntimeError("Prepared OpenAI embedding tokenizer unavailable; startup refused") from None
 
     async def _post(self, endpoint, payload):
         try:
             async with httpx.AsyncClient(
                 timeout=self.settings.timeout_seconds,
                 transport=self.transport,
+                proxy=self.proxy,
                 follow_redirects=False,
                 trust_env=False,
             ) as client:
@@ -61,18 +73,25 @@ class ModelClient:
             raise AppError(503, "AI_UNAVAILABLE", "模型服务暂不可用，请稍后重试") from None
 
     async def embed(self, texts):
+        # Validate the complete operation before sending any batch. Never truncate
+        # evidence or mistake the independent chunk tokenizer for this model's limit.
+        if self.embedding_encoding is not None and any(
+            not text.strip() or len(self.embedding_encoding.encode_ordinary(text)) > 8192
+            for text in texts
+        ):
+            raise AppError(422, "AI_EMBEDDING_INPUT_LIMIT", "嵌入输入为空或超过模型 token 上限")
         vectors = []
         # Bound individual requests, preserving input order even if the provider reorders rows.
         for start in range(0, len(texts), 32):
             batch = texts[start : start + 32]
-            response = await self._post(
-                "/embeddings",
-                {
-                    "model": self.settings.embedding_model,
-                    "input": batch,
-                    "encoding_format": "float",
-                },
-            )
+            payload = {
+                "model": self.settings.embedding_model,
+                "input": batch,
+                "encoding_format": "float",
+            }
+            if self.settings.embedding_model in {"text-embedding-3-small", "text-embedding-3-large"}:
+                payload["dimensions"] = self.settings.embedding_dimensions
+            response = await self._post("/embeddings", payload)
             try:
                 rows = response["data"]
                 if (
