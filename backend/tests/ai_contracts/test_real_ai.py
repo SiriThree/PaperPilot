@@ -77,6 +77,7 @@ def test_long_page_chunks_overlap_without_crossing_page(real, tmp_path):
     result = run(real.ai.process(real.ctx, real.task_id, real.file))
     assert len(result.sources) > 1
     assert all(s.page_number == 2 and len(s.excerpt) <= 1200 for s in result.sources)
+    assert all(s.excerpt.startswith("Retrieval ") and s.excerpt.endswith("sentence.") for s in result.sources)
     assert len({s.chunk_id for s in result.sources}) == len(result.sources)
 
 

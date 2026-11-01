@@ -98,7 +98,7 @@ class RealAI:
                     chunk_id=uuid5(
                         file.paper_id,
                         (
-                            f"pdf-v1:{self.settings.chunk_chars}:{self.settings.chunk_overlap}:"
+                            f"pdf-v2:{self.settings.chunk_chars}:{self.settings.chunk_overlap}:"
                             f"{chunk['page_number']}:{chunk['offset']}:"
                             f"{sha256(chunk['excerpt'].encode()).hexdigest()}"
                         ),
