@@ -1,0 +1,26 @@
+name: paperpilot-local
+services:
+  postgres:
+    image: pgvector/pgvector@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres
+      POSTGRES_DB: paperpilot_local
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    secrets:
+      - postgres
+    ports:
+      - "127.0.0.1:54327:5432"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "paperpilot_local"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+secrets:
+  postgres:
+    file: .runtime/local-deployment/secrets/postgres
+volumes:
+  postgres:

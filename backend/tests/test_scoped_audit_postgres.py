@@ -617,6 +617,7 @@ def test_credentials_scoped_audit_and_real_security_browser(scoped_stack, restri
     environment.update(
         {
             "PYTHONPATH": str(root / "backend"),
+            "PAPERPILOT_E2E_PYTHON": sys.executable,
             "PAPERPILOT_ENV": "test",
             "PAPERPILOT_AUTH_MODE": "credentials",
             "PAPERPILOT_AUTH_DATABASE": "isolated",

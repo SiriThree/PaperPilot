@@ -102,7 +102,7 @@ def csrf(request: Request, response: Response):
         token,
         httponly=False,
         samesite="strict",
-        secure=request.app.state.settings.environment == "production",
+        secure=request.url.scheme == "https" or request.app.state.settings.environment == "production",
         path="/api/v1",
     )
     return CSRFToken(csrf_token=token)
@@ -152,7 +152,7 @@ def login(data: LoginRequest, request: Request, response: Response):
         token,
         httponly=True,
         samesite="strict",
-        secure=request.app.state.settings.environment == "production",
+        secure=request.url.scheme == "https" or request.app.state.settings.environment == "production",
         max_age=request.app.state.settings.session_absolute_seconds,
         path="/api/v1",
     )

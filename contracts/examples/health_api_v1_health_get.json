@@ -23,6 +23,7 @@
         "limitations": [
           "development_identity_only",
           "in_memory_data_lost_on_restart",
+          "in_memory_sessions_lost_on_restart",
           "synthetic_ai",
           "no_real_sql_gateway"
         ]
@@ -42,7 +43,7 @@
       "body": {
         "code": "VALIDATION_ERROR",
         "message": "请求长度格式不正确",
-        "request_id": "ff50369a-7be7-4dd1-8df9-8a0d57ff859f"
+        "request_id": "29e30254-0c35-43bf-906b-ba9d65d0a0b1"
       }
     }
   }

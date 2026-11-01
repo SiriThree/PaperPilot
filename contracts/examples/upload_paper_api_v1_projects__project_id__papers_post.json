@@ -18,7 +18,7 @@
       "content_type": "application/json",
       "body": {
         "paper": {
-          "paper_id": "59425cf9-b899-488b-8a32-f84e416f816f",
+          "paper_id": "895c9a15-a1a7-4f6c-bdd1-451c1bb77c09",
           "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
           "title": "Mock 上传示例",
           "year": null,
@@ -26,13 +26,13 @@
           "mock": true
         },
         "task": {
-          "task_id": "704dc935-e3b7-4d78-ba57-95b1b955a3d3",
+          "task_id": "5ae644c1-4c88-40d1-bd19-6905389c8131",
           "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
-          "request_id": "0d3f4a89-3312-406d-bd0c-08b2a0aab5aa",
+          "request_id": "553f9817-983f-4699-8ddd-592dd2c0f1ba",
           "kind": "process",
           "status": "pending",
-          "created_at": "2026-10-26T07:44:45.427143Z",
-          "updated_at": "2026-10-26T07:44:45.427143Z",
+          "created_at": "2026-10-29T02:42:54.745900Z",
+          "updated_at": "2026-10-29T02:42:54.745900Z",
           "attempts": 0,
           "error": null,
           "result_ref": null,
@@ -60,7 +60,7 @@
       "body": {
         "code": "UNAUTHENTICATED",
         "message": "请先登录",
-        "request_id": "793f8ec8-6edc-4527-a57c-680550712f67"
+        "request_id": "ebdd0f91-19ab-4743-ad50-1ab566887cd1"
       }
     }
   }

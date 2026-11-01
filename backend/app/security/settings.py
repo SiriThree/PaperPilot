@@ -85,7 +85,9 @@ class SecuritySettings(_Config):
             identities = [self.audit, *self.readers]
             if data_config.user in {login.user for login in identities}:
                 raise ValueError("Business and security identities must be distinct")
-            passwords = [os.environ[login.password_env] for login in identities]
+            from app.secrets import read_secret
+
+            passwords = [read_secret(login.password_env) for login in identities]
             if (
                 any(not password or "\x00" in password for password in passwords)
                 or len(set([data_config.password, *passwords])) != len(passwords) + 1

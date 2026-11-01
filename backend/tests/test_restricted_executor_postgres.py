@@ -826,7 +826,10 @@ def test_real_postgres_http_response_budget_fails_closed(restricted):
         response = client.post(
             f"/api/v1/projects/{ctx.project_id}/secure-queries", json={"question": "按研究主题统计论文数量"}
         )
-        assert response.status_code == 503 and response.json()["code"] == "QUERY_RESPONSE_TOO_LARGE"
+        assert response.status_code == 503 and response.json()["code"] == "QUERY_RESPONSE_TOO_LARGE", (
+            response.status_code,
+            response.json().get("reason"),
+        )
         assert "rows" not in response.json() and all(topic not in response.text for topic in topics)
         events = client.get(f"/api/v1/projects/{ctx.project_id}/audit-events").json()["items"]
         request_id = response.json()["request_id"]

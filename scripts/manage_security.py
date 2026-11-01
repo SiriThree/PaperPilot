@@ -1,7 +1,6 @@
 """Explicit PostgreSQL security lifecycle. Passwords/DSNs are read only from named environment variables."""
 
 import argparse
-import os
 from pathlib import Path
 import re
 import sys
@@ -15,13 +14,15 @@ from app.security.provision import (
     revoke_login,
     rotate_login,
     upgrade_business_registry,
+    install_password_auth,
 )  # noqa: E402
+from app.secrets import read_secret  # noqa: E402
 
 
 def secret(name):
-    if not name or re.fullmatch(r"[A-Z][A-Z0-9_]*", name) is None or not os.environ.get(name):
+    if not name or re.fullmatch(r"[A-Z][A-Z0-9_]*", name) is None:
         raise ValueError("A named secret environment variable is missing")
-    return os.environ[name]
+    return read_secret(name)
 
 
 def main():
@@ -31,6 +32,8 @@ def main():
         choices=[
             "install",
             "business-upgrade",
+            "auth-install",
+            "auth-create",
             "reader-create",
             "audit-create",
             "business-create",
@@ -55,7 +58,7 @@ def main():
     try:
         import psycopg
 
-        if options.command not in ("install", "business-upgrade") and not options.role:
+        if options.command not in ("install", "business-upgrade", "auth-install") and not options.role:
             raise ValueError("An explicit managed role is required")
         if options.command == "reader-create" and options.project is None:
             raise ValueError("An explicit project is required")
@@ -69,13 +72,16 @@ def main():
             elif options.command == "business-upgrade":
                 with connection.transaction():
                     upgrade_business_registry(connection)
-            elif options.command in ("reader-create", "audit-create", "business-create"):
+            elif options.command == "auth-install":
+                install_password_auth(connection)
+            elif options.command in ("reader-create", "audit-create", "business-create", "auth-create"):
                 create_login(
                     connection,
                     options.role,
                     secret(options.password_env),
                     project_id=options.project,
                     business=options.command == "business-create",
+                    auth=options.command == "auth-create",
                 )
             elif options.command == "rotate":
                 rotate_login(connection, options.role, secret(options.password_env))

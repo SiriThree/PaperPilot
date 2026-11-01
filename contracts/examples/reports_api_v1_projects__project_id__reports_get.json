@@ -15,8 +15,8 @@
       "body": {
         "items": [
           {
-            "report_id": "73221aa0-7669-4b73-9cd4-c323ca9f2a9b",
-            "version_id": "5cc0bff9-e108-4d93-83ac-0dcbbbbf30bc",
+            "report_id": "9e54e796-6ad1-4927-b847-c0653eb3c400",
+            "version_id": "b5a0c841-3893-4255-8a4a-f671df82b918",
             "project_id": "d4e338d6-16c6-5fa4-b1a8-8b24baf9280f",
             "number": 1,
             "title": "Mock 综述",
@@ -32,7 +32,7 @@
                 "synthetic": true
               }
             ],
-            "created_at": "2026-10-26T07:44:45.841468Z",
+            "created_at": "2026-10-29T02:42:55.279476Z",
             "mock": true
           }
         ],
@@ -53,7 +53,7 @@
       "body": {
         "code": "UNAUTHENTICATED",
         "message": "请先登录",
-        "request_id": "71b84381-939c-4a10-995a-e36238019833"
+        "request_id": "defde06e-0840-47cf-9767-37e837cd8b79"
       }
     }
   }

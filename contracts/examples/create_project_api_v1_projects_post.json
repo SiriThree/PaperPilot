@@ -17,7 +17,7 @@
       "status": 201,
       "content_type": "application/json",
       "body": {
-        "project_id": "be2c3039-313c-4b9a-a00f-71c1650875d7",
+        "project_id": "73f7fd93-380a-43ca-880b-7a89caf71414",
         "name": "契约演示项目",
         "description": "合成数据",
         "owner_id": "d9f21e57-118e-5387-8c77-36ab7e27e4cc",
@@ -43,7 +43,7 @@
       "body": {
         "code": "UNAUTHENTICATED",
         "message": "请先登录",
-        "request_id": "29dc1a7d-a638-4859-bba7-caefed1b584f"
+        "request_id": "83e293a0-2244-4967-9900-2f232100c60c"
       }
     }
   }

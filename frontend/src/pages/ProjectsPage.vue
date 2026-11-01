@@ -11,7 +11,7 @@ const router = useRouter(), { busy, error, run } = useAction()
 const username = ref('alice'), password = ref(''), loginTouched = ref(false), name = ref(''), selected = ref<Models['Project'] | null>(null), newMember = ref('bob')
 const credentialMode = computed(() => health.value?.limitations.includes('authentication_credentials') === true)
 const demoIdentity = computed(() => health.value?.limitations.includes('development_identity_only') === true)
-watch(credentialMode, value => { username.value = value ? '' : 'alice'; password.value = ''; loginTouched.value = false })
+watch(credentialMode, value => { username.value = value ? '' : 'alice'; password.value = ''; loginTouched.value = false }, { immediate: true })
 const memberResource = useResource<Models['Member'][]>([], async () => selected.value ? (await api.members(selected.value.project_id)).items : [])
 const members = memberResource.data
 const nameTouched = ref(false)
