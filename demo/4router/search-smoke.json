@@ -1,0 +1,32 @@
+{
+  "verified_at": "2026-11-01T07:42:59.737931+00:00",
+  "url": "https://127.0.0.1:15180",
+  "paper_count": 300,
+  "active_sources": 20986,
+  "vector_dimensions": 3072,
+  "vectors_normalized": true,
+  "cases": [
+    {
+      "mode": "keyword",
+      "http_status": 200,
+      "hits": 10,
+      "seconds": 2.6512,
+      "sources_exact": true
+    },
+    {
+      "mode": "semantic",
+      "http_status": 200,
+      "hits": 10,
+      "seconds": 3.048,
+      "sources_exact": true
+    },
+    {
+      "mode": "hybrid",
+      "http_status": 200,
+      "hits": 10,
+      "seconds": 2.763,
+      "sources_exact": true
+    }
+  ],
+  "limitations": "Functional smoke checks only; not a latency benchmark or relevance assessment."
+}

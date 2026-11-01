@@ -16,6 +16,18 @@
 
 本机迁移使用独立的 `paperpilot_4router` 数据库及上传目录，保留 BGE 的 `paperpilot_chunking_v2`、基线数据库和公开测速记录。导入同一份真实 300 篇 PDF，通过正常上传/任务接口生成新向量；切换模型本身不构成与 BGE 的公平速度比较。远端延迟包含网络和服务端处理，3072 维也会增加向量存储及精确距离计算成本。
 
+## 真实语料验收（2026-11-01）
+
+已完成同一批 300 篇真实 PDF 的重建：300 个成功处理索引、20,986 个来源和同量 3072 维向量，合成来源为 0，数据库约 381.05 MiB。逐条比对缓存原文后，页码与摘录完全一致；新模型完整输入最大 1926 个 cl100k_base token，低于 8192 上限。保留的切块 tokenizer 统计最大为 422/512，二者计数规则不同。
+
+关键词、语义、混合检索在全库均返回 10 个真实来源；浏览器实际验证 HTTPS 登录、三种检索、来源展开/跳转及原文摘录一致，Secure/HttpOnly 会话有效，没有页面脚本错误。复跑导入没有新增论文、索引、向量、任务或尝试。BGE 原库的 300 篇 / 20,986 个来源及向量内容摘要保持不变。
+
+导入期间保留了 20 次失败尝试（16 次任务超时、4 次 AI_UNAVAILABLE），通过显式任务重试恢复，最终 300 个任务全部成功；不隐藏失败或标记为首次全成功。模型客户端不自动重试，最后的导入阶段使用两个 API 进程、最多两个待处理任务，100 片段及以上的长论文单独处理。验收页面恢复为一个 API 进程。真实服务曾出现连接/超时波动，不能用少量冒烟请求推断吞吐能力或稳定性。
+
+常规回归 726 passed / 480 skipped，另有 13 项显式隔离 PostgreSQL 测试通过。没有测量人工相关性或建立新模型的查询速度基线。
+
+公开记录：[数据快照](../demo/4router/summary.json)、[逐条来源与 token 核验](../demo/4router/ingestion-check.json)、[BGE 保留检查](../demo/4router/baseline-check.json)、[检索冒烟检查](../demo/4router/search-smoke.json)、[浏览器检查](../demo/4router/browser-check.json)、[导入幂等](../demo/4router/idempotency-check.json)、[验证汇总](../demo/4router/checks.json)。token 总数为最终索引文本的本地计数，不含重试和诊断请求，不是供应商账单 usage。
+
 ## 本地配置
 
 安装项目 `ai` extra（本次依赖快照为 `requirements-ai-remote.lock`）；句段 V2 另需 `pysbd` 和 `tokenizers`，可复用已有 `ai-local` 环境。启动前准备公开 tokenizer 资产：
@@ -52,4 +64,4 @@ PYTHONPATH=backend python scripts/start_research_demo.py \
 
 如果本机网络需要代理，可在该 JSON 中加 `"proxy_url": "http://127.0.0.1:7890"`，或设置 `PAPERPILOT_AI_EMBEDDING_PROXY_URL`。只接受显式指定、无 URL 凭据的 loopback HTTP CONNECT 代理，HTTPS 目标仍验证证书。代理仅用于嵌入请求，SJTU 聊天连接不受影响，也不读取全局代理环境变量。本次本机直连曾出现连接超时，经已有本地代理的实际嵌入探测成功。
 
-本地是 development / shared-auth 演示，不代表生产环境的角色隔离已验收。批量导入可临时指定 `--api-workers 4`，完成后恢复一个进程。导入脚本支持 `--tls-ca` 信任已准备的本地证书；不关闭 HTTPS 校验。
+本地是 development / shared-auth 演示，不代表生产环境的角色隔离已验收。本次最终导入使用 `--api-workers 2`，配合导入脚本的 `--max-pending 2 --serialize-above-chunks 100`，完成后恢复一个进程。导入脚本支持 `--tls-ca` 信任已准备的本地证书；不关闭 HTTPS 校验。
