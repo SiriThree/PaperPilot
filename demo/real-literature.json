@@ -1,0 +1,360 @@
+{
+  "version": "1",
+  "description": "Two real-literature research projects. Public arXiv PDFs remain local; metadata, questions and independently inspected physical-page labels are versioned. Labels are a development aid, not a held-out scientific benchmark.",
+  "papers": [
+    {
+      "arxiv_id": "2005.11401",
+      "version": 4,
+      "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+      "authors": [
+        "Lewis, Patrick",
+        "Perez, Ethan",
+        "Piktus, Aleksandra",
+        "Petroni, Fabio",
+        "Karpukhin, Vladimir",
+        "Goyal, Naman",
+        "Küttler, Heinrich",
+        "Lewis, Mike",
+        "Yih, Wen-tau",
+        "Rocktäschel, Tim",
+        "Riedel, Sebastian",
+        "Kiela, Douwe"
+      ],
+      "published": "2020/05/22",
+      "abstract_url": "https://arxiv.org/abs/2005.11401v4",
+      "pdf_url": "https://arxiv.org/pdf/2005.11401v4",
+      "filename": "2005.11401v4.pdf",
+      "sha256": "23e3249e9a1e75418d82efecab0ea8c4d033b89c93742f63208d47ce01f21233",
+      "bytes": 885323,
+      "pages": 19,
+      "key": "rag",
+      "year": 2020
+    },
+    {
+      "arxiv_id": "2004.04906",
+      "version": 3,
+      "title": "Dense Passage Retrieval for Open-Domain Question Answering",
+      "authors": [
+        "Karpukhin, Vladimir",
+        "Oğuz, Barlas",
+        "Min, Sewon",
+        "Lewis, Patrick",
+        "Wu, Ledell",
+        "Edunov, Sergey",
+        "Chen, Danqi",
+        "Yih, Wen-tau"
+      ],
+      "published": "2020/04/10",
+      "abstract_url": "https://arxiv.org/abs/2004.04906v3",
+      "pdf_url": "https://arxiv.org/pdf/2004.04906v3",
+      "filename": "2004.04906v3.pdf",
+      "sha256": "3e67fc1a9977715acf722d85f0b7d124b03715e975f6310a4d6c12094190912f",
+      "bytes": 383508,
+      "pages": 13,
+      "key": "dpr",
+      "year": 2020
+    },
+    {
+      "arxiv_id": "2307.03172",
+      "version": 3,
+      "title": "Lost in the Middle: How Language Models Use Long Contexts",
+      "authors": [
+        "Liu, Nelson F.",
+        "Lin, Kevin",
+        "Hewitt, John",
+        "Paranjape, Ashwin",
+        "Bevilacqua, Michele",
+        "Petroni, Fabio",
+        "Liang, Percy"
+      ],
+      "published": "2023/07/06",
+      "abstract_url": "https://arxiv.org/abs/2307.03172v3",
+      "pdf_url": "https://arxiv.org/pdf/2307.03172v3",
+      "filename": "2307.03172v3.pdf",
+      "sha256": "653b29619eae2ae4b361d7bdcdc06db4bedcb1b0eabe31814036beca8c1af0b1",
+      "bytes": 747542,
+      "pages": 18,
+      "key": "lost-middle",
+      "year": 2023
+    },
+    {
+      "arxiv_id": "1706.03762",
+      "version": 7,
+      "title": "Attention Is All You Need",
+      "authors": [
+        "Vaswani, Ashish",
+        "Shazeer, Noam",
+        "Parmar, Niki",
+        "Uszkoreit, Jakob",
+        "Jones, Llion",
+        "Gomez, Aidan N.",
+        "Kaiser, Lukasz",
+        "Polosukhin, Illia"
+      ],
+      "published": "2017/06/12",
+      "abstract_url": "https://arxiv.org/abs/1706.03762v7",
+      "pdf_url": "https://arxiv.org/pdf/1706.03762v7",
+      "filename": "1706.03762v7.pdf",
+      "sha256": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697",
+      "bytes": 2215244,
+      "pages": 15,
+      "key": "attention",
+      "year": 2017
+    },
+    {
+      "arxiv_id": "1810.04805",
+      "version": 2,
+      "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+      "authors": [
+        "Devlin, Jacob",
+        "Chang, Ming-Wei",
+        "Lee, Kenton",
+        "Toutanova, Kristina"
+      ],
+      "published": "2018/10/11",
+      "abstract_url": "https://arxiv.org/abs/1810.04805v2",
+      "pdf_url": "https://arxiv.org/pdf/1810.04805v2",
+      "filename": "1810.04805v2.pdf",
+      "sha256": "5692a5514787a8c6727b4ff3b726a3385798bc68e12138d1d4af83947e2acf6e",
+      "bytes": 775166,
+      "pages": 16,
+      "key": "bert",
+      "year": 2018
+    },
+    {
+      "arxiv_id": "2004.05150",
+      "version": 2,
+      "title": "Longformer: The Long-Document Transformer",
+      "authors": [
+        "Beltagy, Iz",
+        "Peters, Matthew E.",
+        "Cohan, Arman"
+      ],
+      "published": "2020/04/10",
+      "abstract_url": "https://arxiv.org/abs/2004.05150v2",
+      "pdf_url": "https://arxiv.org/pdf/2004.05150v2",
+      "filename": "2004.05150v2.pdf",
+      "sha256": "053756b54e2d3462d4690b3aed489c962f17df7c3531865e47374c4a651f526c",
+      "bytes": 539211,
+      "pages": 17,
+      "key": "longformer",
+      "year": 2020
+    }
+  ],
+  "projects": [
+    {
+      "key": "rag-evidence",
+      "name": "检索增强生成与可靠问答",
+      "description": "阅读 RAG、DPR 与 Lost in the Middle 三篇真实论文，比较检索、生成与长上下文证据利用。",
+      "paper_keys": [
+        "rag",
+        "dpr",
+        "lost-middle"
+      ],
+      "evidence_paper": "rag",
+      "questions": [
+        {
+          "key": "rag-variants",
+          "question": "RAG-Sequence 和 RAG-Token 在生成时如何使用检索文档？请根据原文比较。",
+          "paper_keys": [
+            "rag"
+          ],
+          "expected_pages": {
+            "rag": [
+              3,
+              4
+            ]
+          },
+          "expect_insufficient": false
+        },
+        {
+          "key": "dpr-encoding",
+          "question": "DPR 使用什么方式编码问题与段落？与 BM25 的差异是什么？",
+          "paper_keys": [
+            "dpr"
+          ],
+          "expected_pages": {
+            "dpr": [
+              1,
+              2,
+              3
+            ]
+          },
+          "expect_insufficient": false
+        },
+        {
+          "key": "dpr-negatives",
+          "question": "DPR 的训练负样本如何构造，in-batch negatives 起什么作用？",
+          "paper_keys": [
+            "dpr"
+          ],
+          "expected_pages": {
+            "dpr": [
+              3,
+              4,
+              5
+            ]
+          },
+          "expect_insufficient": false
+        },
+        {
+          "key": "context-position",
+          "question": "Lost in the Middle 如何改变相关信息在上下文中的位置，观察到了什么？",
+          "paper_keys": [
+            "lost-middle"
+          ],
+          "expected_pages": {
+            "lost-middle": [
+              1,
+              2,
+              3,
+              5,
+              6
+            ]
+          },
+          "expect_insufficient": false
+        },
+        {
+          "key": "retrieval-context",
+          "question": "结合 RAG 与 Lost in the Middle，检索到更多文档是否一定改善回答？请给出依据及适用范围。",
+          "paper_keys": [
+            "rag",
+            "lost-middle"
+          ],
+          "expected_pages": {
+            "rag": [
+              2,
+              3,
+              5,
+              6
+            ],
+            "lost-middle": [
+              1,
+              2,
+              3,
+              5,
+              6,
+              7
+            ]
+          },
+          "expect_insufficient": false
+        },
+        {
+          "key": "not-in-corpus",
+          "question": "这些论文是否给出了2026年某医院心脏手术的随机临床试验结果？如果材料没有提及，请明确说明证据不足。",
+          "paper_keys": [
+            "rag",
+            "dpr",
+            "lost-middle"
+          ],
+          "expected_pages": {},
+          "expect_insufficient": true
+        }
+      ]
+    },
+    {
+      "key": "transformer-context",
+      "name": "Transformer 与长文本理解",
+      "description": "阅读 Transformer、BERT 与 Longformer 的真实论文，了解注意力、预训练和长文档建模。",
+      "paper_keys": [
+        "attention",
+        "bert",
+        "longformer"
+      ],
+      "evidence_paper": "attention",
+      "questions": [
+        {
+          "key": "scaled-attention",
+          "question": "Transformer 的 scaled dot-product attention 如何计算，为什么要除以 sqrt(d_k)？",
+          "paper_keys": [
+            "attention"
+          ],
+          "expected_pages": {
+            "attention": [
+              4
+            ]
+          },
+          "expect_insufficient": false
+        },
+        {
+          "key": "positions",
+          "question": "Transformer 怎样使用正弦和余弦位置编码？请解释原文中的设计理由。",
+          "paper_keys": [
+            "attention"
+          ],
+          "expected_pages": {
+            "attention": [
+              6
+            ]
+          },
+          "expect_insufficient": false
+        },
+        {
+          "key": "bert-objectives",
+          "question": "BERT 预训练包含哪两个任务？masked language model 如何选择和替换 token？",
+          "paper_keys": [
+            "bert"
+          ],
+          "expected_pages": {
+            "bert": [
+              3,
+              4,
+              12,
+              13
+            ]
+          },
+          "expect_insufficient": false
+        },
+        {
+          "key": "longformer-pattern",
+          "question": "Longformer 怎样组合局部滑动窗口与全局注意力，使注意力复杂度随序列长度线性增长？",
+          "paper_keys": [
+            "longformer"
+          ],
+          "expected_pages": {
+            "longformer": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "expect_insufficient": false
+        },
+        {
+          "key": "different-benchmarks",
+          "question": "Attention Is All You Need 和 BERT 分别在哪些任务上评估，用了什么指标？请分别列出并说明这些分数对应的任务。",
+          "paper_keys": [
+            "attention",
+            "bert"
+          ],
+          "expected_pages": {
+            "attention": [
+              1,
+              8,
+              10
+            ],
+            "bert": [
+              1,
+              4,
+              5,
+              6
+            ]
+          },
+          "expect_insufficient": false
+        },
+        {
+          "key": "not-in-corpus",
+          "question": "这些论文是否报告了在2026年某手机芯片上的实测能耗？如果材料没有报告，请明确说明证据不足。",
+          "paper_keys": [
+            "attention",
+            "bert",
+            "longformer"
+          ],
+          "expected_pages": {},
+          "expect_insufficient": true
+        }
+      ]
+    }
+  ]
+}

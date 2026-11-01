@@ -12,7 +12,7 @@ from app.adapters.ports import Context
 from app.ai.adapter import RealAI
 from app.ai.files import LocalPDFReader
 from app.errors import AppError
-from app.schemas import Paper, SearchRequest, Source
+from app.schemas import Paper, QuestionRequest, SearchRequest, Source
 from app.services import ResearchService
 from ai_contracts.support import configuration, model_client
 
@@ -72,3 +72,27 @@ async def test_unscoped_adapter_cannot_silently_degrade(corpus):
     with pytest.raises(AppError) as unavailable:
         await service.search(ctx, SearchRequest(query="retrieval"), paper_ids=[pid])
     assert unavailable.value.code == "AI_SCOPE_UNAVAILABLE"
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("real", [False, True])
+@pytest.mark.parametrize("kind", ["answer", "draft"])
+async def test_generation_job_keeps_selected_paper_outside_global_top_50(corpus, tmp_path, real, kind):
+    data, ctx, pid = corpus
+    settings = replace(configuration(), max_candidates=1)
+    ai = (
+        RealAI(data, settings, reader=LocalPDFReader(tmp_path), client=model_client(settings))
+        if real
+        else MockAI(data)
+    )
+    service = ResearchService(SimpleNamespace(data=data, ai=ai))
+    task = service.question_task(
+        ctx, kind, QuestionRequest(question="retrieval evidence", paper_ids=[pid]), uuid4().hex
+    )
+    job = data.claim_job()
+    assert job.task.task_id == task.task_id
+    await service.run_job(job)
+    completed = data.task(ctx, task.task_id)
+    assert completed.status == "succeeded"
+    assert completed.result.sources
+    assert {source.paper_id for source in completed.result.sources} == {pid}
