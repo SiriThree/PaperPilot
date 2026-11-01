@@ -23,7 +23,10 @@ def parse(payload, chunk_chars, overlap):
     chunks, total = [], 0
     for number, page in enumerate(reader.pages, 1):
         # Preserve page boundaries and extracted text; no invented OCR or page-zero chunks.
-        text = (page.extract_text() or "").replace("\x00", "").strip()
+        # Some PDF ToUnicode maps yield UTF-16 surrogate code units. Combine
+        # valid pairs and replace unpaired units before UTF-8 JSON/DB writes.
+        text = (page.extract_text() or "").encode("utf-16-le", "surrogatepass").decode("utf-16-le", "replace")
+        text = text.replace("\x00", "").strip()
         total += len(text)
         if total > MAX_TEXT:
             return {"error": "PDF_LIMIT_EXCEEDED"}

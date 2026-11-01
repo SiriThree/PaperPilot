@@ -61,6 +61,8 @@ DeepSeek 官方服务与上述交大历史示例是不同服务；官方地址�
 
 本地模型来自 [Qdrant 的 FastEmbed 模型目录](https://qdrant.github.io/fastembed/examples/Supported_Models/)，模型卡：[BGE small Chinese v1.5](https://huggingface.co/BAAI/bge-small-zh-v1.5)。默认 512 维、CPU 两线程；原始模型有 512-token 截断，分词后超长片段的后部可能不参与语义表示。通过 FastEmbed 的 query/passage 方法生成向量并归一化；模型及分词版本、文件哈希应随评测保留。推理在可终止的独立子进程中运行；请求超时或取消会终止并等待子进程，不遗留后台推理。
 
+本地推理子进程在 POSIX 下限制地址空间为 3 GiB、CPU 时间为 180 秒；CPU 时间会累计两个线程的用量，与墙钟时间不同。外层 AIPort 操作期限仍最多 90 秒，取消时终止子进程。旧的 60 CPU 秒限制在真实 379 分片论文上约 31 墙钟秒即触发，因此调整为与两线程最大操作期限一致。非零进程退出报告 `AI_EMBEDDING_UNAVAILABLE`，与有效进程返回畸形 JSON 的 `AI_INVALID_RESPONSE` 区分。
+
 ## 文件、片段与检索
 
 `LocalPDFReader` 只接受 B 的 `<paper_id>.pdf` 存储键；先检查 Context、项目成员和论文，再读取可信上传根目录下的普通文件，拒绝路径、URL 和符号链接。无需暴露上传目录或创建下载 HTTP 接口。这已解决同进程本地文件读取；跨主机文件传输/存储服务不在本次交付内，可通过 reader 私有依赖替换。
@@ -77,7 +79,9 @@ PDF 使用 pypdf 独立子进程解析，不跨页分片。默认 1200 字符、
 
 只使用调用方提供的授权来源，先逐项核对 canonical chunk/page/excerpt/synthetic，再向模型发送来源数据；最多取排序前 50 个、累计不超过 60000 字符，不改写摘录。模型只返回文字、状态与 citation_ids，不能生成 public Source。引用不在本次来源内、重复编号、正文自行夹带方括号引用、无依据成功、状态矛盾均拒绝。
 
-空来源时直接返回结构化不足，不调用模型。answer 的正文引用和 citation_ids 由程序渲染并与返回来源一致。extract 的五字段只允许有文本、有来源的 `pending_verification`；其他状态必须为 null/无引用。draft 只返回待核验正文，不写任务、证据或报告版本。合成输入不重标真实。
+空来源时直接返回结构化不足，不调用模型。answer 的正文引用和 citation_ids 由程序渲染并与返回来源一致。问答/草稿与五字段提取使用独立输出协议，提取提示不再包含问答的 `statements`/布尔不足格式。提取明确要求简短中文正文，以及字符串形式的来源编号。
+
+extract 的五字段只允许有文本、有来源的 `pending_verification`；其他状态必须为 null/无引用。这一状态关系在私有模型解析时校验，随后仍验证引用是否属于当前授权原文。缺字段、截断、类型错误、状态矛盾或伪造引用都失败，不自动补字段、丢弃异常正文或隐式重试。draft 只返回待核验正文，不写任务、证据或报告版本。合成输入不重标真实。
 
 提示将问题和论文正文视为不可信数据，不提供工具、SQL、文件执行或外部检索权限。结构校验只能保证来源身份和引用范围，不能证明每个生成陈述被来源蕴含，亦不代表完成了提示注入安全认证；生成内容仍需人工核验。
 
@@ -107,7 +111,7 @@ def create_app():
 
 需先按 A 文档准备数据库，设 A=persistent、C=real。正常关闭由 B 的生命周期清理 DataBinding；C 的 HTTP/PDF/本地嵌入资源在每次调用完成或取消时释放。合并后的 PostgreSQL/浏览器联调记录见[集成记录](member-d-merged-integration.md)，模型端点使用本地可控替身，不代表外部模型效果验收。
 
-B 当前为研究任务在整个项目检索最多 50 条后按 paper_ids 筛选；指定论文可能不在全项目 top-50 中。C 遇到空来源会正确返回不足，但无法仅凭现有 AIPort 修复 B 的选源策略；团队后续应在 B 调用 extract 前直接获取该论文来源，或商定检索的私有范围参数。当前不改公开契约或 B 服务。
+当前 B 的问答/草稿任务通过私有 `search_scoped` 先限定 paper_ids，再排序并截取最多 50 条；单篇证据任务直接读取该论文来源并应用上下文预算。公开 AIPort、DataPort 与 HTTP 契约保持不变。真实文献联调与后续格式修复记录见[演示验收](real-literature-acceptance.md)。
 
 ## 验证与真实评测
 

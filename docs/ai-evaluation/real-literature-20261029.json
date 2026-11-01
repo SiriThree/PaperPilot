@@ -1,0 +1,425 @@
+{
+  "date": "2026-10-29",
+  "base_commit": "258676788b3c69d45ea884083f0a82fa843ccd8c",
+  "branch": "feat/member-c-real-literature",
+  "scope": "Development acceptance on real PDFs and a real model; citation identity checks and page overlap do not establish semantic entailment or benchmark quality.",
+  "runtime": {
+    "postgresql": "16.15",
+    "pgvector": "0.8.7",
+    "chat_service": "https://models.sjtu.edu.cn/api/v1",
+    "chat_model": "deepseek-chat",
+    "response_format": "json_object",
+    "embedding_model": "BAAI/bge-small-zh-v1.5",
+    "embedding_revision": "46fbe35fd4374a00fee7de77dfddaeb6dd6a2c59",
+    "embedding_dimensions": 512
+  },
+  "first_pass": [
+    {
+      "key": "rag-evidence-rag-variants",
+      "status": "succeeded",
+      "task_id": "dfb82f1c-3ed6-4afa-9dc7-1116298db6cf",
+      "insufficient": false,
+      "canonical_sources": true,
+      "cited_pages": {
+        "rag": [
+          3,
+          4,
+          6,
+          8,
+          9
+        ]
+      },
+      "expected_page_overlap": {
+        "rag": true
+      }
+    },
+    {
+      "key": "rag-evidence-dpr-encoding",
+      "status": "succeeded",
+      "task_id": "010aa751-c573-49d4-9a40-45802f9c9d3f",
+      "insufficient": false,
+      "canonical_sources": true,
+      "cited_pages": {
+        "dpr": [
+          1,
+          2,
+          3,
+          5
+        ]
+      },
+      "expected_page_overlap": {
+        "dpr": true
+      }
+    },
+    {
+      "key": "rag-evidence-dpr-negatives",
+      "status": "failed",
+      "task_id": "c88a4498-482b-4b49-a91b-beaca0cdcdf7",
+      "error": {
+        "code": "TASK_TIMEOUT",
+        "message": "任务处理超时，请核对后重试"
+      }
+    },
+    {
+      "key": "rag-evidence-context-position",
+      "status": "succeeded",
+      "task_id": "e87ddbff-e9dc-4e77-a0b6-d452c28def32",
+      "insufficient": false,
+      "canonical_sources": true,
+      "cited_pages": {
+        "lost-middle": [
+          1,
+          2,
+          3,
+          5,
+          7,
+          8,
+          10,
+          14,
+          15
+        ]
+      },
+      "expected_page_overlap": {
+        "lost-middle": true
+      }
+    },
+    {
+      "key": "rag-evidence-retrieval-context",
+      "status": "succeeded",
+      "task_id": "3b253f3c-d826-41c5-bbb0-1d3846e8eb6e",
+      "insufficient": false,
+      "canonical_sources": true,
+      "cited_pages": {
+        "rag": [
+          6,
+          8
+        ],
+        "lost-middle": [
+          5,
+          7,
+          12
+        ]
+      },
+      "expected_page_overlap": {
+        "rag": true,
+        "lost-middle": true
+      }
+    },
+    {
+      "key": "rag-evidence-not-in-corpus",
+      "status": "succeeded",
+      "task_id": "bc16631d-8a9a-4f20-a757-de5ad655c013",
+      "insufficient": true,
+      "canonical_sources": true,
+      "cited_pages": {},
+      "expected_page_overlap": {}
+    },
+    {
+      "key": "rag-evidence-evidence",
+      "status": "failed",
+      "error": {
+        "code": "AI_INVALID_RESPONSE",
+        "message": "模型证据状态不一致"
+      }
+    },
+    {
+      "key": "rag-evidence-draft",
+      "status": "succeeded",
+      "canonical_sources": true,
+      "pages": [
+        1,
+        3,
+        5,
+        9,
+        15,
+        17,
+        18
+      ],
+      "saved_version_id": "a6016026-a5d5-4ef1-9bbe-f316143cc2ec"
+    },
+    {
+      "key": "transformer-context-scaled-attention",
+      "status": "succeeded",
+      "task_id": "6eb47de8-eea2-4c6e-8b3f-4926fcb8c659",
+      "insufficient": false,
+      "canonical_sources": true,
+      "cited_pages": {
+        "attention": [
+          4
+        ]
+      },
+      "expected_page_overlap": {
+        "attention": true
+      }
+    },
+    {
+      "key": "transformer-context-positions",
+      "status": "succeeded",
+      "task_id": "edb7b9bb-e756-43c6-9031-8d21ded34487",
+      "insufficient": true,
+      "canonical_sources": true,
+      "cited_pages": {},
+      "expected_page_overlap": {
+        "attention": false
+      }
+    },
+    {
+      "key": "transformer-context-bert-objectives",
+      "status": "failed",
+      "task_id": "32e36e94-27ac-49ad-b6ea-2ef304370c1c",
+      "error": {
+        "code": "AI_INVALID_RESPONSE",
+        "message": "模型正文或引用格式无效"
+      }
+    },
+    {
+      "key": "transformer-context-longformer-pattern",
+      "status": "succeeded",
+      "task_id": "ea375ed6-6331-487b-89ce-0b7d4ce8af79",
+      "insufficient": false,
+      "canonical_sources": true,
+      "cited_pages": {
+        "longformer": [
+          1,
+          3,
+          4
+        ]
+      },
+      "expected_page_overlap": {
+        "longformer": true
+      }
+    },
+    {
+      "key": "transformer-context-different-benchmarks",
+      "status": "succeeded",
+      "task_id": "787716cd-ce20-4061-a185-8735c2a8dd41",
+      "insufficient": false,
+      "canonical_sources": true,
+      "cited_pages": {
+        "attention": [
+          1,
+          6,
+          8,
+          9,
+          10
+        ],
+        "bert": [
+          6,
+          8,
+          9,
+          14
+        ]
+      },
+      "expected_page_overlap": {
+        "attention": true,
+        "bert": true
+      }
+    },
+    {
+      "key": "transformer-context-not-in-corpus",
+      "status": "succeeded",
+      "task_id": "fe4b4445-d698-44fa-92ee-c3abe2a8f088",
+      "insufficient": true,
+      "canonical_sources": true,
+      "cited_pages": {},
+      "expected_page_overlap": {}
+    },
+    {
+      "key": "transformer-context-evidence",
+      "status": "succeeded",
+      "fields": {
+        "research_question": {
+          "status": "pending_verification",
+          "pages": [
+            1
+          ],
+          "canonical_sources": true
+        },
+        "method": {
+          "status": "pending_verification",
+          "pages": [
+            3,
+            7
+          ],
+          "canonical_sources": true
+        },
+        "results": {
+          "status": "pending_verification",
+          "pages": [
+            1,
+            8
+          ],
+          "canonical_sources": true
+        },
+        "conclusion": {
+          "status": "pending_verification",
+          "pages": [
+            10
+          ],
+          "canonical_sources": true
+        },
+        "limitations": {
+          "status": "pending_verification",
+          "pages": [
+            2,
+            7
+          ],
+          "canonical_sources": true
+        }
+      }
+    },
+    {
+      "key": "transformer-context-draft",
+      "status": "succeeded",
+      "canonical_sources": true,
+      "pages": [
+        1,
+        2,
+        7,
+        8,
+        9
+      ],
+      "saved_version_id": "8fbc51a7-900c-4783-8e48-c2e325ec6962"
+    }
+  ],
+  "follow_up": [
+    {
+      "key": "transformer-context-positions",
+      "mode": "new_after_scope_fix",
+      "status": "succeeded",
+      "attempts": 1,
+      "canonical_sources": true,
+      "pages": [
+        6
+      ],
+      "insufficient": false
+    },
+    {
+      "key": "transformer-context-bert-objectives",
+      "mode": "retry_original_failed_task",
+      "status": "succeeded",
+      "attempts": 2,
+      "canonical_sources": true,
+      "pages": [
+        2,
+        4,
+        12
+      ],
+      "insufficient": false
+    },
+    {
+      "key": "rag-evidence-dpr-negatives",
+      "mode": "retry_original_failed_task",
+      "status": "succeeded",
+      "attempts": 2,
+      "canonical_sources": true,
+      "pages": [
+        3,
+        6
+      ],
+      "insufficient": false
+    },
+    {
+      "key": "rag-evidence-evidence",
+      "mode": "retry_original_failed_task",
+      "status": "failed",
+      "attempts": 2,
+      "error": {
+        "code": "AI_INVALID_RESPONSE",
+        "message": "模型响应格式无效，请稍后重试"
+      }
+    }
+  ],
+  "restart": {
+    "projects": 2,
+    "papers": 6,
+    "sources": 378,
+    "reports": 2,
+    "first_pass_tasks_unchanged": true
+  },
+  "database_restart": {
+    "counts": {
+      "projects": 2,
+      "project_papers": 6,
+      "chunks": 378,
+      "chunk_embeddings": 378,
+      "process_indexes": 6
+    },
+    "vector_dimensions": [
+      [
+        512,
+        378
+      ]
+    ],
+    "postmaster_started_at": "2026-10-29T17:33:13.358356+08:00",
+    "unchanged_after_restart": true
+  },
+  "retrieval_diagnostic": {
+    "unscoped_total_hits": 50,
+    "unscoped_selected_pages": [
+      2,
+      3,
+      8,
+      9,
+      10
+    ],
+    "scoped_hits": 40,
+    "scoped_pages": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "expected_pdf_page": 6
+  },
+  "browser": {
+    "project_count": 2,
+    "project_paper_count": 3,
+    "all_papers_searchable": true,
+    "source_excerpt_visible": true,
+    "saved_report_opened": true,
+    "page_errors": [],
+    "screenshots": [
+      "projects.png",
+      "real-paper-reader.png",
+      "persisted-report.png"
+    ]
+  },
+  "browser_answer": {
+    "task_id": "0976bb67-5d59-4236-b1fd-483c9842deb5",
+    "status": "succeeded",
+    "mode": "real-ui-sjtu-postgresql-bge",
+    "answer_mock": false,
+    "insufficient": false,
+    "cited_page": 2,
+    "citation_located": true,
+    "source_paper": "Dense Passage Retrieval for Open-Domain Question Answering",
+    "page_errors": []
+  },
+  "tests": {
+    "default_backend": {
+      "passed": 590,
+      "skipped": 428
+    },
+    "postgres_data_contracts": {
+      "passed": 41
+    },
+    "corpus_and_ai_before_fixes": {
+      "passed": 57
+    },
+    "literal_tokens_and_ai": {
+      "passed": 52
+    }
+  }
+}

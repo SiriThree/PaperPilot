@@ -224,6 +224,7 @@ npm.cmd --prefix frontend run test:e2e
 - [A/B 数据层契约 AB-1](docs/ab-data-contract.md)、[成员 A 交接摘要](docs/member-a-handoff.md)
 - [成员 C：AI 接口与开工验收](docs/member-c-handoff.md)、[成员 D：安全接口与开工验收](docs/member-d-handoff.md)
 - [C 实现、交大 API 与本地嵌入配置](docs/ai-adapter.md)、[真实论文评测](docs/ai-evaluation/README.md)
+- [300 篇真实 RAG 文献、入库核验与后续压测输入](docs/rag-300-corpus.md)
 - [C/D 全方法可执行示例与异常](contracts/module-port-examples.json)
 - [数据库中立接入、测试与待确认事项](docs/persistence-integration.md)、[历史 SQLite 实验](docs/persistence.md)
 - [任务恢复、未知提交与重复提交边界](docs/task-recovery.md)

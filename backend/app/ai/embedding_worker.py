@@ -10,7 +10,11 @@ def main():
             import resource
 
             resource.setrlimit(resource.RLIMIT_AS, (3 * 1024**3, 3 * 1024**3))
-            resource.setrlimit(resource.RLIMIT_CPU, (60, 60))
+            # Inference uses two CPU threads. CPU seconds accumulate across
+            # threads; 60 CPU seconds killed valid long-paper imports after
+            # roughly 30 wall seconds. The parent still enforces at most 90
+            # wall seconds and kills this child on cancellation.
+            resource.setrlimit(resource.RLIMIT_CPU, (180, 180))
         except (ImportError, ValueError, OSError):
             pass
         from fastembed import TextEmbedding
