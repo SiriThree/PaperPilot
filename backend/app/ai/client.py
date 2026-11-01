@@ -19,9 +19,10 @@ class ModelClient:
     disabled, so a provider cannot redirect the Authorization header elsewhere.
     """
 
-    def __init__(self, settings: AISettings, *, transport=None):
+    def __init__(self, settings: AISettings, *, transport=None, proxy=None):
         self.settings = settings
         self.transport = transport
+        self.proxy = proxy
         self.embedding_encoding = None
         if settings.embedding_backend == "remote" and settings.embedding_model in {
             "text-embedding-3-small", "text-embedding-3-large", "text-embedding-ada-002"
@@ -38,6 +39,7 @@ class ModelClient:
             async with httpx.AsyncClient(
                 timeout=self.settings.timeout_seconds,
                 transport=self.transport,
+                proxy=self.proxy,
                 follow_redirects=False,
                 trust_env=False,
             ) as client:

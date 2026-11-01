@@ -102,7 +102,9 @@ class RealAI:
             from app.ai.local_embeddings import LocalEmbeddings
 
             self.embedder = LocalEmbeddings(settings)
-        elif self.embedder is None and (settings.embedding_base_url or settings.embedding_api_key):
+        elif self.embedder is None and (
+            settings.embedding_base_url or settings.embedding_api_key or settings.embedding_proxy_url
+        ):
             self.embedder = ModelClient(
                 replace(
                     settings,
@@ -110,7 +112,8 @@ class RealAI:
                     api_key=settings.embedding_api_key or settings.api_key,
                     embedding_base_url=None,
                     embedding_api_key=None,
-                )
+                ),
+                proxy=settings.embedding_proxy_url,
             )
 
     async def astart(self):

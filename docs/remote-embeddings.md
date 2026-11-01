@@ -50,4 +50,6 @@ PYTHONPATH=backend python scripts/start_research_demo.py \
 
 `--embedding-config` 覆盖本地 BGE 嵌入配置；存在独立 chunk tokenizer 时启动器的 `auto` 保持 V2。其余环境启动可设置 `PAPERPILOT_AI_EMBEDDING_BACKEND=remote`、`...EMBEDDING_BASE_URL`、`...EMBEDDING_API_KEY_FILE`、`...EMBEDDING_MODEL`、`...EMBEDDING_DIMENSIONS`、`...EMBEDDING_REVISION`，并显式设置 `PAPERPILOT_AI_CHUNK_STRATEGY=sentence-token-v2` 及 `...CHUNK_TOKENIZER_DIR`。
 
+如果本机网络需要代理，可在该 JSON 中加 `"proxy_url": "http://127.0.0.1:7890"`，或设置 `PAPERPILOT_AI_EMBEDDING_PROXY_URL`。只接受显式指定、无 URL 凭据的 loopback HTTP CONNECT 代理，HTTPS 目标仍验证证书。代理仅用于嵌入请求，SJTU 聊天连接不受影响，也不读取全局代理环境变量。本次本机直连曾出现连接超时，经已有本地代理的实际嵌入探测成功。
+
 本地是 development / shared-auth 演示，不代表生产环境的角色隔离已验收。批量导入可临时指定 `--api-workers 4`，完成后恢复一个进程。导入脚本支持 `--tls-ca` 信任已准备的本地证书；不关闭 HTTPS 校验。

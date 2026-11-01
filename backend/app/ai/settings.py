@@ -23,6 +23,7 @@ class AISettings:
     embedding_backend: str = "remote"
     embedding_base_url: str | None = None
     embedding_api_key: str | None = field(default=None, repr=False)
+    embedding_proxy_url: str | None = None
     local_model_dir: Path | None = None
     chunk_tokenizer_dir: Path | None = None
     token_limit_parameter: str = "max_tokens"
@@ -112,6 +113,14 @@ class AISettings:
             not self.embedding_api_key.strip() or any(c in self.embedding_api_key for c in "\r\n")
         ):
             raise ValueError("Invalid embedding credentials")
+        if self.embedding_proxy_url is not None:
+            proxy = urlsplit(self.embedding_proxy_url)
+            if (
+                proxy.scheme != "http" or proxy.hostname not in {"localhost", "127.0.0.1", "::1"}
+                or proxy.username or proxy.password or proxy.path not in {"", "/"}
+                or proxy.query or proxy.fragment or proxy.port is None or not 1 <= proxy.port <= 65535
+            ):
+                raise ValueError("Embedding proxy must be an explicit loopback HTTP CONNECT proxy")
         if self.token_limit_parameter not in {"max_tokens", "max_completion_tokens"}:
             raise ValueError("Unsupported token limit parameter")
         if self.response_format not in {"json_schema", "json_object"}:
@@ -140,6 +149,7 @@ class AISettings:
                 min_similarity=float(os.getenv("PAPERPILOT_AI_MIN_SIMILARITY", "0.2")),
                 embedding_backend=os.getenv("PAPERPILOT_AI_EMBEDDING_BACKEND", "remote"),
                 embedding_base_url=os.getenv("PAPERPILOT_AI_EMBEDDING_BASE_URL") or None,
+                embedding_proxy_url=os.getenv("PAPERPILOT_AI_EMBEDDING_PROXY_URL") or None,
                 embedding_api_key=read_secret("PAPERPILOT_AI_EMBEDDING_API_KEY")
                 if os.getenv("PAPERPILOT_AI_EMBEDDING_API_KEY")
                 or os.getenv("PAPERPILOT_AI_EMBEDDING_API_KEY_FILE")

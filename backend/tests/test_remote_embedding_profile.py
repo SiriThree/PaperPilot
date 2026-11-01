@@ -10,6 +10,7 @@ import httpx
 import pytest
 
 from app.ai.client import ModelClient
+from app.ai.adapter import RealAI
 from app.errors import AppError
 from ai_contracts.support import configuration
 
@@ -63,3 +64,20 @@ def test_remote_launcher_uses_file_secret_without_reading_a_local_model(tmp_path
     assert env["PAPERPILOT_AI_EMBEDDING_DIMENSIONS"] == "3072"
     assert env["PAPERPILOT_AI_LOCAL_MODEL_DIR"] == ""
     assert "fixture-not-a-real-key" not in repr(env)
+
+
+def test_embedding_proxy_is_explicit_and_does_not_route_chat(tmp_path):
+    settings = configuration(embedding_proxy_url="http://127.0.0.1:7890")
+    ai = RealAI(object(), settings, reader=None)
+    assert ai.embedder.proxy == "http://127.0.0.1:7890"
+    assert ai.client.proxy is None
+    assert ai.embedder.settings.base_url == settings.base_url
+
+
+@pytest.mark.parametrize("proxy", [
+    "http://external.invalid:7890", "http://user:secret@localhost:7890",
+    "http://localhost:7890/path", "http://localhost", "http://localhost:99999",
+])
+def test_proxy_configuration_rejects_remote_hosts_and_url_credentials(proxy):
+    with pytest.raises(ValueError):
+        configuration(embedding_proxy_url=proxy)

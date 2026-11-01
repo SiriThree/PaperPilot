@@ -1,0 +1,19 @@
+{
+  "checks": [
+    {
+      "recorded_at": "2026-11-01T06:46:26.352402+00:00",
+      "error": "ConnectTimeout",
+      "seconds": 20.058
+    },
+    {
+      "recorded_at": "2026-11-01T06:47:53.958338+00:00",
+      "http_status": 200,
+      "dimensions": [
+        3072
+      ],
+      "seconds": 2.689,
+      "route": "explicit-loopback-https-connect-proxy"
+    }
+  ],
+  "note": "Connectivity diagnostics, not a paired latency benchmark. HTTPS certificate validation remained enabled."
+}

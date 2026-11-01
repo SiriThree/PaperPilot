@@ -26,6 +26,7 @@ def embedding_environment(config_path, model_manifest):
         "PAPERPILOT_AI_EMBEDDING_BASE_URL": "",
         "PAPERPILOT_AI_EMBEDDING_API_KEY": "",
         "PAPERPILOT_AI_EMBEDDING_API_KEY_FILE": "",
+        "PAPERPILOT_AI_EMBEDDING_PROXY_URL": "",
         "PAPERPILOT_AI_CHUNK_TOKENIZER_DIR": "",
     }
     if config_path is not None:
@@ -37,6 +38,7 @@ def embedding_environment(config_path, model_manifest):
             PAPERPILOT_AI_EMBEDDING_MODEL=config["model"],
             PAPERPILOT_AI_EMBEDDING_DIMENSIONS=str(config["dimensions"]),
             PAPERPILOT_AI_EMBEDDING_REVISION=config["revision"],
+            PAPERPILOT_AI_EMBEDDING_PROXY_URL=config.get("proxy_url", ""),
             PAPERPILOT_AI_LOCAL_MODEL_DIR="",
             PAPERPILOT_AI_CHUNK_TOKENIZER_DIR=str(Path(config["chunk_tokenizer_dir"]).resolve(strict=True))
             if config.get("chunk_tokenizer_dir") else "",
